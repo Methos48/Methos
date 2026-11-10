@@ -74,3 +74,15 @@ jobs:
           path: release/*.exe
           if-no-files-found: error
           retention-days: 14
+      - name: Package extracted source for inspection
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\source-package" | Out-Null
+          Compress-Archive -Path "$env:PROJECT_DIR\*" -DestinationPath "$env:GITHUB_WORKSPACE\source-package\Methos-XDAT-Source.zip" -Force
+      - name: Upload source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Methos-XDAT-Source
+          path: source-package/Methos-XDAT-Source.zip
+          if-no-files-found: error
+          retention-days: 14
