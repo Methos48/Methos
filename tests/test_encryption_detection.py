@@ -35,7 +35,7 @@ class EncryptionDetectionTests(unittest.TestCase):
                 self.assertIn("nombre original", result.detail.lower())
 
     def test_unencrypted_candidate_is_not_claimed_as_valid_xdat(self):
-        result = detect_encryption(b"plain file data" + bytes(32))
+        result = detect_encryption(bytes.fromhex("01 00 00 00") + bytes(32))
         self.assertEqual(result.status, "plain_candidate")
         self.assertFalse(result.encrypted)
 
