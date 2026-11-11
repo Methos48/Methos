@@ -25,7 +25,7 @@ class EncryptionDetectionTests(unittest.TestCase):
                 self.assertTrue(result.encrypted)
                 self.assertEqual(result.version, version)
                 self.assertEqual(result.family, PROTOCOLS[version][0])
-                self.assertFalse(result.decoder_available)
+                self.assertEqual(result.decoder_available, version in {111, 120, 121, 211, 212, 411, 412, 413, 414})
 
     def test_filename_dependent_variants_are_flagged(self):
         for version in (121, 821):
