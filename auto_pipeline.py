@@ -34,9 +34,18 @@ def _technical_details(source:Path,data:bytes,detection,reason:str):
         "El archivo original no fue modificado."
     )
 def _unknown_cipher_message(source:Path,data:bytes,detection,reason:str):
-    return "No se reconoce este cifrado.\n\n" + _technical_details(source,data,detection,reason)
+    if detection.status == "suspected_encryption":
+        heading = "Posible cifrado u ofuscación personalizada; protocolo no identificado.\n\n"
+    else:
+        heading = "No se reconoce este cifrado.\n\n"
+    return heading + _technical_details(source,data,detection,reason)
 def decode_xdat(source:Path,data:bytes,validate_xdat:Callable):
     source=Path(source); detection=detect_encryption(data,source.name)
+    if detection.status == "suspected_encryption":
+        raise AutoPipelineError(_unknown_cipher_message(
+            source,data,detection,
+            "El primer campo no coincide con el contador esperado de un XDAT ct0 sin cifrar."
+        ))
     if detection.encrypted is not True:
         try: validate_xdat(data)
         except Exception as exc:
