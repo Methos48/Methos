@@ -2,7 +2,7 @@ name: Build Methos XDAT for Windows
 
 on:
   push:
-    branches: [main, research/xdat-format-probe]
+    branches: [main, 'research/xdat-format-probe']
     paths:
       - 'Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip'
       - 'encryption_detection.py'
