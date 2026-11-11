@@ -90,14 +90,13 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
 """
     if old in source: source=source.replace(old,new,1)
     elif "raw_original=source.read_bytes()" not in source: raise SystemExit("Lectura del original no localizada")
-    old="""            if original_data is not None:
-                detection=detect_encryption(original_data, source.name if source else '')
-                if detection.encrypted is True:
-                    raise ValueError(f"El original usa cifrado {detection.version} ({detection.family}). La capa de detección ya lo reconoce, pero todavía falta conectar su codificador. Se canceló la compilación para no generar un archivo incompatible.")
-            self.set_status(f'Compilando {len(xmls)} archivos XML…')
-            data,windows,shortcuts=compile_from_folder(PARTS_DIR,original_data)
-"""
-    new="""            self.set_status(f'Compilando {len(xmls)} archivos XML…')
+    compile_start = source.find("            if original_data is not None:", source.find("def compile"))
+    compile_call = "            data,windows,shortcuts=compile_from_folder(PARTS_DIR,original_data)"
+    compile_call_start = source.find(compile_call, compile_start)
+    if compile_start < 0 or compile_call_start < 0:
+        raise SystemExit("No se pudo localizar de forma segura la llamada de compilación XDAT")
+    compile_end = compile_call_start + len(compile_call)
+    compile_replacement = """            self.set_status(f'Compilando {len(xmls)} archivos XML…')
             data,windows,shortcuts=compile_from_folder(PARTS_DIR,original_data)
             plain_compiled=data
             parse_xdat(plain_compiled)
@@ -113,15 +112,8 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
                 if original_detection is not None and original_detection.encrypted is True:
                     if not manifest_path.is_file():
                         raise ValueError("Falta el manifiesto de origen. No se codificará el XDAT con un protocolo supuesto.")
-                    data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)
-"""
-    if old in source: source=source.replace(old,new,1)
-    elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source:
-        print("DEBUG COMPILACION:")
-        for line_no, line in enumerate(source.splitlines(), 1):
-            if "compile_from_folder" in line or "Compilando" in line or "original_data" in line or "encode_xdat" in line:
-                print(f"{line_no}: {line}")
-        raise SystemExit("Bloque de compilación no localizado")
+                    data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)"""
+    source = source[:compile_start] + compile_replacement + source[compile_end:]
     source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
     source = source.replace(
         "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
