@@ -18,12 +18,13 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import zipfile, pathlib, hashlib, math, re, collections
+          import zipfile, pathlib, hashlib, math, re, collections, struct
           import pefile
           from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
           archive = pathlib.Path("system.zip")
           marker = bytes.fromhex("FF ED FA CE 01 00")
           out = []
+          pathlib.Path("analysis-binaries").mkdir(exist_ok=True)
           def emit(s=""): out.append(str(s))
           emit("ARCHIVE SHA256: " + hashlib.sha256(archive.read_bytes()).hexdigest())
           with zipfile.ZipFile(archive) as z:
@@ -32,16 +33,26 @@ jobs:
               for info in infos:
                   name = info.filename
                   data = z.read(info)
-                  emit(f"\nFILE {name} size={len(data)} sha256={hashlib.sha256(data).hexdigest()}")
+                  base_name = pathlib.PurePosixPath(name).name.lower()
+                  if base_name in {"npkscrypt.dll","ogg.dll","l2ui.dll","l2patch.u"}:
+                      pathlib.Path("analysis-binaries",base_name).write_bytes(data)
+                  emit(f"\nFILE {name} size={len(data)} md5={hashlib.md5(data).hexdigest()} sha256={hashlib.sha256(data).hexdigest()}")
                   if len(data) < 2 or data[:2] != b"MZ":
-                      if name.lower().endswith((".dll",".exe")): emit("  WARNING: extension says PE but no MZ header")
                       continue
                   try:
                       pe = pefile.PE(data=data, fast_load=False)
-                      emit(f"  PE machine=0x{pe.FILE_HEADER.Machine:04X} timestamp={pe.FILE_HEADER.TimeDateStamp} sections={len(pe.sections)}")
+                      emit(f"  PE machine=0x{pe.FILE_HEADER.Machine:04X} timestamp={pe.FILE_HEADER.TimeDateStamp} imagebase=0x{pe.OPTIONAL_HEADER.ImageBase:X} entry_rva=0x{pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} sections={len(pe.sections)}")
+                      try:
+                          ep=pe.get_offset_from_rva(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+                          emit("  ENTRY_BYTES "+data[ep:ep+96].hex(" "))
+                      except Exception: pass
                       if hasattr(pe, "VS_FIXEDFILEINFO") and pe.VS_FIXEDFILEINFO:
                           v=pe.VS_FIXEDFILEINFO[0]
                           emit(f"  VERSION {v.FileVersionMS >> 16}.{v.FileVersionMS & 65535}.{v.FileVersionLS >> 16}.{v.FileVersionLS & 65535}")
+                      try:
+                          for entry in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                              emit(f"  EXPORT {entry.name.decode(errors='replace') if entry.name else '<ordinal>'} ordinal={entry.ordinal} rva=0x{entry.address:X}")
+                      except Exception: pass
                       try:
                           for entry in pe.DIRECTORY_ENTRY_IMPORT:
                               emit("  IMPORT " + entry.dll.decode(errors="replace") + ": " + ", ".join((x.name or b"ord"+str(x.ordinal).encode()).decode(errors="replace") if isinstance(x.name,bytes) else str(x.name) for x in entry.imports[:100]))
@@ -61,20 +72,16 @@ jobs:
                               positions.append(p); start=p+1
                           if positions: emit(f"  MATCH {label}: " + ", ".join(hex(p) for p in positions[:30]))
                       strings=re.findall(rb"[\x20-\x7e]{5,}",data)
-                      useful=[s.decode("ascii","replace") for s in strings if re.search(rb"crypt|lineage|protect|guard|file|engine|xdat|unreal|smart|lame|decrypt|encrypt|version|patch",s,re.I)]
+                      useful=[s.decode("ascii","replace") for s in strings if re.search(rb"crypt|lineage|protect|guard|file|engine|xdat|unreal|smart|lame|decrypt|encrypt|version|patch|akumu",s,re.I)]
                       for s in useful[:100]: emit("  STRING "+s[:250])
-                      # Disassemble a bounded sample of executable sections and report references to crypto/API instructions.
+                      # bounded entry-point disassembly
                       mode=CS_MODE_64 if pe.FILE_HEADER.Machine==0x8664 else CS_MODE_32
                       md=Cs(CS_ARCH_X86,mode)
-                      for sec in pe.sections:
-                          if not (sec.Characteristics & 0x20000000): continue
-                          raw=sec.get_data()[:1024*1024]
-                          if not raw: continue
-                          base=pe.OPTIONAL_HEADER.ImageBase+sec.VirtualAddress
-                          hits=[]
-                          for ins in md.disasm(raw,base):
-                              if ins.mnemonic in ("call","jmp") and any(k in ins.op_str.lower() for k in ("crypt","bcrypt","advapi","crypt32")): hits.append(f"{ins.mnemonic} {ins.op_str}")
-                          if hits: emit("  CODE_CRYPTO_REFS "+", ".join(hits[:40]))
+                      try:
+                          ep=pe.get_offset_from_rva(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+                          for ins in list(md.disasm(data[ep:ep+512],pe.OPTIONAL_HEADER.ImageBase+pe.OPTIONAL_HEADER.AddressOfEntryPoint))[:60]:
+                              emit(f"  EP {ins.address:08X}: {ins.mnemonic} {ins.op_str}")
+                      except Exception as e: emit("  EP_DISASM_ERROR "+repr(e))
                   except Exception as e: emit("  PE_PARSE_ERROR "+repr(e))
           report="\n".join(out)+"\n"
           pathlib.Path("client-protection-report.txt").write_text(report,encoding="utf-8")
@@ -82,6 +89,8 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: Methos-Client-Protection-Report
-          path: client-protection-report.txt
+          name: Methos-Client-Protection-Analysis
+          path: |
+            client-protection-report.txt
+            analysis-binaries/
           if-no-files-found: error
