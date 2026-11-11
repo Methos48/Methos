@@ -39,8 +39,12 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
                 except Exception as xml_error:
                     xml_errors.append(f"{Path(xml_file).name}: {type(xml_error).__name__}: {xml_error}")
             if xml_errors:
-                report=("La revisión XML terminó. Se revisaron todos los archivos y no se inició la compilación.\\n\\n"
-                        + f"Archivos con errores: {len(xml_errors)}\\n\\n" + "\\n\\n".join(xml_errors))
+                report=("COMPILACIÓN FALLIDA\\n\\nArchivos con errores:\\n- "
+                        + "\\n- ".join(
+                            item.split(": ", 1)[0] + "\\n  Motivo: " + item.split(": ", 1)[1]
+                            if ": " in item else item
+                            for item in xml_errors
+                        ))
                 self.set_status(f'{len(xml_errors)} archivo(s) XML con errores; compilación cancelada.',False)
                 messagebox.showerror('Informe de archivos XML',report)
                 return
