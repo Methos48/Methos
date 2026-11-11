@@ -30,7 +30,9 @@ class EncryptionDetectionTests(unittest.TestCase):
     def test_filename_dependent_variants_are_flagged(self):
         for version in (121, 821):
             with self.subTest(version=version):
-                self.assertTrue(detect_encryption(make_header(version)).filename_required)
+                result = detect_encryption(make_header(version))
+                self.assertTrue(result.filename_required)
+                self.assertIn("nombre original", result.detail.lower())
 
     def test_unencrypted_candidate_is_not_claimed_as_valid_xdat(self):
         result = detect_encryption(b"plain file data" + bytes(32))
