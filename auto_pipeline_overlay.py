@@ -9,6 +9,21 @@ def main():
     shutil.copy2(repo/"tests"/"test_auto_pipeline.py",tests/"test_auto_pipeline.py")
     app=project/"app.py"; source=app.read_text(encoding="utf-8")
     line="from xdat_core import decompile_to_folder, compile_from_folder, parse_xdat\n"
+    old_paths = """APP_DIR = Path(__file__).resolve().parent
+# Datos editables en Documentos: no requieren permisos de administrador.
+DATA_DIR = Path.home() / 'Documents' / 'Methos XDAT'
+COMPLETE_DIR = DATA_DIR / 'xdat completo'
+PARTS_DIR = DATA_DIR / 'xdat por partes'
+"""
+    new_paths = """APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+DATA_DIR = APP_DIR / 'Archivos XDAT'
+COMPLETE_DIR = DATA_DIR / 'Comprimido'
+PARTS_DIR = DATA_DIR / 'Descomprimido'
+"""
+    if old_paths in source:
+        source = source.replace(old_paths, new_paths, 1)
+    elif "DATA_DIR = APP_DIR / 'Archivos XDAT'" not in source:
+        raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
     if "from auto_pipeline import decode_xdat, encode_xdat" not in source:
         source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\n",1)
     old="""            data=source.read_bytes()
@@ -70,4 +85,5 @@ def main():
     elif new not in bat: raise SystemExit("No se pudo añadir el motor a PyInstaller")
     bat_path.write_text(bat,encoding="utf-8",newline="\n")
     print("Despacho automático integrado y motor incluido en el paquete Windows.")
+    print("Carpetas XDAT: Archivos XDAT/Comprimido y Archivos XDAT/Descomprimido.")
 if __name__=="__main__": main()
