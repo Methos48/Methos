@@ -7,7 +7,7 @@ on:
       - 'Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip'
       - 'encryption_detection.py'
       - 'auto_pipeline.py'
-      - 'auto_pipeline_overlay.py'
+          python "$env:GITHUB_WORKSPACE\auto_pipeline_overlay.py" "$env:PROJECT_DIR"
       - 'apply_detection_layer.py'
       - 'tests/test_encryption_detection.py'
       - 'tests/test_auto_pipeline.py'
@@ -40,11 +40,11 @@ jobs:
       - name: Apply encryption detection layer
         shell: pwsh
         run: |
-python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:PROJECT_DIR"
+          python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:PROJECT_DIR"
       - name: Apply automatic crypto dispatch layer
         shell: pwsh
         run: |
-          python "$env:GITHUB_WORKSPACE\\auto_pipeline_overlay.py" "$env:PROJECT_DIR"
+          python "$env:GITHUB_WORKSPACE\auto_pipeline_overlay.py" "$env:PROJECT_DIR"
       - name: Download integrated Lineage II crypto engine
         shell: pwsh
         run: |
