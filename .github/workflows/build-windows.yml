@@ -2,16 +2,9 @@ name: Build Methos XDAT for Windows
 
 on:
   push:
-    branches: [main, 'research/xdat-format-probe']
-    paths:
-      - 'Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip'
-      - 'encryption_detection.py'
-      - 'auto_pipeline.py'
-          python "$env:GITHUB_WORKSPACE\auto_pipeline_overlay.py" "$env:PROJECT_DIR"
-      - 'apply_detection_layer.py'
-      - 'tests/test_encryption_detection.py'
-      - 'tests/test_auto_pipeline.py'
-      - '.github/workflows/build-windows.yml'
+    branches:
+      - main
+      - research/xdat-format-probe
   workflow_dispatch:
 
 permissions:
@@ -27,7 +20,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          architecture: 'x64'
+          architecture: x64
       - name: Extract source package
         shell: pwsh
         run: |
