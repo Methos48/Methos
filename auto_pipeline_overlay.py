@@ -84,6 +84,10 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
     if old in source: source=source.replace(old,new,1)
     elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source: raise SystemExit("Bloque de compilación no localizado")
     source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
+    source = source.replace(
+        "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
+        "messagebox.showerror('Error al descompilar',f'{e}\\n\\n{traceback.format_exc()}')"
+    )
     app.write_text(source,encoding="utf-8",newline="\n")
     installer = project / "installer" / "MethosXDAT.iss"
     if installer.is_file():
