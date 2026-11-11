@@ -54,11 +54,15 @@ class EncryptionDetectionTests(unittest.TestCase):
         result = detect_encryption(bytes.fromhex("FF ED FA CE"))
         self.assertEqual(result.status, "unknown_or_truncated")
 
-    def test_user_file_signature_is_not_guessed(self):
-        result = detect_encryption(bytes.fromhex("FF ED FA CE") + bytes(100))
-        self.assertEqual(result.status, "plain_candidate")
+    def test_user_file_signature_is_reported_as_suspected_not_confirmed_cipher(self):
+        sample_prefix = bytes.fromhex("FF ED FA CE 01 00 FE 0F C3 9D 01 09 E1 BB 1A DF")
+        result = detect_encryption(sample_prefix + bytes(100))
+        self.assertEqual(result.status, "suspected_encryption")
+        self.assertIsNone(result.encrypted)
         self.assertIsNone(result.version)
-        self.assertFalse(result.decoder_available)
+        self.assertEqual(result.family, "UNKNOWN")
+        self.assertIn("0xCEFAEDFF", result.detail)
+        self.assertIn("corrupción", result.detail)
 
 
 if __name__ == "__main__":
