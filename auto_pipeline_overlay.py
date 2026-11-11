@@ -116,7 +116,10 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
                     data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)
 """
     if old in source: source=source.replace(old,new,1)
-    elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source: raise SystemExit("Bloque de compilación no localizado")
+    elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source:
+        marker = source.find("compile_from_folder")
+        print("DEBUG BLOQUE COMPILACION:", source[max(0, marker-1800):marker+2600])
+        raise SystemExit("Bloque de compilación no localizado")
     source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
     source = source.replace(
         "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
