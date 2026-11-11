@@ -25,7 +25,8 @@ class AutoPipelineTests(unittest.TestCase):
 
     def test_lamecrypt_is_detected_but_not_claimed_supported(self):
         header="Lineage2Ver811".encode("utf-16le")
-        with self.assertRaisesRegex(AutoPipelineError,"No se reconoce este cifrado"):
+        with self.assertRaisesRegex(AutoPipelineError,"Cifrado reconocido, pero esta variante"):
+
             decode_xdat(Path("interface.xdat"),header+b"0"*100,lambda data:object())
 
 if __name__=="__main__":
