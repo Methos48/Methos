@@ -83,7 +83,10 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
             if source is not None and source.exists():
                 manifest_path=PARTS_DIR / ".methos" / (source.name + ".json")
                 if manifest_path.is_file():
-                    origin=load_and_validate_origin(manifest_path,source)
+                    immutable_original=manifest_path.parent / "originals" / source.name
+                    if not immutable_original.is_file():
+                        raise ValueError("Falta la copia original inmutable de Methos; no se puede validar el perfil.")
+                    origin=load_and_validate_origin(manifest_path,immutable_original)
                     if original_detection is not None and original_detection.encrypted is True:
                         require_recorded_protocol(origin,original_detection.version)
                 if original_detection is not None and original_detection.encrypted is True:
