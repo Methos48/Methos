@@ -5,8 +5,10 @@ def main():
     if len(sys.argv)!=2: raise SystemExit("Uso: auto_pipeline_overlay.py <carpeta-proyecto>")
     repo=Path(__file__).resolve().parent; project=Path(sys.argv[1]).resolve()
     shutil.copy2(repo/"auto_pipeline.py",project/"auto_pipeline.py")
+    shutil.copy2(repo/"package_origin_metadata.py",project/"package_origin_metadata.py")
     tests=project/"tests"; tests.mkdir(exist_ok=True)
     shutil.copy2(repo/"tests"/"test_auto_pipeline.py",tests/"test_auto_pipeline.py")
+    shutil.copy2(repo/"tests"/"test_package_origin_metadata.py",tests/"test_package_origin_metadata.py")
     app=project/"app.py"; source=app.read_text(encoding="utf-8")
     line="from xdat_core import decompile_to_folder, compile_from_folder, parse_xdat\n"
     old_paths = """APP_DIR = Path(__file__).resolve().parent
@@ -25,7 +27,7 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
     elif "DATA_DIR = APP_DIR / 'Archivos XDAT'" not in source:
         raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
     if "from auto_pipeline import decode_xdat, encode_xdat" not in source:
-        source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\n",1)
+        source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
     source = source.replace("1. XDAT COMPLETO", "1. XDAT COMPRIMIDO")
     source = source.replace("Aquí se guardan los archivos .xdat.", "Aquí se colocan los archivos .xdat de entrada y se guardan los compilados.")
     source = source.replace("2. XDAT POR PARTES", "2. XDAT DESCOMPRIMIDO")
@@ -48,7 +50,7 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
 """
     new="""            data=source.read_bytes()
             plain_data,detection=decode_xdat(source,data,parse_xdat)
-            windows,shortcuts=decompile_to_folder(plain_data,PARTS_DIR)
+            windows,shortcuts=decompile_to_folder(plain_data,PARTS_DIR)\n            manifest=save_origin_record(PARTS_DIR,source,data,detection,file_kind="XDAT")\n            self.log(f"Perfil de origen guardado: {manifest}")
 """
     if old in source: source=source.replace(old,new,1)
     elif "plain_data,detection=decode_xdat(source,data,parse_xdat)" not in source: raise SystemExit("Bloque de descompilación no localizado")
@@ -78,8 +80,16 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
             data,windows,shortcuts=compile_from_folder(PARTS_DIR,original_data)
             plain_compiled=data
             parse_xdat(plain_compiled)
-            if original_detection is not None and original_detection.encrypted is True:
-                data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)
+            if source is not None and source.exists():
+                manifest_path=PARTS_DIR / ".methos" / (source.name + ".json")
+                if manifest_path.is_file():
+                    origin=load_and_validate_origin(manifest_path,source)
+                    if original_detection is not None and original_detection.encrypted is True:
+                        require_recorded_protocol(origin,original_detection.version)
+                if original_detection is not None and original_detection.encrypted is True:
+                    if not manifest_path.is_file():
+                        raise ValueError("Falta el manifiesto de origen. No se codificará el XDAT con un protocolo supuesto.")
+                    data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)
 """
     if old in source: source=source.replace(old,new,1)
     elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source: raise SystemExit("Bloque de compilación no localizado")
