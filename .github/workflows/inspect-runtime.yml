@@ -1,0 +1,66 @@
+name: Inspect uploaded runtime files
+on:
+  push:
+    paths:
+      - 'l2.exe'
+      - 'Core.dll'
+      - 'engine.zip'
+      - '.github/workflows/inspect-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract engine and inspect PE files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path runtime-analysis | Out-Null
+          if (Test-Path engine.zip) {
+            Expand-Archive -LiteralPath engine.zip -DestinationPath runtime-analysis/engine -Force
+          }
+          $files = @()
+          $files += Get-Item l2.exe, Core.dll -ErrorAction SilentlyContinue
+          $files += Get-ChildItem runtime-analysis/engine -Recurse -File -ErrorAction SilentlyContinue
+          $report = [System.Collections.Generic.List[string]]::new()
+          foreach ($f in $files) {
+            $bytes = [IO.File]::ReadAllBytes($f.FullName)
+            $md5 = [Convert]::ToHexString([Security.Cryptography.MD5]::HashData($bytes))
+            $sha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
+            $report.Add("FILE $($f.FullName) SIZE=$($bytes.Length) MD5=$md5 SHA256=$sha")
+            if ($bytes.Length -ge 2 -and $bytes[0] -eq 0x4D -and $bytes[1] -eq 0x5A) {
+              try {
+                $stream = [IO.MemoryStream]::new($bytes)
+                $reader = [IO.BinaryReader]::new($stream)
+                $stream.Position = 0x3c
+                $peoff = $reader.ReadInt32()
+                $stream.Position = $peoff + 4
+                $machine = $reader.ReadUInt16()
+                $sections = $reader.ReadUInt16()
+                $stream.Position = $peoff + 24
+                $magic = $reader.ReadUInt16()
+                $stream.Position = $peoff + 24 + 16
+                $entry = $reader.ReadUInt32()
+                $stream.Position = $peoff + 24 + 24
+                $imagebase = if ($magic -eq 0x20b) { $reader.ReadUInt64() } else { $reader.ReadUInt32() }
+                $report.Add(("  PE MACHINE=0x{0:X4} SECTIONS={1} MAGIC=0x{2:X} ENTRY_RVA=0x{3:X} IMAGEBASE=0x{4:X}" -f $machine,$sections,$magic,$entry,$imagebase))
+                $ascii = [Text.Encoding]::ASCII.GetString($bytes)
+                foreach ($needle in @('npkscrypt','ogg.dll','engine.dll','Core.dll','SysString-e.dat','SmartCrypt','Lineage2Ver','xdat','decrypt','encrypt')) {
+                  if ($ascii.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0) { $report.Add("  STRING $needle") }
+                }
+                $reader.Dispose(); $stream.Dispose()
+              } catch { $report.Add("  PE_PARSE_ERROR $($_.Exception.Message)") }
+            }
+            $report.Add("")
+          }
+          $report | Set-Content runtime-report.txt -Encoding UTF8
+          Get-Content runtime-report.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Methos-Runtime-Analysis
+          path: |
+            runtime-report.txt
+            runtime-analysis/
+          if-no-files-found: error
