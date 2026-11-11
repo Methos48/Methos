@@ -40,6 +40,10 @@ jobs:
         shell: pwsh
         run: |
 python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:PROJECT_DIR"
+      - name: Apply automatic crypto dispatch layer
+        shell: pwsh
+        run: |
+          python "$env:GITHUB_WORKSPACE\\auto_pipeline_overlay.py" "$env:PROJECT_DIR"
       - name: Download integrated Lineage II crypto engine
         shell: pwsh
         run: |
