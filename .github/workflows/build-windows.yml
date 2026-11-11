@@ -2,9 +2,12 @@ name: Build Methos XDAT for Windows
 
 on:
   push:
-    branches: [main]
+    branches: [main, research/xdat-format-probe]
     paths:
       - 'Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip'
+      - 'encryption_detection.py'
+      - 'apply_detection_layer.py'
+      - 'tests/test_encryption_detection.py'
       - '.github/workflows/build-windows.yml'
   workflow_dispatch:
 
@@ -31,6 +34,10 @@ jobs:
           $root = Get-ChildItem "$env:GITHUB_WORKSPACE\kit" -Directory | Select-Object -First 1
           if (!$root) { throw "El ZIP no contiene la carpeta del proyecto." }
           "PROJECT_DIR=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Apply encryption detection layer
+        shell: pwsh
+        run: |
+          python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:GITHUB_WORKSPACE\kit\$(Get-ChildItem "$env:GITHUB_WORKSPACE\kit" -Directory | Select-Object -First 1 -ExpandProperty Name)"
       - name: Install build dependencies
         shell: pwsh
         run: |
@@ -40,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location $env:PROJECT_DIR
-          python -m py_compile app.py xdat_core.py
+          python -m py_compile app.py xdat_core.py encryption_detection.py
           python -m unittest discover -s tests -v
       - name: Build Windows application
         shell: pwsh
