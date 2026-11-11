@@ -20,6 +20,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Inventory source kit and locate cryptographic implementations
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import re
+          archive = Path("Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip")
+          with ZipFile(archive) as z:
+              names = z.namelist()
+              print("[SOURCE_KIT_FILES]")
+              for name in names:
+                  print(name)
+              print("\\n[SOURCE_CODE_CRYPTO_REFERENCES]")
+              terms = re.compile(r"crypt|decrypt|encrypt|cipher|blowfish|rsa|xor|header|lame", re.I)
+              for name in names:
+                  if name.endswith("/") or not name.lower().endswith((".py", ".txt", ".md", ".json", ".toml", ".ini", ".yml", ".yaml")):
+                      continue
+                  try:
+                      content = z.read(name).decode("utf-8", errors="replace")
+                  except Exception:
+                      continue
+                  matches = [(i, line.strip()) for i, line in enumerate(content.splitlines(), 1) if terms.search(line)]
+                  if matches:
+                      print(f"\\n--- {name} ---")
+                      for line_no, line in matches[:100]:
+                          print(f"{line_no}: {line[:240]}")
+          PY
       - name: Compare protected input with known-good XDAT fixture
         shell: bash
         run: |
