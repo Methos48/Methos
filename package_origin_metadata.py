@@ -66,6 +66,23 @@ def save_origin_record(output_directory: Path, source: Path, raw: bytes,
     target_dir = Path(output_directory) / ".methos"
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / (Path(source).name + ".json")
+    originals = target_dir / "originals"
+    originals.mkdir(parents=True, exist_ok=True)
+    immutable = originals / Path(source).name
+    if immutable.exists():
+        if sha256_file(immutable) != hashlib.sha256(raw).hexdigest().upper():
+            raise ValueError("Ya existe una copia original inmutable diferente para este paquete.")
+    else:
+        fd_original, temp_original = tempfile.mkstemp(prefix="original.", suffix=".tmp", dir=originals)
+        try:
+            with os.fdopen(fd_original, "wb") as stream:
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temp_original, immutable)
+        finally:
+            if os.path.exists(temp_original):
+                os.unlink(temp_original)
     payload = json.dumps(build_origin_record(source, raw, detection, **kwargs),
                          ensure_ascii=False, indent=2) + "\n"
     fd, temporary = tempfile.mkstemp(prefix="origin.", suffix=".tmp", dir=target_dir)
