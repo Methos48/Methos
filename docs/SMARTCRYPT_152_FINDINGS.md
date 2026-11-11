@@ -68,3 +68,13 @@ El ZIP recibido contiene ogg.dll, npkscrypt.dll, l2ui.dll, L2Patch.u y los archi
 - [ ] Validar U y XDAT con sus parsers independientes.
 
 Límite: todavía no se ha producido ni validado una decodificación completa de los dos archivos originales. La identificación de la protección está sustentada; la extracción real sigue pendiente de la prueba de ejecución.
+
+## Verificación cruzada adicional (11-11-2026)
+
+Se localizó una segunda guía pública de Smart Decryptor que describe el mismo flujo operativo: preparar una copia de ogg.dll con SmartDecrypt.dll por delante de npkscrypt.dll en la tabla de importaciones, renombrar una copia del archivo objetivo como SysString-e.dat, ejecutar L2.exe y recuperar decrypted_file.txt. La guía también advierte que puede quedar una capa de cifrado Lineage II anterior y que debe retirarse después con el decodificador estándar correspondiente.
+
+Referencias:
+- Smart Crypt Decryptor 1.5.2.2 (código de captura y orden de carga): https://maxcheaters.com/topic/249577-smart-crypt-decryptor-1522/
+- Guía independiente Smart Decryptor (pasos de importación y segunda etapa): https://mmo-dev.info/resources/smart-decryptor.3096/
+
+Esta verificación refuerza el método de extracción, pero no sustituye la prueba con el L2.exe y engine.dll exactos de L2Sudamérica. No se modificará el cliente original: la preparación del import table y la captura se harán sobre copias aisladas.
