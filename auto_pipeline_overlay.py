@@ -28,6 +28,24 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
         raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
     if "from auto_pipeline import decode_xdat, encode_xdat" not in source:
         source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
+    if "import xml.etree.ElementTree as ET" not in source:
+        source = source.replace("import tkinter", "import xml.etree.ElementTree as ET\\nimport tkinter", 1)
+    source = source.replace(
+        "            self.set_status(f'Compilando {len(xmls)} archivos XML…')",
+        """            xml_errors=[]
+            for xml_file in xmls:
+                try:
+                    ET.parse(xml_file)
+                except Exception as xml_error:
+                    xml_errors.append(f"{Path(xml_file).name}: {type(xml_error).__name__}: {xml_error}")
+            if xml_errors:
+                report=("La revisión XML terminó. Se revisaron todos los archivos y no se inició la compilación.\\n\\n"
+                        + f"Archivos con errores: {len(xml_errors)}\\n\\n" + "\\n\\n".join(xml_errors))
+                self.set_status(f'{len(xml_errors)} archivo(s) XML con errores; compilación cancelada.',False)
+                messagebox.showerror('Informe de archivos XML',report)
+                return
+            self.set_status(f'Compilando {len(xmls)} archivos XML…')""", 1)
+    )
     source = source.replace("1. XDAT COMPLETO", "1. XDAT COMPRIMIDO")
     source = source.replace("Aquí se guardan los archivos .xdat.", "Aquí se colocan los archivos .xdat de entrada y se guardan los compilados.")
     source = source.replace("2. XDAT POR PARTES", "2. XDAT DESCOMPRIMIDO")
