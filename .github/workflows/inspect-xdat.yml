@@ -1,0 +1,39 @@
+name: Inspect uploaded XDAT bytes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-xdat.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Identify target file without modifying it
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p = Path("interface.xdat")
+          b = p.read_bytes()
+          print("file:", p.name)
+          print("size:", len(b))
+          print("sha256:", hashlib.sha256(b).hexdigest())
+          print("first_128_bytes:", b[:128].hex(" "))
+          print("first_4_le_signed:", int.from_bytes(b[:4], "little", signed=True))
+          PY
+      - name: Preserve original for offline analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: Methos-XDAT-Original-Input
+          path: interface.xdat
+          if-no-files-found: error
+          retention-days: 2
