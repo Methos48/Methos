@@ -23,6 +23,13 @@ class AutoPipelineTests(unittest.TestCase):
         self.assertIn("FF ED FA CE",message)
         self.assertIn("interface.xdat",message)
 
+    def test_suspicious_user_signature_is_not_sent_to_plain_parser(self):
+        payload = bytes.fromhex("FF ED FA CE 01 00 FE 0F C3 9D 01 09 E1 BB 1A DF") + bytes(100)
+        def should_not_parse(data):
+            raise AssertionError("A suspicious encrypted candidate must not be parsed as plaintext")
+        with self.assertRaisesRegex(AutoPipelineError, "Posible cifrado u ofuscación personalizada"):
+            decode_xdat(Path("interface.xdat"), payload, should_not_parse)
+
     def test_lamecrypt_is_detected_but_not_claimed_supported(self):
         header="Lineage2Ver811".encode("utf-16le")
         with self.assertRaisesRegex(AutoPipelineError,"Cifrado reconocido, pero esta variante"):
