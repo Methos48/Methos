@@ -78,6 +78,17 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
     elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source: raise SystemExit("Bloque de compilación no localizado")
     source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
     app.write_text(source,encoding="utf-8",newline="\n")
+    installer = project / "installer" / "MethosXDAT.iss"
+    if installer.is_file():
+        iss = installer.read_text(encoding="utf-8")
+        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat completo"', 'DestDir: "{app}\\Archivos XDAT\\Comprimido"')
+        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat por partes"', 'DestDir: "{app}\\Archivos XDAT\\Descomprimido"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat completo"', 'Name: "{app}\\Archivos XDAT\\Comprimido"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\windows"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\windows"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\shortcuts"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\shortcuts"')
+        installer.write_text(iss, encoding="utf-8", newline="\\n")
+    else:
+        raise SystemExit("No se encontró installer/MethosXDAT.iss")
     bat_path=project/"build_windows.bat"; bat=bat_path.read_text(encoding="utf-8")
     old='py -3.12 -m PyInstaller --noconfirm --clean --windowed --onedir --name "Methos XDAT" app.py'
     new='py -3.12 -m PyInstaller --noconfirm --clean --windowed --onedir --name "Methos XDAT" --add-binary "l2encdec.exe;." app.py'
