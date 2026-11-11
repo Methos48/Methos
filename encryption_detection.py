@@ -68,6 +68,35 @@ def _plain(status: str, detail: str = "") -> DetectionResult:
     )
 
 
+
+def _unrecognized(raw: bytes, detail: str) -> DetectionResult:
+    """Use the XDAT editor's count-field sanity check without guessing a cipher.
+
+    A plaintext ct0 XDAT begins with a little-endian window count. The known
+    reader rejects values outside 0..65535 as likely encrypted. We preserve
+    uncertainty because this can also mean corruption or another XDAT version.
+    """
+    if len(raw) >= 4:
+        first = int.from_bytes(raw[:4], "little", signed=True)
+        if first < 0 or first > 0xFFFF:
+            unsigned = int.from_bytes(raw[:4], "little", signed=False)
+            return DetectionResult(
+                status="suspected_encryption",
+                encrypted=None,
+                version=None,
+                family="UNKNOWN",
+                description="Posible cifrado u ofuscación no identificada",
+                header=None,
+                header_size=0,
+                detail=(
+                    f"El primer campo XDAT vale {first} (sin signo: {unsigned}, "
+                    f"0x{unsigned:08X}); un XDAT ct0 sin cifrar debe comenzar "
+                    "con un contador entre 0 y 65535. Puede ser cifrado, "
+                    "ofuscación personalizada, corrupción o una variante distinta."
+                ),
+            )
+    return _plain("plain_candidate", detail)
+
 def detect_encryption(data: bytes, filename: str = "") -> DetectionResult:
     """Detect a documented Lineage2Ver header at offset zero.
 
@@ -86,13 +115,10 @@ def detect_encryption(data: bytes, filename: str = "") -> DetectionResult:
     try:
         header = raw[:HEADER_SIZE].decode("utf-16le", errors="strict")
     except UnicodeDecodeError:
-        return _plain(
-            "plain_candidate",
-            "Los primeros 28 bytes no son una cabecera UTF-16LE Lineage2Ver",
-        )
+        return _unrecognized(raw, "Los primeros 28 bytes no son una cabecera UTF-16LE Lineage2Ver")
 
     if not header.startswith(HEADER_PREFIX):
-        return _plain("plain_candidate", "No aparece Lineage2Ver al inicio del archivo")
+        return _unrecognized(raw, "No aparece Lineage2Ver al inicio del archivo")
 
     suffix = header[len(HEADER_PREFIX):]
     if len(header) != 14 or len(suffix) != 3 or not suffix.isascii() or not suffix.isdigit():
