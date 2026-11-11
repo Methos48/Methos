@@ -6,8 +6,10 @@ on:
     paths:
       - 'Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip'
       - 'encryption_detection.py'
+      - 'auto_pipeline.py'
       - 'apply_detection_layer.py'
       - 'tests/test_encryption_detection.py'
+      - 'tests/test_auto_pipeline.py'
       - '.github/workflows/build-windows.yml'
   workflow_dispatch:
 
@@ -38,6 +40,17 @@ jobs:
         shell: pwsh
         run: |
 python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:PROJECT_DIR"
+      - name: Download integrated Lineage II crypto engine
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'l2encdec-win32.zip'
+          Invoke-WebRequest -Uri 'https://github.com/ritsuwastaken/open-l2encdec/releases/download/1.5.1/l2encdec-1.5.1-win32.zip' -OutFile $archive
+          $engineDir = Join-Path $env:RUNNER_TEMP 'l2encdec-engine'
+          Expand-Archive -LiteralPath $archive -DestinationPath $engineDir -Force
+          $engine = Get-ChildItem $engineDir -Recurse -File | Where-Object { $_.Name -ieq 'l2encdec.exe' } | Select-Object -First 1
+          if (!$engine) { throw 'No se encontró l2encdec.exe en el paquete oficial 1.5.1.' }
+          Copy-Item $engine.FullName (Join-Path $env:PROJECT_DIR 'l2encdec.exe') -Force
+          Get-Item (Join-Path $env:PROJECT_DIR 'l2encdec.exe') | Select-Object Name,Length
       - name: Install build dependencies
         shell: pwsh
         run: |
