@@ -18,11 +18,10 @@ def _decode(engine,source,output,legacy=False):
     if legacy: cmd.append("-l")
     cmd.append(str(source))
     return subprocess.run(cmd,capture_output=True,text=True,timeout=120,check=False)
-def _unknown_cipher_message(source:Path,data:bytes,detection,reason:str):
+def _technical_details(source:Path,data:bytes,detection,reason:str):
     header=detection.header or "(no identificada)"
     signature=data[:32].hex(" ").upper() or "(archivo vacío)"
     return (
-        "No se reconoce este cifrado.\n\n"
         "INFORMACIÓN TÉCNICA\n"
         f"Archivo: {source.name}\n"
         f"Tamaño: {len(data):,} bytes\n"
@@ -34,6 +33,8 @@ def _unknown_cipher_message(source:Path,data:bytes,detection,reason:str):
         f"Motivo: {reason}\n\n"
         "El archivo original no fue modificado."
     )
+def _unknown_cipher_message(source:Path,data:bytes,detection,reason:str):
+    return "No se reconoce este cifrado.\n\n" + _technical_details(source,data,detection,reason)
 def decode_xdat(source:Path,data:bytes,validate_xdat:Callable):
     source=Path(source); detection=detect_encryption(data,source.name)
     if detection.encrypted is not True:
@@ -47,8 +48,8 @@ def decode_xdat(source:Path,data:bytes,validate_xdat:Callable):
     version=detection.version
     if version not in ENGINE_PROTOCOLS:
         raise AutoPipelineError(
-            "El cifrado fue detectado, pero esta variante todavía no está soportada.\n\n"
-            + _unknown_cipher_message(source,data,detection,"No existe un motor compatible integrado para esta versión.")
+            "Cifrado reconocido, pero esta variante todavía no está soportada.\n\n"
+            + _technical_details(source,data,detection,"No existe un motor compatible integrado para esta versión.")
         )
     engine=engine_path()
     if engine is None: raise AutoPipelineError("No se encontró el motor integrado l2encdec.exe. El archivo original no fue modificado.")
