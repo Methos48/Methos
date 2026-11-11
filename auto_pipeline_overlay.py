@@ -26,6 +26,13 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
         raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
     if "from auto_pipeline import decode_xdat, encode_xdat" not in source:
         source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\n",1)
+    source = source.replace("1. XDAT COMPLETO", "1. XDAT COMPRIMIDO")
+    source = source.replace("Aquí se guardan los archivos .xdat.", "Aquí se colocan los archivos .xdat de entrada y se guardan los compilados.")
+    source = source.replace("2. XDAT POR PARTES", "2. XDAT DESCOMPRIMIDO")
+    source = source.replace("Aquí se guardan las ventanas y accesos directos XML.", "Aquí se guardan las ventanas y accesos directos XML extraídos.")
+    source = source.replace("text='Abrir carpeta'", "text='Abrir Comprimido'", 1)
+    source = source.replace("text='Abrir carpeta'", "text='Abrir Descomprimido'", 1)
+    source = source.replace("ARCHIVOS POR PARTES", "ARCHIVOS XML DESCOMPRIMIDOS")
     old="""            data=source.read_bytes()
             detection=detect_encryption(data, source.name)
             if detection.encrypted is True:
