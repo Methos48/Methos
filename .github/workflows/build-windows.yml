@@ -37,7 +37,7 @@ jobs:
       - name: Apply encryption detection layer
         shell: pwsh
         run: |
-          python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:GITHUB_WORKSPACE\kit\$(Get-ChildItem "$env:GITHUB_WORKSPACE\kit" -Directory | Select-Object -First 1 -ExpandProperty Name)"
+python "$env:GITHUB_WORKSPACE\apply_detection_layer.py" "$env:PROJECT_DIR"
       - name: Install build dependencies
         shell: pwsh
         run: |
