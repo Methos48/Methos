@@ -50,7 +50,7 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
 """
     new="""            data=source.read_bytes()
             plain_data,detection=decode_xdat(source,data,parse_xdat)
-            windows,shortcuts=decompile_to_folder(plain_data,PARTS_DIR)\n            manifest=save_origin_record(PARTS_DIR,source,data,detection,file_kind="XDAT")\n            self.log(f"Perfil de origen guardado: {manifest}")
+            windows,shortcuts=decompile_to_folder(plain_data,PARTS_DIR)\n            manifest=save_origin_record(PARTS_DIR,source,data,detection,file_kind="XDAT")\n            print(f"Perfil de origen guardado: {manifest}")
 """
     if old in source: source=source.replace(old,new,1)
     elif "plain_data,detection=decode_xdat(source,data,parse_xdat)" not in source: raise SystemExit("Bloque de descompilación no localizado")
