@@ -1,4 +1,4 @@
-name: Inspect uploaded XDAT bytes
+name: Inspect uploaded Lineage II originals
 
 on:
   push:
@@ -18,24 +18,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Identify target file without modifying it
+      - name: Inspect both original files without modifying them
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import hashlib
-          p = Path("interface.xdat")
-          b = p.read_bytes()
-          print("file:", p.name)
-          print("size:", len(b))
-          print("sha256:", hashlib.sha256(b).hexdigest())
-          print("first_128_bytes:", b[:128].hex(" "))
-          print("first_4_le_signed:", int.from_bytes(b[:4], "little", signed=True))
+          for name in ("interface.u", "interface.xdat"):
+              p = Path(name)
+              b = p.read_bytes()
+              print("\\nFILE:", p.name)
+              print("SIZE:", len(b))
+              print("SHA256:", hashlib.sha256(b).hexdigest())
+              print("FIRST_256_BYTES:", b[:256].hex(" "))
+              print("FIRST_4_LE_SIGNED:", int.from_bytes(b[:4], "little", signed=True))
+              print("FIRST_4_LE_UNSIGNED:", int.from_bytes(b[:4], "little", signed=False))
           PY
-      - name: Preserve original for offline analysis
+      - name: Preserve both originals for deeper analysis
         uses: actions/upload-artifact@v4
         with:
-          name: Methos-XDAT-Original-Input
-          path: interface.xdat
+          name: Methos-Lineage2-Original-Files
+          path: |
+            interface.u
+            interface.xdat
           if-no-files-found: error
           retention-days: 2
