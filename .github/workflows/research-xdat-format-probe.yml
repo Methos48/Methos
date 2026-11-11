@@ -1,0 +1,71 @@
+name: Research XDAT format probe
+
+on:
+  push:
+    branches: [research/xdat-format-probe]
+    paths:
+      - ".github/workflows/research-xdat-format-probe.yml"
+      - "interface.xdat"
+      - "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compare protected input with known-good XDAT fixture
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import hashlib, math, collections, struct
+
+          target = Path("interface.xdat").read_bytes()
+          archive = Path("Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip")
+          with ZipFile(archive) as z:
+              candidates = [n for n in z.namelist() if n.lower().endswith("/xdat completo/interface.xdat")]
+              if not candidates:
+                  raise SystemExit("Known-good XDAT fixture missing from build kit")
+              reference = z.read(candidates[0])
+
+          def report(label, data):
+              freq = collections.Counter(data)
+              entropy = -sum((n/len(data))*math.log2(n/len(data)) for n in freq.values())
+              print(f"\n[{label}]")
+              print("size:", len(data))
+              print("sha256:", hashlib.sha256(data).hexdigest())
+              print("first_64:", data[:64].hex(" "))
+              print("first_u32_le:", struct.unpack("<I", data[:4])[0])
+              print("entropy_bits_per_byte:", round(entropy, 4))
+              print("distinct_byte_values:", len(freq))
+              print("lineage2_header_at_offsets:", [
+                  i for i in range(min(64, len(data)-28+1))
+                  if data[i:i+22].decode("utf-16le", errors="ignore").startswith("Lineage2Ver")
+              ])
+
+          report("KNOWN_GOOD_REFERENCE", reference)
+          report("USER_PROTECTED_INPUT", target)
+
+          print("\n[KNOWN_SIMPLE_XOR_HEADER_TEST]")
+          hits=[]
+          for key in range(256):
+              word=bytes(x ^ key for x in target[:4])
+              count=int.from_bytes(word,"little")
+              if 1 <= count <= 10000:
+                  hits.append((key,count,word.hex()))
+          print("single_byte_xor_candidates_for_first_u32:", hits or "none")
+
+          print("\n[COMPARISON]")
+          print("same_size:", len(reference)==len(target))
+          print("same_first_64:", reference[:64]==target[:64])
+          print("reference_first_u32:", int.from_bytes(reference[:4],"little"))
+          print("target_first_u32_signed:", int.from_bytes(target[:4],"little",signed=True))
+          PY
