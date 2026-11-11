@@ -58,7 +58,7 @@ jobs:
         shell: pwsh
         run: |
           Set-Location $env:PROJECT_DIR
-          python -m py_compile app.py xdat_core.py encryption_detection.py auto_pipeline.py
+          python -m py_compile app.py xdat_core.py encryption_detection.py auto_pipeline.py package_origin_metadata.py
           python -m unittest discover -s tests -v
       - name: Build Windows application
         shell: pwsh
