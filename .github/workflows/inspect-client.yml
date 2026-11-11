@@ -1,0 +1,87 @@
+name: Inspect Lineage2 client protection
+on:
+  push:
+    paths:
+      - 'system.zip'
+      - '.github/workflows/inspect-client.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PE inspection tools
+        run: python -m pip install pefile capstone
+      - name: Inspect uploaded system archive
+        shell: bash
+        run: |
+          python - <<'PY'
+          import zipfile, pathlib, hashlib, math, re, collections
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+          archive = pathlib.Path("system.zip")
+          marker = bytes.fromhex("FF ED FA CE 01 00")
+          out = []
+          def emit(s=""): out.append(str(s))
+          emit("ARCHIVE SHA256: " + hashlib.sha256(archive.read_bytes()).hexdigest())
+          with zipfile.ZipFile(archive) as z:
+              infos = [i for i in z.infolist() if not i.is_dir()]
+              emit(f"FILES: {len(infos)}")
+              for info in infos:
+                  name = info.filename
+                  data = z.read(info)
+                  emit(f"\nFILE {name} size={len(data)} sha256={hashlib.sha256(data).hexdigest()}")
+                  if len(data) < 2 or data[:2] != b"MZ":
+                      if name.lower().endswith((".dll",".exe")): emit("  WARNING: extension says PE but no MZ header")
+                      continue
+                  try:
+                      pe = pefile.PE(data=data, fast_load=False)
+                      emit(f"  PE machine=0x{pe.FILE_HEADER.Machine:04X} timestamp={pe.FILE_HEADER.TimeDateStamp} sections={len(pe.sections)}")
+                      if hasattr(pe, "VS_FIXEDFILEINFO") and pe.VS_FIXEDFILEINFO:
+                          v=pe.VS_FIXEDFILEINFO[0]
+                          emit(f"  VERSION {v.FileVersionMS >> 16}.{v.FileVersionMS & 65535}.{v.FileVersionLS >> 16}.{v.FileVersionLS & 65535}")
+                      try:
+                          for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                              emit("  IMPORT " + entry.dll.decode(errors="replace") + ": " + ", ".join((x.name or b"ord"+str(x.ordinal).encode()).decode(errors="replace") if isinstance(x.name,bytes) else str(x.name) for x in entry.imports[:100]))
+                      except Exception: pass
+                      for sec in pe.sections:
+                          raw=sec.get_data()
+                          ent=0
+                          if raw:
+                              c=collections.Counter(raw); n=len(raw)
+                              ent=-sum((v/n)*math.log2(v/n) for v in c.values())
+                          emit(f"  SECTION {sec.Name.rstrip(bytes([0])).decode(errors='replace')} RVA=0x{sec.VirtualAddress:X} raw={len(raw)} entropy={ent:.3f}")
+                      for pat,label in [(marker,"CUSTOM_MARKER_FF_ED_FA_CE_01_00"),(b"Lineage2Ver","Lineage2Ver"),(b"SmartCrypt","SmartCrypt"),(b"LameCrypt","LameCrypt"),(b"Crypt","Crypt"),(b"Decrypt","Decrypt"),(b"XOR","XOR")]:
+                          positions=[]; start=0
+                          while True:
+                              p=data.find(pat,start)
+                              if p<0: break
+                              positions.append(p); start=p+1
+                          if positions: emit(f"  MATCH {label}: " + ", ".join(hex(p) for p in positions[:30]))
+                      strings=re.findall(rb"[\x20-\x7e]{5,}",data)
+                      useful=[s.decode("ascii","replace") for s in strings if re.search(rb"crypt|lineage|protect|guard|file|engine|xdat|unreal|smart|lame|decrypt|encrypt|version|patch",s,re.I)]
+                      for s in useful[:100]: emit("  STRING "+s[:250])
+                      # Disassemble a bounded sample of executable sections and report references to crypto/API instructions.
+                      mode=CS_MODE_64 if pe.FILE_HEADER.Machine==0x8664 else CS_MODE_32
+                      md=Cs(CS_ARCH_X86,mode)
+                      for sec in pe.sections:
+                          if not (sec.Characteristics & 0x20000000): continue
+                          raw=sec.get_data()[:1024*1024]
+                          if not raw: continue
+                          base=pe.OPTIONAL_HEADER.ImageBase+sec.VirtualAddress
+                          hits=[]
+                          for ins in md.disasm(raw,base):
+                              if ins.mnemonic in ("call","jmp") and any(k in ins.op_str.lower() for k in ("crypt","bcrypt","advapi","crypt32")): hits.append(f"{ins.mnemonic} {ins.op_str}")
+                          if hits: emit("  CODE_CRYPTO_REFS "+", ".join(hits[:40]))
+                  except Exception as e: emit("  PE_PARSE_ERROR "+repr(e))
+          report="\n".join(out)+"\n"
+          pathlib.Path("client-protection-report.txt").write_text(report,encoding="utf-8")
+          print(report)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Methos-Client-Protection-Report
+          path: client-protection-report.txt
+          if-no-files-found: error
