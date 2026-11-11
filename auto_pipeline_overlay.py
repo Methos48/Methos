@@ -93,7 +93,7 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
         iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat completo"', 'Name: "{app}\\Archivos XDAT\\Comprimido"')
         iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\windows"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\windows"')
         iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\shortcuts"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\shortcuts"')
-        installer.write_text(iss, encoding="utf-8", newline="\\n")
+        installer.write_text(iss, encoding="utf-8", newline="\n")
     else:
         raise SystemExit("No se encontró installer/MethosXDAT.iss")
     bat_path=project/"build_windows.bat"; bat=bat_path.read_text(encoding="utf-8")
