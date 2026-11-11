@@ -130,9 +130,9 @@ def detect_encryption(data: bytes, filename: str = "") -> DetectionResult:
         header=header,
         header_size=HEADER_SIZE,
         filename_required=needs_filename,
-        decoder_available=False,
+        decoder_available=version in {111, 120, 121, 211, 212, 411, 412, 413, 414},
         detail=(
-            "El detector reconoce la variante; el adaptador criptográfico aún no está conectado"
+            ("Motor integrado disponible" if version in {111, 120, 121, 211, 212, 411, 412, 413, 414} else "Variante detectada; motor integrado pendiente")
             + (". Se necesita el nombre original del archivo." if needs_filename else ".")
         ),
     )
