@@ -117,8 +117,10 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
 """
     if old in source: source=source.replace(old,new,1)
     elif "data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)" not in source:
-        marker = source.find("compile_from_folder")
-        print("DEBUG BLOQUE COMPILACION:", source[max(0, marker-1800):marker+2600])
+        print("DEBUG COMPILACION:")
+        for line_no, line in enumerate(source.splitlines(), 1):
+            if "compile_from_folder" in line or "Compilando" in line or "original_data" in line or "encode_xdat" in line:
+                print(f"{line_no}: {line}")
         raise SystemExit("Bloque de compilación no localizado")
     source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
     source = source.replace(
