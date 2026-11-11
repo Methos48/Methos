@@ -65,7 +65,7 @@ def save_origin_record(output_directory: Path, source: Path, raw: bytes,
                        detection: Any, **kwargs) -> Path:
     target_dir = Path(output_directory) / ".methos"
     target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / "origin.json"
+    target = target_dir / (Path(source).name + ".json")
     payload = json.dumps(build_origin_record(source, raw, detection, **kwargs),
                          ensure_ascii=False, indent=2) + "\\n"
     fd, temporary = tempfile.mkstemp(prefix="origin.", suffix=".tmp", dir=target_dir)
