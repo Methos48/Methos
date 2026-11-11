@@ -67,10 +67,10 @@ def save_origin_record(output_directory: Path, source: Path, raw: bytes,
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / (Path(source).name + ".json")
     payload = json.dumps(build_origin_record(source, raw, detection, **kwargs),
-                         ensure_ascii=False, indent=2) + "\\n"
+                         ensure_ascii=False, indent=2) + "\n"
     fd, temporary = tempfile.mkstemp(prefix="origin.", suffix=".tmp", dir=target_dir)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\\n") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
