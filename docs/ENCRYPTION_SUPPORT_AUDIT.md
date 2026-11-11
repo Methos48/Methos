@@ -45,3 +45,17 @@ The repository's `interface.xdat` begins with bytes `FF ED FA CE`, not the docum
 ## Scope separation
 
 This audit concerns offline client-file encryption for files such as XDAT and U packages. Network packet encryption is a different protocol and is not a file decoder. Likewise, decoding an XDAT encryption wrapper does not imply that the internal XDAT schema is supported; the schema parser remains a separate compatibility layer.
+
+
+## Implemented detection layer (research branch)
+
+The research branch now includes `encryption_detection.py`, which recognizes all 18 documented header values listed above, identifies their cipher family/wrapper, flags the filename-dependent 121/821 variants, distinguishes malformed and unknown numeric headers, and reports short/unrecognized input without changing bytes.
+
+The Windows build overlay connects this detector to the GUI. A recognized encrypted file is reported and the operation stops safely because the decryptor/encoder adapters have not yet been implemented. Compilation against an encrypted original is also blocked rather than silently emitting an incompatible plaintext file.
+
+Local verification performed:
+- Python syntax compilation passed for the app and detector.
+- 7 detector tests passed, covering every listed version, filename-dependent variants, malformed/unknown headers, truncated data, and the user's `FF ED FA CE` signature.
+- 2 existing XDAT fixture round-trip tests passed byte-for-byte.
+
+This is a tested **detection** milestone, not yet a claim that Methos can decrypt or encrypt these 18 formats. The custom `FF ED FA CE` file remains unidentified.
