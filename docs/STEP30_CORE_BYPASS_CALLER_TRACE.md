@@ -48,3 +48,17 @@ The current probe's hook order and API patching are not yet proven equivalent to
 - [ ] Validate U and XDAT independently.
 
 No original interface files have been modified.
+
+
+## Exact Core.dll call-site resolution
+
+The caller address is not just somewhere inside Core.dll: disassembly of the exact Core.dll from artifact 13930541611 resolves it to:
+
+- Runtime return address: `0x10176E65`
+- Core.dll RVA: `0x00076E65`
+- The call instruction is at `0x10176E5F` (RVA `0x76E5F`).
+- It calls through Core.dll IAT slot `0x10340570` (IAT RVA `0x240570`), which the PE import table labels **kernel32!ReadFile**.
+
+The surrounding code checks the ReadFile return value and updates a stream position/count. This confirms the probe is observing Core.dll's ordinary direct ReadFile import, not a return from the candidate NPK wrapper.
+
+The immediate next technical target is therefore the other caller path used by the actual Unreal/Engine interface loader, or the NPK hook installation routine that would redirect the Core IAT/API call in the real client. Do not call the current Core FFileStream control test a SmartCrypt decode attempt.
