@@ -1,0 +1,115 @@
+name: SmartCrypt runtime reverse engineering
+on:
+  push:
+    paths:
+      - 'system.zip'
+      - 'engine.zip'
+      - 'Core.dll'
+      - 'l2.exe'
+      - '.github/workflows/smartcrypt-reverse-engineering.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install static analysis libraries
+        run: python -m pip install pefile capstone
+      - name: Extract and analyze exact client binaries
+        shell: bash
+        run: |
+          python - <<'PY'
+          import zipfile, pathlib, hashlib, re, collections, math, struct
+          import pefile
+          from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+          root=pathlib.Path("smartcrypt-analysis")
+          root.mkdir(exist_ok=True)
+          files={}
+          for archive_name in ("system.zip","engine.zip"):
+              p=pathlib.Path(archive_name)
+              if p.exists():
+                  with zipfile.ZipFile(p) as z:
+                      for info in z.infolist():
+                          if info.is_dir(): continue
+                          name=pathlib.PurePosixPath(info.filename).name.lower()
+                          if name.endswith((".dll",".exe")):
+                              files[name]=z.read(info)
+          for name in ("Core.dll","l2.exe"):
+              p=pathlib.Path(name)
+              if p.exists(): files[name.lower()]=p.read_bytes()
+          lines=[]
+          def emit(s=""): lines.append(str(s))
+          emit("STATIC ANALYSIS ONLY — no game process launched, no file decryption claimed.")
+          emit("Files: "+", ".join(sorted(files)))
+          parsed={}
+          for name,data in files.items():
+              (root/name).write_bytes(data)
+              emit(f"\n===== {name} size={len(data)} md5={hashlib.md5(data).hexdigest()} sha256={hashlib.sha256(data).hexdigest()} =====")
+              try:
+                  pe=pefile.PE(data=data, fast_load=False); parsed[name]=(pe,data)
+                  machine=pe.FILE_HEADER.Machine
+                  mode=CS_MODE_64 if machine==0x8664 else CS_MODE_32
+                  emit(f"PE machine=0x{machine:04X} imagebase=0x{pe.OPTIONAL_HEADER.ImageBase:X} entry=0x{pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} sections={len(pe.sections)}")
+                  for sec in pe.sections:
+                      raw=sec.get_data()
+                      if not raw: continue
+                      c=collections.Counter(raw); n=len(raw)
+                      ent=-sum((v/n)*math.log2(v/n) for v in c.values())
+                      emit(f"SECTION {sec.Name.rstrip(bytes([0])).decode(errors='replace')} RVA=0x{sec.VirtualAddress:X} VSIZE=0x{sec.Misc_VirtualSize:X} RAW={len(raw)} ENTROPY={ent:.3f}")
+                  try:
+                      for imp in pe.DIRECTORY_ENTRY_IMPORT:
+                          dll=imp.dll.decode(errors="replace")
+                          for sym in imp.imports:
+                              fn=sym.name.decode(errors="replace") if sym.name else f"ordinal_{sym.ordinal}"
+                              emit(f"IMPORT {dll}!{fn} IAT=0x{sym.address-pe.OPTIONAL_HEADER.ImageBase:X}")
+                  except Exception as e: emit("IMPORTS "+repr(e))
+                  try:
+                      for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                          fn=exp.name.decode(errors="replace") if exp.name else f"ordinal_{exp.ordinal}"
+                          emit(f"EXPORT {fn} ordinal={exp.ordinal} RVA=0x{exp.address:X}")
+                          if any(k in fn.lower() for k in ("akumu","crypt","decrypt","encrypt","file","load")):
+                              try:
+                                  off=pe.get_offset_from_rva(exp.address)
+                                  md=Cs(CS_ARCH_X86,mode)
+                                  emit(f"--- DISASSEMBLY {fn} ---")
+                                  for ins in list(md.disasm(data[off:off+1024],pe.OPTIONAL_HEADER.ImageBase+exp.address))[:140]:
+                                      emit(f"{ins.address:08X}: {ins.mnemonic} {ins.op_str}")
+                              except Exception as e: emit("EXPORT_DISASM_ERROR "+repr(e))
+                  except Exception as e: emit("EXPORTS "+repr(e))
+                  for pat in (b"Akumu_ICQ_10050005",b"SysString-e.dat",b"SmartCrypt",b"Lineage2Ver",b"npkscrypt.dll",b"decrypt",b"encrypt"):
+                      poss=[]; pos=0
+                      while True:
+                          pos=data.find(pat,pos)
+                          if pos<0: break
+                          poss.append(pos); pos+=1
+                      if poss: emit("STRING "+pat.decode(errors="replace")+" @ "+", ".join(hex(x) for x in poss[:40]))
+                  for s in re.findall(rb"[\x20-\x7e]{6,}",data):
+                      if re.search(rb"crypt|akumu|sysstring|protect|decrypt|encrypt|smart|lineage|filemanager|archive",s,re.I):
+                          emit("TEXT "+s[:180].decode("ascii","replace"))
+              except Exception as e:
+                  emit("NOT_PE_OR_PARSE_ERROR "+repr(e))
+          # Correlate the known import in ogg.dll to the exact exported implementation, if present.
+          if "ogg.dll" in parsed and "npkscrypt.dll" in parsed:
+              emit("\n===== KNOWN AKUMU IMPORT CORRELATION =====")
+              ogg,_=parsed["ogg.dll"]; npk,_=parsed["npkscrypt.dll"]
+              try:
+                  for imp in ogg.DIRECTORY_ENTRY_IMPORT:
+                      if imp.dll.decode(errors="replace").lower()=="npkscrypt.dll":
+                          for sym in imp.imports:
+                              if sym.name and sym.name.decode(errors="replace")=="Akumu_ICQ_10050005":
+                                  emit(f"ogg IAT slot RVA=0x{sym.address-ogg.OPTIONAL_HEADER.ImageBase:X}")
+                  for exp in npk.DIRECTORY_ENTRY_EXPORT.symbols:
+                      if exp.name and exp.name.decode(errors="replace")=="Akumu_ICQ_10050005":
+                          emit(f"npkscrypt export RVA=0x{exp.address:X}")
+              except Exception as e: emit("CORRELATION_ERROR "+repr(e))
+          (root/"report.txt").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          print("\n".join(lines))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Methos-SmartCrypt-Static-Analysis
+          path: smartcrypt-analysis/
+          if-no-files-found: error
+          retention-days: 14
