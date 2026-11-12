@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using UELib;
 using UELib.Core;
 
@@ -11,7 +12,12 @@ public sealed record UnrealPackageDecompileResult(
     int ClassCount,
     int ExportedCount,
     int FailedCount,
-    IReadOnlyList<string> Errors);
+    IReadOnlyList<string> Errors)
+{
+    public int SanitizedNameCount { get; init; }
+}
+
+public sealed record UnrealNameReplacement(int Index, string SafeName, string OriginalName);
 
 /// <summary>
 /// Exports UnrealScript classes from a real UE1/UE2 package using the same
@@ -36,6 +42,44 @@ public static class UnrealPackageDecompiler
 
         Directory.CreateDirectory(output);
         using var package = UnrealLoader.LoadPackage(input, FileAccess.Read);
+
+        // Some protected UE2 interfaces deliberately use control characters,
+        // punctuation and empty FNames as UnrealScript identifiers. UELib can
+        // read them, but UCC cannot compile those identifiers from source.
+        // Replace only the in-memory names used for source generation; retain a
+        // reversible map so the original FNames can be restored after UCC.
+        var replacements = new List<UnrealNameReplacement>();
+        var usedNames = new HashSet<string>(package.Names.Select(item => item.Name), StringComparer.OrdinalIgnoreCase);
+        var reserved = new HashSet<string>(new[]
+        {
+            "class", "const", "var", "local", "function", "event", "delegate",
+            "state", "struct", "enum", "if", "else", "while", "do", "for",
+            "foreach", "switch", "case", "default", "return", "break",
+            "continue", "goto", "simulated", "static", "final", "native",
+            "private", "protected", "public", "transient", "config",
+            "globalconfig", "replication", "defaultproperties", "ignores",
+            "iterator", "operator", "preoperator", "postoperator", "extends",
+            "within", "implements", "true", "false", "none", "self", "super"
+        }, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < package.Names.Count; i++)
+        {
+            string originalName = package.Names[i].Name ?? string.Empty;
+            if (IsValidIdentifier(originalName) && !reserved.Contains(originalName))
+                continue;
+
+            string safeName = $"MethosRecoveredName_{i}";
+            while (!usedNames.Add(safeName))
+                safeName += "_";
+            replacements.Add(new UnrealNameReplacement(i, safeName, originalName));
+            package.Names[i].Name = safeName;
+        }
+
+        File.WriteAllText(
+            Path.Combine(output, "methos_name_map.json"),
+            JsonSerializer.Serialize(replacements, new JsonSerializerOptions { WriteIndented = true }),
+            new UTF8Encoding(false));
+
         package.InitializePackage();
 
         var classes = package.Objects.OfType<UClass>()
@@ -72,6 +116,25 @@ public static class UnrealPackageDecompiler
             classes.Count,
             exported,
             errors.Count,
-            errors);
+            errors)
+        {
+            SanitizedNameCount = replacements.Count
+        };
     }
+
+    private static bool IsValidIdentifier(string value)
+    {
+        if (string.IsNullOrEmpty(value) || !IsAsciiLetter(value[0]) && value[0] != '_')
+            return false;
+        for (int i = 1; i < value.Length; i++)
+        {
+            char c = value[i];
+            if (!IsAsciiLetter(c) && (c < '0' || c > '9') && c != '_')
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsAsciiLetter(char c) =>
+        (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
