@@ -107,8 +107,10 @@ def put_compact(v):
 def put_string(s):
  s=str(s)
  if not s:return put_compact(0)
- if all(ord(c)<128 for c in s):
-  b=s.encode('ascii')+b'\0'; return put_compact(len(b))+b
+ if all(ord(c)<=0xFF for c in s):
+  # UE1/UE2 ANSI FString values are Latin-1 bytes, not UTF-16 merely because
+  # a character is outside ASCII. Preserve the original byte representation.
+  b=s.encode('latin-1')+b'\0'; return put_compact(len(b))+b
  b=s.encode('utf-16le')+b'\0\0'; return put_compact(-(len(b)//2))+b
 
 def ops_for(t):
@@ -353,6 +355,22 @@ def merge_missing(dst, src):
     if a.get('__type__')==b.get('__type__'):
      if b.get('__tag__'): a['__tag__']=b['__tag__']
      merge_missing(a,b)
+   # Keep an original list's exact bytes when the edited XML still represents
+   # the same records. If a user changes anything, the comparison fails and
+   # the list is serialized from its fields instead.
+   if name in src.get('__raw__',{}):
+    try:
+     encoded=bytearray(struct.pack('<i',len(da)))
+     itemtype=kind[5:]
+     for child in da:
+      if itemtype=='poly':
+       tag=child.get('__tag__',b'')
+       encoded.extend(tag if tag else put_string(child['__type__'].split('.',1)[1]))
+      write_node(child,encoded)
+     if bytes(encoded)==src['__raw__'][name]:
+      dst.setdefault('__raw__',{})[name]=src['__raw__'][name]
+    except Exception:
+     pass
   elif name in src.get('__raw__',{}):
    try:
     if encode_scalar(kind,dst[name])==src['__raw__'][name]: dst.setdefault('__raw__',{})[name]=src['__raw__'][name]
