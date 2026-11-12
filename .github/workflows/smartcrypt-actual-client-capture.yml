@@ -45,15 +45,8 @@ jobs:
           try {
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
             Write-Host "L2_PID=$($p.Id)"
-            for ($i = 0; $i -lt 20; $i++) {
-              $p.Refresh()
-              if ($p.HasExited) { break }
-              try {
-                $mods = (Get-Process -Id $p.Id -Module -ErrorAction Stop).Modules.ModuleName -join ","
-                Write-Host "L2_MODULES[$i]=$mods"
-              } catch { Write-Host "L2_MODULES[$i]=unavailable" }
-              Start-Sleep -Seconds 1
-            }
+            Start-Sleep -Seconds 20
+            $p.Refresh()
             $p.Refresh()
             if (!$p.HasExited) {
               Write-Host "L2_TIMEOUT=1 (terminating after capture window)"
