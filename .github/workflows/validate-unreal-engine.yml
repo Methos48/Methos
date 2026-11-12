@@ -45,9 +45,30 @@ jobs:
           if (!(Test-Path $output) -or (Get-Item $output).Length -lt 65536) { throw "Compiled Interface.u is missing or too small" }
           Get-FileHash $output -Algorithm SHA256 | Format-List
           "OUTPUT=$output" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Decompile the reference Interface.u and the newly compiled package
+        shell: pwsh
+        run: |
+          $original = Join-Path $PWD "u-editor\Interface.u"
+          $originalOut = Join-Path $env:RUNNER_TEMP "Methos-U-Original-Decompiled"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $original $originalOut
+          if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile the reference Interface.u" }
+          $originalCount = @(Get-ChildItem -LiteralPath $originalOut -Filter "*.uc" -File).Count
+          if ($originalCount -ne 169) { throw "Expected 169 decompiled classes from Interface.u, found $originalCount" }
+          $compiledOut = Join-Path $env:RUNNER_TEMP "Methos-U-Compiled-Decompiled"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $env:OUTPUT $compiledOut
+          if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile its compiled Interface.u output" }
+          $compiledCount = @(Get-ChildItem -LiteralPath $compiledOut -Filter "*.uc" -File).Count
+          if ($compiledCount -ne 169) { throw "Expected 169 decompiled classes from compiled package, found $compiledCount" }
+          Write-Host "REFERENCE_DECOMPILED_CLASSES=$originalCount"
+          Write-Host "COMPILED_PACKAGE_DECOMPILED_CLASSES=$compiledCount"
+          "DECOMPILED_ORIGINAL=$originalOut" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "DECOMPILED_COMPILED=$compiledOut" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Preserve the compiled U package for inspection
         uses: actions/upload-artifact@v4
         with:
           name: methos-compiled-interlude-interface-u
-          path: ${{ env.OUTPUT }}
+          path: |
+            ${{ env.OUTPUT }}
+            ${{ env.DECOMPILED_ORIGINAL }}/*.uc
+            ${{ env.DECOMPILED_COMPILED }}/*.uc
           if-no-files-found: error
