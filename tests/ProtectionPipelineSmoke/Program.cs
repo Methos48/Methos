@@ -241,6 +241,9 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
     var tailProfile = Lineage2CustomTailProfile.FromEnvelope(lineageEnvelope, includeTailInPayload: false);
     var customTailCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
     byte[] plainPayload = customTailCodec.Decode(lineageEnvelope, targetName);
+    byte[] standardDecoded = new Lineage2StandardCodec(111).Decode(lineageEnvelope, targetName);
+    Check(standardDecoded.SequenceEqual(plainPayload),
+        $"{targetName}: normal protocol-111 decode should ignore the optional trailer checksum just like the game client.");
 
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
