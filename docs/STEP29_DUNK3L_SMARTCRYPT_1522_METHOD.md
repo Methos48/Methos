@@ -51,6 +51,23 @@ The current capture DLL uses MinHook and installs API hooks during initializatio
 5. Apply the ordinary L2 413/111 decoder only if the captured first-stage output has the corresponding signature.
 6. Validate `interface.u` and `interface.xdat` independently.
 
+
+## Results from the November 12 Windows probes
+
+- Run 43207341894 confirmed that `Engine.int` is staged (6,700 bytes), but the actual L2 process never opened `SysString-e.dat`; it loaded `Engine.u` and `Core.u`, then exited with a `Window.Errors.Critical` dialog. The captured bytes from the separate headless probes were byte-identical to the original and are not a decrypted result.
+- Run 43211768051 copied the targets under their real names `Interface.u` and `Interface.xdat` and extended the capture shim to keep separate output files for each. The client still exited before opening any of the three target names. Therefore the real-client test is currently blocked by startup/loader conditions, not by a failed file decode.
+- The client log repeatedly attempts to open `Window.int` and other missing package/localization files. The supplied test payload has `Window.dll`, but no `Window.u` or `Window.int`. The blank critical dialog is not evidence that the interface was processed.
+- The headless probe reports `DSETUP_MODULE` loaded but `GetProcAddress(ordinal 0x67)` returns null. The supplied `dsetup.dll` is an 8,704-byte DirectX-setup-style DLL whose export table contains only ordinals 1–18. In the NPK static initialization routine, a successful lookup of ordinal 0x67 is a prerequisite for populating global key pointer `0x10051430` and activation flag `0x10051468`; in the probe both remain zero. This is a concrete missing-provider lead, not proof that the file itself is the only missing component.
+- The user's observation that no `dsetup.u` exists in the supplied client is consistent with a possible external or separately supplied key-provider component. Do not assume the entire protection layer is self-contained in the game's normal system folder.
+
+## Revised next route
+
+1. Reproduce the published `SmartDecrypt.dll` detour semantics exactly and verify hook initialization order relative to NPK's own ReadFile wrapper. Do not treat MinHook's successful installation as proof that it is observing the post-transform buffer.
+2. Identify the expected provider behind `dsetup.dll` ordinal 0x67 and the `dsetup.u` resource/file reference. Search both in the game payload and in external tooling; do not require the user to produce a file already confirmed absent.
+3. Repair the controlled client harness so it reaches the same file-load stage as the published method. The current client exits before opening `SysString-e.dat`, `Interface.u`, or `Interface.xdat`.
+4. In parallel, reverse the per-handle key-state creation and the NPK transform offline. A successful key-state reconstruction would remove dependence on launching the game or an external decryptor.
+5. Once any candidate intermediate is recovered, validate its standard 111/413 layer and then independently validate U and XDAT structure. Preserve both original files throughout.
+
 ## Status
 
 - [x] Find a public SmartCrypt 1.5.2.2 extraction method that explicitly names interface.u and interface.xdat.
