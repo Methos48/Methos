@@ -235,64 +235,55 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
     var smartProfile = SmartCryptKeyProfile.FromEncryptedFile(original);
     var smartCodec = new SmartCrypt1522Codec(smartProfile);
     byte[] lineageEnvelope = smartCodec.Decode(original, targetName);
-    Check(lineageEnvelope.AsSpan(0, 28).SequenceEqual(Encoding.Unicode.GetBytes($"Lineage2Ver{smartProfile.Lineage2Version:D3}")),
-        $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver header.");
+    Check(lineageEnvelope.AsSpan(0, 28).SequenceEqual(Encoding.Unicode.GetBytes("Lineage2Ver111")),
+        $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver111 header.");
 
-    var standardCodec = new Lineage2StandardCodec(smartProfile.Lineage2Version);
-    byte[] rawWithoutTail = standardCodec.Decode111Unchecked(lineageEnvelope, includeTail: false);
-    byte[] rawWithTail = standardCodec.Decode111Unchecked(lineageEnvelope, includeTail: true);
-    byte[] selectedRaw;
-    bool includeTail;
+    var tailProfile = Lineage2CustomTailProfile.FromEnvelope(lineageEnvelope, includeTailInPayload: false);
+    var customTailCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
+    byte[] plainPayload = customTailCodec.Decode(lineageEnvelope, targetName);
 
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
-        bool parsed = false;
-        try
-        {
-            var parsedPackageWithoutTail = UnrealPackageIndex.Parse(rawWithoutTail);
-            Check(parsedPackageWithoutTail.Summary.Version == 126 &&
-                  parsedPackageWithoutTail.Summary.LicenseeVersion == 0 &&
-                  parsedPackageWithoutTail.Names.Count == 5482 &&
-                  parsedPackageWithoutTail.Exports.Count == 10308 &&
-                  parsedPackageWithoutTail.Imports.Count == 740,
-                "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
-            selectedRaw = rawWithoutTail;
-            includeTail = false;
-            parsed = true;
-        }
-        catch (Exception)
-        {
-            var parsedPackageWithTail = UnrealPackageIndex.Parse(rawWithTail);
-            Check(parsedPackageWithTail.Summary.Version == 126 &&
-                  parsedPackageWithTail.Summary.LicenseeVersion == 0 &&
-                  parsedPackageWithTail.Names.Count == 5482 &&
-                  parsedPackageWithTail.Exports.Count == 10308 &&
-                  parsedPackageWithTail.Imports.Count == 740,
-                "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
-            selectedRaw = rawWithTail;
-            includeTail = true;
-            parsed = true;
-        }
-        Check(parsed, "Dunk3l interface.u could not be parsed as a real Unreal package.");
+        var parsedPackage = UnrealPackageIndex.Parse(plainPayload);
+        Check(parsedPackage.Summary.Version == 126 &&
+              parsedPackage.Summary.LicenseeVersion == 0 &&
+              parsedPackage.Names.Count == 5482 &&
+              parsedPackage.Exports.Count == 10308 &&
+              parsedPackage.Imports.Count == 740,
+            "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
     }
     else
     {
-        string withoutTailText = Encoding.ASCII.GetString(rawWithoutTail);
-        string withTailText = Encoding.ASCII.GetString(rawWithTail);
-        includeTail = !withoutTailText.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal)
-            && withTailText.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal);
-        selectedRaw = includeTail ? rawWithTail : rawWithoutTail;
-        Check(Encoding.ASCII.GetString(selectedRaw).Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
+        Check(Encoding.ASCII.GetString(plainPayload).Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
             "Dunk3l interface.xdat did not expose expected XDAT window names after both layers.");
     }
 
-    byte[] standardRebuilt = standardCodec.Encode111PreservingTail(selectedRaw, lineageEnvelope, includeTail);
-    Check(standardRebuilt.SequenceEqual(lineageEnvelope),
-        $"{targetName}: protocol-111 payload transform plus original trailer did not round-trip exactly.");
-    byte[] smartRebuilt = smartCodec.Encode(standardRebuilt, targetName);
-    Check(smartRebuilt.SequenceEqual(original),
-        $"{targetName}: SmartCrypt failed byte-for-byte round-trip.");
-    Console.WriteLine($"PASS: REAL Dunk3l {targetName} SmartCrypt + Lineage2Ver{smartProfile.Lineage2Version} decode/re-encode exact round-trip; custom trailer preserved ({original.Length} bytes).");
+    var customPlan = ProtectionPipelinePlanner.Inspect(lineageEnvelope, targetName,
+        lineage2CustomTailProfileAvailable: true, lineage2CustomTailEncoderVerified: true);
+    Check(customPlan.Layers[0].Kind == ProtectionLayerKind.Lineage2CustomTrailer &&
+          customPlan.CanDecode && customPlan.CanEncode,
+        $"{targetName}: planner did not recognize the original custom protocol-111 trailer.");
+
+    var smartLayer = new ProtectionLayer(ProtectionLayerKind.SmartCrypt1522Candidate,
+        "smartcrypt-1.5.2.2", "real-file-roundtrip-verified", true, true,
+        "Embedded per-file seed profile reconstructed from the original file.");
+    var tailLayer = new ProtectionLayer(ProtectionLayerKind.Lineage2CustomTrailer,
+        "lineage2-111-custom-tail", "original-trailer-preserved-and-roundtrip-verified", true, true,
+        "Original 20-byte trailer preserved verbatim; no stock trailer is invented.");
+    var fullPlan = new ProtectionPlan(Path.GetExtension(targetName),
+        new[] { smartLayer, tailLayer }, true, true,
+        "real-file-roundtrip-verified", "SmartCrypt + custom Lineage2Ver111 trailer.");
+    var runtime = ProtectionCodecRuntime.CreateDefault(
+        smartCryptProfile: smartProfile, lineage2CustomTailProfile: tailProfile);
+
+    byte[] runtimeDecoded = runtime.Decode(fullPlan, original, targetName);
+    Check(runtimeDecoded.SequenceEqual(plainPayload),
+        $"{targetName}: complete layered runtime decode did not reproduce the validated payload.");
+    byte[] runtimeRebuilt = runtime.Encode(fullPlan, plainPayload, targetName);
+    Check(runtimeRebuilt.SequenceEqual(original),
+        $"{targetName}: complete layered runtime encode did not reproduce the original file byte for byte.");
+
+    Console.WriteLine($"PASS: REAL Dunk3l {targetName}: SmartCrypt + custom Lineage2Ver111 decode/encode exact round-trip; original trailer preserved ({original.Length} bytes).");
 }
 
 if (File.Exists("Engine.u"))
