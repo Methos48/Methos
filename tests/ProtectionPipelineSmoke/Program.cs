@@ -149,7 +149,7 @@ var smartNeedsExternal = ProtectionPipelinePlanner.Inspect(externalKeySample, "I
 Check(smartNeedsExternal.Status == "recognized-key-required" && !smartNeedsExternal.CanDecode,
     "SmartCrypt must require the external key when the seed block sets its external-key bit.");
 Console.WriteLine("PASS: SmartCrypt 1.5.2.2 embedded seed derivation, Lineage2Ver header reconstruction, profile import, and fail-closed encode.");
-
+}
 
 using (RSA aacRsa = RSA.Create(2048))
 {
