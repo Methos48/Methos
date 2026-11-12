@@ -48,7 +48,7 @@ This validates the mathematical key pairing and block framing independently of t
 
 ## Remaining validation
 
-The container does not have the .NET SDK, and the GitHub Actions integration has not yet returned a run for the latest commits. Therefore the C# build/test is pending. The next CI execution must pass before marking this codec runtime-verified.
+Windows CI run 43191919868 completed successfully with .NET SDK 8.0.428. It reported PASS for the protection planner checks, the generic two-layer runtime checks, and the integrated 111 XOR plus 413 RSA/zlib encode/decode round-trips. The codec is now runtime-verified against synthetic vectors. Real captured-file validation is still pending.
 
 The SmartCrypt capture remains a separate first-stage runtime task. The standard codec is now ready to process its intermediate only when that intermediate has a valid Lineage2Ver111 or Lineage2Ver413 header and a valid tail checksum.
 
