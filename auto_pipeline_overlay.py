@@ -50,13 +50,13 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
                 messagebox.showerror('Informe de archivos XML',report)
                 return
             self.set_status(f'Compilando {len(xmls)} archivos XML…')""", 1)
-    source = source.replace("1. XDAT COMPLETO", "1. XDAT COMPRIMIDO")
+    source = source.replace("1. XDAT COMPLETO", "1. ARCHIVO XDAT")
     source = source.replace("Aquí se guardan los archivos .xdat.", "Aquí se colocan los archivos .xdat de entrada y se guardan los compilados.")
-    source = source.replace("2. XDAT POR PARTES", "2. XDAT DESCOMPRIMIDO")
+    source = source.replace("2. XDAT POR PARTES", "2. DECOPILADO XDAT")
     source = source.replace("Aquí se guardan las ventanas y accesos directos XML.", "Aquí se guardan las ventanas y accesos directos XML extraídos.")
-    source = source.replace("text='Abrir carpeta'", "text='Abrir Comprimido'", 1)
-    source = source.replace("text='Abrir carpeta'", "text='Abrir Descomprimido'", 1)
-    source = source.replace("ARCHIVOS POR PARTES", "ARCHIVOS XML DESCOMPRIMIDOS")
+    source = source.replace("text='Abrir carpeta'", "text='Abrir Archivo'", 1)
+    source = source.replace("text='Abrir carpeta'", "text='Abrir Decopilado'", 1)
+    source = source.replace("ARCHIVOS POR PARTES", "ARCHIVOS XML DECOPILADOS")
     old="""            data=source.read_bytes()
             detection=detect_encryption(data, source.name)
             if detection.encrypted is True:
