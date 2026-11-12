@@ -12,10 +12,11 @@ internal static class Probe {
   if(shim==IntPtr.Zero){Console.WriteLine("SHIM_LOAD_FAIL "+Marshal.GetLastWin32Error());return 2;}
   var init=(InitFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Initialize"),typeof(InitFn));
   var flush=(FlushFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Flush"),typeof(FlushFn));
-  bool patched=init(); Console.WriteLine("IAT_PATCHED="+patched);
+  IntPtr engine=LoadLibraryW(Path.Combine(Environment.CurrentDirectory,"engine.dll"));
+  Console.WriteLine("ENGINE_LOAD="+(engine!=IntPtr.Zero)+" ERROR="+Marshal.GetLastWin32Error());
   IntPtr ogg=LoadLibraryW(Path.Combine(Environment.CurrentDirectory,"ogg.dll"));
   Console.WriteLine("OGG_LOAD="+(ogg!=IntPtr.Zero)+" ERROR="+Marshal.GetLastWin32Error());
-  patched=init(); Console.WriteLine("IAT_PATCHED_AFTER_OGG="+patched);
+  bool patched=init(); Console.WriteLine("IAT_PATCHED="+patched);
   byte[] bytes=File.ReadAllBytes(Path.Combine(Environment.CurrentDirectory,"SysString-e.dat")); flush();
   Console.WriteLine("NORMAL_READ="+bytes.Length+" CAPTURE_EXISTS="+File.Exists("smartcrypt-capture.bin"));
   if(File.Exists("smartcrypt-capture.bin")){byte[] cap=File.ReadAllBytes("smartcrypt-capture.bin");using(var sha=System.Security.Cryptography.SHA256.Create())Console.WriteLine("CAPTURE_BYTES="+cap.Length+" SHA256="+BitConverter.ToString(sha.ComputeHash(cap)).Replace("-","").ToLowerInvariant());Console.WriteLine("CAPTURE_HEADER="+BitConverter.ToString(cap,0,Math.Min(16,cap.Length)));}
