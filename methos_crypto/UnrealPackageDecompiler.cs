@@ -50,22 +50,11 @@ public static class UnrealPackageDecompiler
         // reversible map so the original FNames can be restored after UCC.
         var replacements = new List<UnrealNameReplacement>();
         var usedNames = new HashSet<string>(package.Names.Select(item => item.Name), StringComparer.OrdinalIgnoreCase);
-        var reserved = new HashSet<string>(new[]
-        {
-            "class", "const", "var", "local", "function", "event", "delegate",
-            "state", "struct", "enum", "if", "else", "while", "do", "for",
-            "foreach", "switch", "case", "default", "return", "break",
-            "continue", "goto", "simulated", "static", "final", "native",
-            "private", "protected", "public", "transient", "config",
-            "globalconfig", "replication", "defaultproperties", "ignores",
-            "iterator", "operator", "preoperator", "postoperator", "extends",
-            "within", "implements", "true", "false", "none", "self", "super"
-        }, StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < package.Names.Count; i++)
         {
             string originalName = package.Names[i].Name ?? string.Empty;
-            if (IsValidIdentifier(originalName) && !reserved.Contains(originalName))
+            if (IsValidIdentifier(originalName))
                 continue;
 
             string safeName = $"MethosRecoveredName_{i}";
