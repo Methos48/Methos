@@ -78,3 +78,10 @@ Referencias:
 - Guía independiente Smart Decryptor (pasos de importación y segunda etapa): https://mmo-dev.info/resources/smart-decryptor.3096/
 
 Esta verificación refuerza el método de extracción, pero no sustituye la prueba con el L2.exe y engine.dll exactos de L2Sudamérica. No se modificará el cliente original: la preparación del import table y la captura se harán sobre copias aisladas.
+
+
+## Correction from Step 26 (2026-11-12)
+
+The exact `npkscrypt.dll` contains executable comparisons for the supplied `FF ED FA CE` marker and a ReadFile-compatible in-place XOR stream transform. Its activation path also checks for `dsetup.dll` and processes `dsetup.u`. This means the earlier generic SmartCrypt 1.5.2.2 identification should not be treated as the complete explanation of this client's protection. The dsetup loader/key-provider path is now the leading explanation for the missing key state.
+
+The exact matching `dsetup.dll` and `dsetup.u` were not found in either uploaded `system.zip` or `engine.zip`, nor in the Windows runner. The PE-base gate was emulated successfully at `0x10900000`, but key globals remained zero and no decryption occurred. See `docs/STEP26_NPKSCRYPT_DECRYPTION_PATH.md` for the disassembly findings and exact next inputs required.
