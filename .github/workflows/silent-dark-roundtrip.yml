@@ -85,6 +85,17 @@ jobs:
           if ($eventClass) {
             $eventClass | Get-Content | Set-Content -LiteralPath (Join-Path $diagnostics "EventMatchGMWnd.uc")
           }
+          $observerClass = Get-ChildItem -LiteralPath $src -Filter "EventMatchObserverWnd.uc" -File -Recurse | Select-Object -First 1
+          if ($observerClass) {
+            $observerClass | Get-Content | Set-Content -LiteralPath (Join-Path $diagnostics "EventMatchObserverWnd.uc")
+          }
+          $skillTypeHits = Select-String -Path (Join-Path $src "*.uc") -Pattern "\\bSkillMsgInfo\\b" -List
+          foreach ($hit in $skillTypeHits) {
+            Add-Content -LiteralPath (Join-Path $diagnostics "SkillMsgInfo-references.txt") -Value ("FILE=" + $hit.Path)
+            Select-String -Path $hit.Path -Pattern "\\bSkillMsgInfo\\b" -Context 4,4 |
+              ForEach-Object { Add-Content -LiteralPath (Join-Path $diagnostics "SkillMsgInfo-references.txt") -Value $_.ToString() }
+            Copy-Item -LiteralPath $hit.Path -Destination (Join-Path $diagnostics ("SkillType-" + $hit.Path.Split('\\')[-1])) -Force
+          }
           $allSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
           "SOURCE_COUNT=$($allSources.Count)" | Set-Content (Join-Path $diagnostics "source-inventory.txt")
           $allSources | ForEach-Object { $_.FullName.Substring($src.Length).TrimStart('\','/') } | Add-Content (Join-Path $diagnostics "source-inventory.txt")
