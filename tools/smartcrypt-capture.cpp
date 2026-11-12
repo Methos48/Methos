@@ -14,10 +14,19 @@ typedef HMODULE (WINAPI *PFN_LoadLibraryA)(LPCSTR);
 typedef BOOL (WINAPI *PFN_VirtualProtect)(LPVOID,SIZE_T,DWORD,PDWORD);
 typedef HANDLE (WINAPI *PFN_CreateThread)(LPSECURITY_ATTRIBUTES,SIZE_T,LPTHREAD_START_ROUTINE,LPVOID,DWORD,LPDWORD);
 typedef DWORD (WINAPI *PFN_GetModuleFileNameW)(HMODULE,LPWSTR,DWORD);
+typedef HMODULE (WINAPI *PFN_GetModuleHandleA)(LPCSTR);
+typedef DWORD (WINAPI *PFN_GetModuleFileNameA)(HMODULE,LPSTR,DWORD);
+typedef HLOCAL (WINAPI *PFN_LocalAlloc)(UINT,SIZE_T);
+typedef HLOCAL (WINAPI *PFN_LocalFree)(HLOCAL);
+typedef BOOL (WINAPI *PFN_InitCriticalSection)(LPCRITICAL_SECTION,DWORD);
 static PFN_CreateFileW realCreateFileW=NULL; static PFN_ReadFile realReadFile=NULL;
 static PFN_GetProcAddress realGetProcAddress=NULL; static PFN_LoadLibraryA realLoadLibraryA=NULL;
 static PFN_VirtualProtect realVirtualProtect=NULL; static PFN_CreateThread realCreateThread=NULL;
 static PFN_GetModuleFileNameW realGetModuleFileNameW=NULL;
+static PFN_GetModuleHandleA realGetModuleHandleA=NULL;
+static PFN_GetModuleFileNameA realGetModuleFileNameA=NULL;
+static PFN_LocalAlloc realLocalAlloc=NULL; static PFN_LocalFree realLocalFree=NULL;
+static PFN_InitCriticalSection realInitCriticalSection=NULL;
 static HANDLE targetHandle=INVALID_HANDLE_VALUE,outputHandle=INVALID_HANDLE_VALUE;
 static CRITICAL_SECTION lock; static LONG initialized=0; static LONGLONG maxEnd=0;
 static HMODULE engineModule=NULL; static BOOL hookReady=FALSE;
@@ -45,11 +54,16 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  MH_CreateHookApi(L"kernel32.dll","VirtualProtect",(LPVOID)HookVirtualProtect,(LPVOID*)&realVirtualProtect);
  MH_CreateHookApi(L"kernel32.dll","CreateThread",(LPVOID)HookCreateThread,(LPVOID*)&realCreateThread);
  MH_CreateHookApi(L"kernel32.dll","GetModuleFileNameW",(LPVOID)HookGetModuleFileNameW,(LPVOID*)&realGetModuleFileNameW);
+ MH_CreateHookApi(L"kernel32.dll","GetModuleHandleA",(LPVOID)HookGetModuleHandleA,(LPVOID*)&realGetModuleHandleA);
+ MH_CreateHookApi(L"kernel32.dll","GetModuleFileNameA",(LPVOID)HookGetModuleFileNameA,(LPVOID*)&realGetModuleFileNameA);
+ MH_CreateHookApi(L"kernel32.dll","LocalAlloc",(LPVOID)HookLocalAlloc,(LPVOID*)&realLocalAlloc);
+ MH_CreateHookApi(L"kernel32.dll","LocalFree",(LPVOID)HookLocalFree,(LPVOID*)&realLocalFree);
+ MH_CreateHookApi(L"kernel32.dll","InitializeCriticalSectionAndSpinCount",(LPVOID)HookInitCriticalSection,(LPVOID*)&realInitCriticalSection);
  if(MH_EnableHook(MH_ALL_HOOKS)!=MH_OK)return FALSE;
  hookReady=TRUE; return TRUE;
 }
 extern "C" __declspec(dllexport) void WINAPI SmartCapture_Flush(void){if(!hookReady||!initialized)return;EnterCriticalSection(&lock);if(outputHandle!=INVALID_HANDLE_VALUE){LARGE_INTEGER end;end.QuadPart=maxEnd;SetFilePointerEx(outputHandle,end,NULL,FILE_BEGIN);SetEndOfFile(outputHandle);FlushFileBuffers(outputHandle);CloseHandle(outputHandle);outputHandle=INVALID_HANDLE_VALUE;}LeaveCriticalSection(&lock);}
 extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Status(void){return hookReady;}
 extern "C" __declspec(dllexport) void WINAPI SmartCapture_DumpTrace(void){if(!initialized)return;HANDLE h=realCreateFileW(L"npkscrypt-api-trace.txt",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);if(h!=INVALID_HANDLE_VALUE){DWORD n=(DWORD)traceLength,w=0;WriteFile(h,traceBuffer,n,&w,NULL);CloseHandle(h);}}
-extern "C" __declspec(dllexport) int __stdcall load(void){return 0;}
+extern "C" __declspec(dllexport) int __stdcall load(void){Trace("SmartCapture load callback called\\n");return 0;}
 BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){if(r==DLL_PROCESS_ATTACH){DisableThreadLibraryCalls(h);engineModule=LoadLibraryA("engine.dll");if(!SmartCapture_Initialize())return FALSE;}return TRUE;}
