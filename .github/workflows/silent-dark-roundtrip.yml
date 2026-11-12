@@ -83,6 +83,20 @@ jobs:
           $allSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
           "SOURCE_COUNT=$($allSources.Count)" | Set-Content (Join-Path $diagnostics "source-inventory.txt")
           $allSources | ForEach-Object { $_.FullName.Substring($src.Length).TrimStart('\','/') } | Add-Content (Join-Path $diagnostics "source-inventory.txt")
+          $badTokens = @()
+          foreach ($file in $allSources) {
+            $content = Get-Content -LiteralPath $file -Raw
+            $lineNo = 0
+            foreach ($line in ($content -split "`r?`n")) {
+              $lineNo++
+              if ($line -match '[\x00-\x08\x0B\x0C\x0E-\x1F]') { $badTokens += ($file.Name + ":" + $lineNo + ": " + $line) }
+            }
+          }
+          if ($badTokens.Count -gt 0) {
+            Write-Host "=== INVALID CONTROL CHARACTERS IN UnrealScript ==="
+            $badTokens | ForEach-Object { Write-Host $_ }
+            $badTokens | Set-Content -LiteralPath (Join-Path $diagnostics "invalid-control-lines.txt")
+          } else { Write-Host "No invalid control characters found in .uc sources" }
           "DIAGNOSTICS_DIR=$diagnostics" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Create isolated Methos U compile/decompile test harness
