@@ -1,6 +1,17 @@
 using System.Text;
 using MethosUEngine;
 
+if (args.Length > 0 && args[0] == "--ucc-compile")
+{
+    if (args.Length != 4)
+        throw new ArgumentException("Usage: --ucc-compile <runtimeRoot> <sourceDirectory> <outputPackage>");
+    UccCompileResult result = UccCompiler.CompileInterface(args[1], args[2]);
+    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[3]))!);
+    File.WriteAllBytes(args[3], result.PackageBytes);
+    Console.WriteLine($"PASS: UCC compiled {result.PackageBytes.Length} bytes; profile={result.ProfileDescription}; names={result.NameCount}; imports={result.ImportCount}; exports={result.ExportCount}.");
+    return;
+}
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);
@@ -69,6 +80,13 @@ foreach (int protocol in new[] { 111, 413 })
     Check(standardPlain.SequenceEqual(standardDecoded), $"Protocol {protocol} round-trip failed.");
 }
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
+var literalBody = "return 42;";
+byte[] literalBytecode = UnrealScriptFunctionCompiler.CompileReturnOnlyBody(literalBody);
+string restoredLiteralBody = UnrealScriptFunctionDecompiler.DecompileReturnOnly(literalBytecode);
+Check(restoredLiteralBody == literalBody,
+    "UnrealScript literal return compile/decompile round-trip failed.");
+Console.WriteLine("PASS: native UnrealScript literal return compile/decompile round-trip.");
+
 
 if (File.Exists("Engine.u"))
 {
