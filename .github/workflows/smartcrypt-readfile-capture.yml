@@ -56,6 +56,9 @@ jobs:
           $command = 'call "' + $vcvars + '" && cl /nologo /EHsc /O2 tools\core-filestream-probe.cpp /link /OUT:probe\core-filestream-probe.exe'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "Core FFileStream probe compile failed" }
+          $command = 'call "' + $vcvars + '" && cl /nologo /EHsc /O2 tools\core-filestream-probe.cpp /link /OUT:probe\l2.exe'
+          cmd.exe /c $command
+          if ($LASTEXITCODE -ne 0) { throw "Headless L2 host compile failed" }
       - name: Run capture with SmartCapture loaded from ogg import order
         shell: pwsh
         run: |
@@ -63,7 +66,10 @@ jobs:
           try { .\smartcrypt-probe.exe | Tee-Object capture.log }
           finally { Pop-Location }
           Push-Location probe
-          try { .\core-filestream-probe.exe | Tee-Object filestream.log }
+          try { .\core-filestream-probe.exe | Tee-Object filestream.log; Get-FileHash .\filestream-read.bin -Algorithm SHA256 | Format-List }
+          finally { Pop-Location }
+          Push-Location probe
+          try { .\l2.exe | Tee-Object l2host.log; Get-FileHash .\filestream-read.bin -Algorithm SHA256 | Format-List }
           finally { Pop-Location }
       - uses: actions/upload-artifact@v4
         if: always()
