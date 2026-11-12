@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/npkscrypt-headless-readfile-probe.yml"
-      - "tools/npkscrypt-headless-probe.cs"
+      - "(Resolve-Path .\\tools\\npkscrypt-headless-probe.cs).Path"
 
 jobs:
   probe:
