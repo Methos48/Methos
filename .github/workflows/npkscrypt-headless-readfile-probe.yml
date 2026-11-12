@@ -22,6 +22,9 @@ jobs:
           if (!$ogg) { throw 'ogg.dll missing from system.zip' }
           Copy-Item $npk.FullName probe/npkscrypt.dll
           Copy-Item $ogg.FullName probe/ogg.dll
+          if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll }
+          $ui = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'l2ui.dll' } | Select-Object -First 1
+          if ($ui) { Copy-Item $ui.FullName probe/l2ui.dll }
           Copy-Item interface.u probe/SysString-e.dat
           if (Test-Path engine.zip) {
             Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
