@@ -260,7 +260,7 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
             includeTail = false;
             parsed = true;
         }
-        catch (Exception ex) when (ex is InvalidDataException or NotSupportedException or ArgumentException)
+        catch (Exception)
         {
             var parsedPackageWithTail = UnrealPackageIndex.Parse(rawWithTail);
             Check(parsedPackageWithTail.Summary.Version == 126 &&
