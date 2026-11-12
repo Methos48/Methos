@@ -119,10 +119,17 @@ static void DumpNpkKeyState(HANDLE h){
  for(int i=0;i<6;i++)sprintf_s(k6+i*2,3,"%02X",s[2+i]);
  for(int i=0;i<16;i++)sprintf_s(k16+i*2,3,"%02X",s[8+i]);
  DWORD globalKey=npkModule?*(DWORD*)((BYTE*)npkModule+0x51430):0;
- DebugLog("NPK_KEY_STATE kind=%d handle=%p state=%p global=%08lX seed=%02X%02X key6=%s key16=%s flag=%02X\\r\\n",kind,h,state,globalKey,s[0],s[1],k6,k16,s[0x18]);
+ DWORD globalFlag=npkModule?*(DWORD*)((BYTE*)npkModule+0x51468):0;
+ BYTE seed[24]={};seed[0]=s[0];seed[1]=s[1];
+ BYTE globalBytes[4]={(BYTE)globalKey,(BYTE)(globalKey>>8),(BYTE)(globalKey>>16),(BYTE)(globalKey>>24)};
+ for(int i=0;i<6;i++){BYTE v=s[2+i];if((s[1]&1)&&globalFlag)v^=globalBytes[i&3];seed[2+i]=(BYTE)(v^(BYTE)(s[0]+1));}
+ for(int i=0;i<16;i++)seed[8+i]=(BYTE)(s[8+i]^s[2+(i%6)]);
+ char seedHex[64]={};for(int i=0;i<24;i++)sprintf_s(seedHex+i*2,3,"%02X",seed[i]);
+ DWORD version=s[0]==1?111:(s[0]==2?121:(s[0]==3?413:0));
+ DebugLog("NPK_KEY_STATE kind=%d handle=%p state=%p global=%08lX globalFlag=%08lX seed=%02X%02X seedBlock=%s key6=%s key16=%s flag=%02X version=%lu\\r\\n",kind,h,state,globalKey,globalFlag,s[0],s[1],seedHex,k6,k16,s[0x18],version);
  const char* files[4]={"","smartcrypt-key-profile-sysstring.txt","smartcrypt-key-profile-interface-u.txt","smartcrypt-key-profile-interface-xdat.txt"};
  HANDLE out=CreateFileA(files[kind],GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
- if(out!=INVALID_HANDLE_VALUE){char line[512]={};int n=sprintf_s(line,sizeof(line),"NPK_GLOBAL_KEY=%08lX\\r\\nSTATE_SEED=%02X%02X\\r\\nKEY6=%s\\r\\nKEY16=%s\\r\\nFLAG=%02X\\r\\n",globalKey,s[0],s[1],k6,k16,s[0x18]);DWORD wrote=0;WriteFile(out,line,(DWORD)n,&wrote,NULL);FlushFileBuffers(out);CloseHandle(out);}
+ if(out!=INVALID_HANDLE_VALUE){char line[768]={};int n=sprintf_s(line,sizeof(line),"NPK_GLOBAL_KEY=%08lX\\r\\nSTATE_SEED=%02X%02X\\r\\nSEED_BLOCK=%s\\r\\nMARKER=FFEDFACE\\r\\nLINEAGE2_VERSION=%08lX\\r\\nKEY6=%s\\r\\nKEY16=%s\\r\\nFLAG=%02X\\r\\n",globalKey,s[0],s[1],seedHex,version,k6,k16,s[0x18]);DWORD wrote=0;WriteFile(out,line,(DWORD)n,&wrote,NULL);FlushFileBuffers(out);CloseHandle(out);}
 }
 static BOOL WINAPI HookNpkReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
  inNpkRead++;
