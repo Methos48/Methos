@@ -30,20 +30,23 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
     private const string Legacy413PrivateExponent = "35";
 
     private readonly int _protocol;
+    private readonly bool _verifyChecksumOnDecode;
     public string LayerId => $"lineage2-{_protocol}";
+    public bool VerifyChecksumOnDecode => _verifyChecksumOnDecode;
 
-    public Lineage2StandardCodec(int protocol)
+    public Lineage2StandardCodec(int protocol, bool verifyChecksumOnDecode = false)
     {
         if (protocol is not (111 or 413))
             throw new ArgumentOutOfRangeException(nameof(protocol), "Only verified protocol implementations 111 and 413 are currently registered.");
         _protocol = protocol;
+        _verifyChecksumOnDecode = verifyChecksumOnDecode;
     }
 
     public byte[] Decode(ReadOnlyMemory<byte> input, string originalFileName, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         byte[] bytes = input.ToArray();
-        ValidateEnvelope(bytes);
+        ValidateEnvelope(bytes, _verifyChecksumOnDecode);
         if (_protocol == 111)
         {
             byte[] plain = bytes.AsSpan(HeaderSize, bytes.Length - HeaderSize - TailSize).ToArray();
@@ -140,7 +143,7 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
         return output;
     }
 
-    private void ValidateEnvelope(byte[] data)
+    private void ValidateEnvelope(byte[] data, bool verifyChecksum)
     {
         if (data.Length < HeaderSize + TailSize)
             throw new InvalidDataException("File is too short to contain a Lineage II header and tail.");
@@ -148,10 +151,13 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
         for (int i = 0; i < expected.Length; i++)
             if (data[i * 2] != (byte)expected[i] || data[i * 2 + 1] != 0)
                 throw new InvalidDataException($"Expected UTF-16LE Lineage2Ver{_protocol:D3} header.");
-        uint stored = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(data.Length - TailSize + 12, 4));
-        uint actual = Crc32(data.AsSpan(0, data.Length - TailSize));
-        if (stored != actual)
-            throw new InvalidDataException($"Lineage II tail checksum mismatch (stored {stored:X8}, calculated {actual:X8}).");
+        if (verifyChecksum)
+        {
+            uint stored = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(data.Length - TailSize + 12, 4));
+            uint actual = Crc32(data.AsSpan(0, data.Length - TailSize));
+            if (stored != actual)
+                throw new InvalidDataException($"Lineage II tail checksum mismatch (stored {stored:X8}, calculated {actual:X8}).");
+        }
     }
 
     private static byte[] Decode413(byte[] encrypted, string modulusHex, string privateExponentHex, CancellationToken token)
