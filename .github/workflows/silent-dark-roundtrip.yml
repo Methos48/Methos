@@ -73,7 +73,7 @@ jobs:
             Write-Host "=== AutoSkillWnd.uc path: $($offender.FullName) ==="
             $lines = Get-Content -LiteralPath $offender.FullName
             $start = [Math]::Max(0, 74)
-            $end = [Math]::Min(115, $lines.Count)
+            $end = [Math]::Min(1225, $lines.Count)
             for ($i = $start; $i -lt $end; $i++) { Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i]) }
             $lines | Set-Content -LiteralPath (Join-Path $diagnostics "AutoSkillWnd.uc")
           } else {
