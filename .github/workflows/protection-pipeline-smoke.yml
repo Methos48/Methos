@@ -4,6 +4,9 @@ on:
     paths:
       - 'methos_crypto/**'
       - 'Engine.u'
+      - 'interface.u'
+      - 'interface.xdat'
+      - 'tools/xdat/**'
       - 'tests/ProtectionPipelineSmoke/**'
       - '.github/workflows/protection-pipeline-smoke.yml'
   workflow_dispatch:
@@ -19,3 +22,8 @@ jobs:
           dotnet-version: 8.0.x
       - name: Run planner and real Unreal package smoke tests
         run: dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate Dunk3l XDAT layered decode and XML round-trip
+        run: python tools/xdat/validate_dunk3l_smartcrypt.py interface.xdat
