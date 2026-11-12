@@ -33,23 +33,29 @@ public sealed record ProtectionPlan(
 /// </summary>
 public static class ProtectionPipelinePlanner
 {
-    private static readonly byte[] SmartCrypt1522SamplePrefix = Convert.FromHexString("FFEDFACE0100");
     private const uint UnrealPackageTag = 0x9E2A83C1;
 
     public static ProtectionPlan Inspect(ReadOnlySpan<byte> data, string fileName,
+        bool smartCryptKeyAvailable = false, bool smartCryptEncoderVerified = false,
         bool activeAntiCheatPrivateKeyAvailable = false, bool activeAntiCheatEncoderVerified = false)
     {
         ArgumentNullException.ThrowIfNull(fileName);
         string extension = Path.GetExtension(fileName).ToLowerInvariant();
 
-        if (data.Length >= SmartCrypt1522SamplePrefix.Length &&
-            data[..SmartCrypt1522SamplePrefix.Length].SequenceEqual(SmartCrypt1522SamplePrefix))
+        if (data.Length >= 0x400 && SmartCrypt1522Codec.HasHeader(data))
         {
+            bool canDecode = smartCryptKeyAvailable;
+            bool canEncode = canDecode && smartCryptEncoderVerified;
             var layer = new ProtectionLayer(ProtectionLayerKind.SmartCrypt1522Candidate,
-                "smartcrypt-1.5.2.2", "candidate-unverified", false, false,
-                "Coincide con el prefijo de las muestras aportadas. No demuestra por sí solo que cualquier archivo con este prefijo use SmartCrypt.");
-            return new(extension, new[] { layer }, false, false, "recognized-candidate",
-                "Firma coincidente con las muestras SmartCrypt 1.5.2.2. Falta recuperar y probar el transformador y su inversa; no se intenta descifrar por suposición.");
+                "smartcrypt-1.5.2.2",
+                canEncode ? "codec-ready" : canDecode ? "decode-key-available-encode-unverified" : "recognized-key-required",
+                canDecode, canEncode,
+                "FF ED FA CE marker recognized. The transform is implemented; decoding requires the matching per-handle key6/key16 state captured from the protected client. Re-encoding remains disabled until a real-file round trip is verified.");
+            return new(extension, new[] { layer }, canDecode, canEncode,
+                canEncode ? "recognized-supported-encryption" : canDecode ? "recognized-decode-only" : "recognized-key-required",
+                canDecode
+                    ? "SmartCrypt 1.5.2.2 recognized and a matching key profile is available. The file remains protected until the decoded intermediate is validated."
+                    : "SmartCrypt 1.5.2.2 recognized, but its matching key profile is unavailable. The file is preserved; no key is guessed.");
         }
 
         if (ActiveAntiCheatCodec.HasHeader(data))
