@@ -45,7 +45,15 @@ jobs:
           try {
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
             Write-Host "L2_PID=$($p.Id)"
-            $p.WaitForExit(20000) | Out-Null
+            for ($i = 0; $i -lt 20; $i++) {
+              $p.Refresh()
+              if ($p.HasExited) { break }
+              try {
+                $mods = (Get-Process -Id $p.Id -Module -ErrorAction Stop).Modules.ModuleName -join ","
+                Write-Host "L2_MODULES[$i]=$mods"
+              } catch { Write-Host "L2_MODULES[$i]=unavailable" }
+              Start-Sleep -Seconds 1
+            }
             $p.Refresh()
             if (!$p.HasExited) {
               Write-Host "L2_TIMEOUT=1 (terminating after capture window)"
@@ -59,6 +67,7 @@ jobs:
               Write-Host "CAPTURE_LENGTH=$((Get-Item smartcrypt-capture.bin).Length)"
               Format-Hex -Path smartcrypt-capture.bin | Select-Object -First 4
             } else { Write-Host "CAPTURE_MISSING=1" }
+            if (Test-Path smartcapture-debug.log) { Get-Content smartcapture-debug.log }
             if (Test-Path npkscrypt-api-trace.txt) { Get-Content npkscrypt-api-trace.txt }
             Get-ChildItem -File | Select-Object Name,Length
           } finally { Pop-Location }
