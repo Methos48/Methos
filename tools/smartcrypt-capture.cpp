@@ -44,6 +44,11 @@ static HMODULE WINAPI HookLoadLibraryA(LPCSTR n){HMODULE h=realLoadLibraryA(n);T
 static BOOL WINAPI HookVirtualProtect(LPVOID a,SIZE_T s,DWORD p,PDWORD o){BOOL r=realVirtualProtect(a,s,p,o);Trace("VirtualProtect caller=%p address=%p size=%Ix protect=%08lX result=%d\n",_ReturnAddress(),a,s,p,r);return r;}
 static HANDLE WINAPI HookCreateThread(LPSECURITY_ATTRIBUTES a,SIZE_T s,LPTHREAD_START_ROUTINE f,LPVOID p,DWORD flags,LPDWORD id){HANDLE h=realCreateThread(a,s,f,p,flags,id);Trace("CreateThread caller=%p start=%p param=%p result=%p\n",_ReturnAddress(),f,p,h);return h;}
 static DWORD WINAPI HookGetModuleFileNameW(HMODULE m,LPWSTR b,DWORD n){DWORD r=realGetModuleFileNameW(m,b,n);if(r){char tmp[MAX_PATH*3]={};WideCharToMultiByte(CP_UTF8,0,b,-1,tmp,sizeof(tmp),NULL,NULL);Trace("GetModuleFileNameW caller=%p module=%p path=%s\n",_ReturnAddress(),m,tmp);}return r;}
+static HMODULE WINAPI HookGetModuleHandleA(LPCSTR n){HMODULE h=realGetModuleHandleA(n);Trace("GetModuleHandleA caller=%p name=%s result=%p\\n",_ReturnAddress(),n?n:"(null)",h);return h;}
+static DWORD WINAPI HookGetModuleFileNameA(HMODULE m,LPSTR b,DWORD n){DWORD r=realGetModuleFileNameA(m,b,n);if(r)Trace("GetModuleFileNameA caller=%p module=%p path=%s\\n",_ReturnAddress(),m,b);return r;}
+static HLOCAL WINAPI HookLocalAlloc(UINT f,SIZE_T n){HLOCAL h=realLocalAlloc(f,n);Trace("LocalAlloc caller=%p flags=%X size=%Ix result=%p\\n",_ReturnAddress(),f,n,h);return h;}
+static HLOCAL WINAPI HookLocalFree(HLOCAL h){Trace("LocalFree caller=%p handle=%p\\n",_ReturnAddress(),h);return realLocalFree(h);}
+static BOOL WINAPI HookInitCriticalSection(LPCRITICAL_SECTION s,DWORD spin){BOOL r=realInitCriticalSection(s,spin);Trace("InitCriticalSection caller=%p spin=%lu result=%d\\n",_ReturnAddress(),spin,r);return r;}
 extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  if(InterlockedCompareExchange(&initialized,1,0)==0)InitializeCriticalSection(&lock);
  MH_STATUS init=MH_Initialize(); if(init!=MH_OK&&init!=MH_ERROR_ALREADY_INITIALIZED)return FALSE;
