@@ -37,10 +37,11 @@ static volatile LONG openLogCount=0;
 static CRITICAL_SECTION lock; static LONG initialized=0; static LONGLONG maxEnd=0;
 static HMODULE engineModule=NULL; static BOOL hookReady=FALSE;
 static char traceBuffer[1<<20]; static LONG traceLength=0;
+static HANDLE debugHandle=INVALID_HANDLE_VALUE;
 static void DebugLog(const char* fmt,...){
  char line[768]={}; va_list ap; va_start(ap,fmt); _vsnprintf_s(line,sizeof(line),_TRUNCATE,fmt,ap); va_end(ap);
- HANDLE h=CreateFileA("smartcapture-debug.log",FILE_APPEND_DATA,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
- if(h!=INVALID_HANDLE_VALUE){DWORD n=0;WriteFile(h,line,(DWORD)strlen(line),&n,NULL);CloseHandle(h);}
+ if(debugHandle==INVALID_HANDLE_VALUE)debugHandle=CreateFileA("smartcapture-debug.log",FILE_APPEND_DATA,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+ if(debugHandle!=INVALID_HANDLE_VALUE){DWORD n=0;WriteFile(debugHandle,line,(DWORD)strlen(line),&n,NULL);}
 }
 static void Trace(const char* fmt,...){
  if(!initialized)return; EnterCriticalSection(&lock);
