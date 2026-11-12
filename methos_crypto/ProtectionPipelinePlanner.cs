@@ -5,6 +5,7 @@ namespace MethosUEngine;
 public enum ProtectionLayerKind
 {
     SmartCrypt1522Candidate,
+    ActiveAntiCheatCrypt,
     Lineage2Standard,
     UnrealPackage,
     XdatPayload,
@@ -35,7 +36,8 @@ public static class ProtectionPipelinePlanner
     private static readonly byte[] SmartCrypt1522SamplePrefix = Convert.FromHexString("FFEDFACE0100");
     private const uint UnrealPackageTag = 0x9E2A83C1;
 
-    public static ProtectionPlan Inspect(ReadOnlySpan<byte> data, string fileName)
+    public static ProtectionPlan Inspect(ReadOnlySpan<byte> data, string fileName,
+        bool activeAntiCheatPrivateKeyAvailable = false, bool activeAntiCheatPublicExponentAvailable = false)
     {
         ArgumentNullException.ThrowIfNull(fileName);
         string extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -48,6 +50,22 @@ public static class ProtectionPipelinePlanner
                 "Coincide con el prefijo de las muestras aportadas. No demuestra por sí solo que cualquier archivo con este prefijo use SmartCrypt.");
             return new(extension, new[] { layer }, false, false, "recognized-candidate",
                 "Firma coincidente con las muestras SmartCrypt 1.5.2.2. Falta recuperar y probar el transformador y su inversa; no se intenta descifrar por suposición.");
+        }
+
+        if (ActiveAntiCheatCodec.HasHeader(data))
+        {
+            bool canDecode = activeAntiCheatPrivateKeyAvailable;
+            bool canEncode = canDecode && activeAntiCheatPublicExponentAvailable;
+            var layer = new ProtectionLayer(ProtectionLayerKind.ActiveAntiCheatCrypt,
+                "active-anticheat-crypt",
+                canEncode ? "codec-ready" : canDecode ? "decode-key-available-encode-key-unverified" : "recognized-key-required",
+                canDecode, canEncode,
+                "ActiveAntiCheatCrypt magic recognized. Decoding requires the matching RSA private key captured from the protected client; encoding additionally requires a verified public exponent.");
+            return new(extension, new[] { layer }, canDecode, canEncode,
+                canEncode ? "recognized-supported-encryption" : canDecode ? "recognized-decode-only" : "recognized-key-required",
+                canDecode
+                    ? "ActiveAntiCheatCrypt container recognized and a private key is available. Re-encoding remains disabled until the matching public exponent is verified."
+                    : "ActiveAntiCheatCrypt container recognized, but the matching RSA key is not available. The file is preserved; no key is guessed.");
         }
 
         if (TryReadLineage2Version(data, out int version))
