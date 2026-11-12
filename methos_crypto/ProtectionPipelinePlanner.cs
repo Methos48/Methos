@@ -52,11 +52,18 @@ public static class ProtectionPipelinePlanner
 
         if (TryReadLineage2Version(data, out int version))
         {
+            bool supported = version is 111 or 413;
             var layer = new ProtectionLayer(ProtectionLayerKind.Lineage2Standard,
-                $"lineage2-{version}", "identified-codec-not-verified", false, false,
-                $"Cabecera Lineage2Ver{version:D3} reconocida. La identificación no equivale a tener un codec validado.");
-            return new(extension, new[] { layer }, false, false, "recognized-encryption",
-                $"Se identificó Lineage II versión {version:D3}, pero no se ejecutará hasta disponer de un codec probado.");
+                $"lineage2-{version}", supported ? "codec-implemented-roundtrip-pending-real-sample" : "identified-codec-unavailable",
+                supported, supported,
+                supported
+                    ? $"Cabecera Lineage2Ver{version:D3} reconocida; hay codec integrado con pruebas sintéticas de ida y vuelta. Falta validarlo con la captura real de SmartCrypt."
+                    : $"Cabecera Lineage2Ver{version:D3} reconocida, pero este protocolo aún no tiene codec integrado.");
+            return new(extension, new[] { layer }, supported, supported,
+                supported ? "recognized-supported-encryption" : "recognized-encryption",
+                supported
+                    ? $"Se identificó Lineage II {version:D3}; el codec está integrado. La captura real debe superar la validación de checksum, descifrado y formato."
+                    : $"Se identificó Lineage II {version:D3}, pero todavía no hay codec disponible para esta versión.");
         }
 
         if (data.Length >= 4 && BitConverter.ToUInt32(data[..4]) == UnrealPackageTag)
