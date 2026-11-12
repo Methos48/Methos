@@ -1,4 +1,5 @@
 using System.Text;
+using System.Security.Cryptography;
 using MethosUEngine;
 
 if (args.Length > 0 && args[0] == "--ucc-decompile")
@@ -92,6 +93,41 @@ foreach (int protocol in new[] { 111, 413 })
     Check(standardPlain.SequenceEqual(standardDecoded), $"Protocol {protocol} round-trip failed.");
 }
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
+
+using (RSA aacRsa = RSA.Create(2048))
+{
+    RSAParameters aacParameters = aacRsa.ExportParameters(true);
+    byte[] nLe = aacParameters.Modulus!.Reverse().ToArray();
+    byte[] dLe = aacParameters.D!.Reverse().ToArray();
+    byte[] eLe = aacParameters.Exponent!.Reverse().ToArray();
+    var aacProfile = new ActiveAntiCheatRsaProfile(nLe, dLe, eLe);
+    var aacRuntime = ProtectionCodecRuntime.CreateDefault(aacProfile);
+    var aacPlan = new ProtectionPlan(".u", new[]
+    {
+        new ProtectionLayer(ProtectionLayerKind.ActiveAntiCheatCrypt,
+            "active-anticheat-crypt", "synthetic", true, true, "synthetic RSA/RC4 fixture")
+    }, true, true, "test", "Synthetic ActiveAntiCheatCrypt round-trip.");
+    byte[] aacPlain = Encoding.UTF8.GetBytes("Methos ActiveAntiCheatCrypt RSA-2048 RC4 test vector.");
+    byte[] aacEncrypted = aacRuntime.Encode(aacPlan, aacPlain, "Interface.u");
+    Check(ActiveAntiCheatCodec.HasHeader(aacEncrypted), "ActiveAntiCheatCrypt header was not emitted.");
+    byte[] rsaMessage = aacRsa.Decrypt(
+        aacEncrypted.AsSpan(ActiveAntiCheatCodec.RsaBlockOffset, ActiveAntiCheatCodec.RsaBlockLength).ToArray(),
+        RSAEncryptionPadding.Pkcs1);
+    Check(rsaMessage.Length == 40 &&
+          rsaMessage.AsSpan(0, 20).SequenceEqual("ActiveAntiCheatCrypt"u8),
+        "ActiveAntiCheatCrypt RSA block did not contain the expected magic and RC4 key.");
+    var aacDetected = ProtectionPipelinePlanner.Inspect(aacEncrypted, "Interface.u",
+        activeAntiCheatPrivateKeyAvailable: true, activeAntiCheatPublicExponentAvailable: true);
+    Check(aacDetected.CanDecode && aacDetected.CanEncode &&
+          aacDetected.Layers[0].Kind == ProtectionLayerKind.ActiveAntiCheatCrypt,
+        "ActiveAntiCheatCrypt detection did not expose the configured key capabilities.");
+    byte[] aacDecoded = aacRuntime.Decode(aacDetected, aacEncrypted, "Interface.u");
+    Check(aacPlain.SequenceEqual(aacDecoded), "ActiveAntiCheatCrypt RSA/RC4 round-trip failed.");
+    var aacNoKey = ProtectionPipelinePlanner.Inspect(aacEncrypted, "Interface.u");
+    Check(aacNoKey.Status == "recognized-key-required" && !aacNoKey.CanDecode,
+        "ActiveAntiCheatCrypt must fail closed when its matching private key is unavailable.");
+}
+Console.WriteLine("PASS: ActiveAntiCheatCrypt RSA-2048/PKCS#1 v1.5 + RC4 encode/decode and key-required detection.");
 var literalBody = "return 42;";
 byte[] literalBytecode = UnrealScriptFunctionCompiler.CompileReturnOnlyBody(literalBody);
 string restoredLiteralBody = UnrealScriptFunctionDecompiler.DecompileReturnOnly(literalBytecode);
