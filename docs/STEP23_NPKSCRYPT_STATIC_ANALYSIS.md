@@ -27,3 +27,20 @@ Do not call the export as if it were a normal C function and do not register it 
 ## Validation status
 
 The planner smoke workflow passed, including synthetic multi-layer round-trip and refusal to decode the real SmartCrypt candidate without a codec. That validates orchestration only; it does not decrypt the supplied U/XDAT samples.
+
+
+## Step 23B — loaded-image snapshot (2026-11-12)
+
+The exact DLL was loaded in a disposable x86 process without starting `l2.exe`. The process captured the mapped image after Windows loader initialization:
+
+- LoadLibrary succeeded; mapped base `0x737C0000`; `SizeOfImage=0x16B000`.
+- Snapshot: 363 readable pages, 1,486,848 bytes.
+- Both exported names resolve to RVA `0x28C0`; the mapped code at that RVA is `mov eax,1; ret`. These exports are success stubs, not file decoders.
+- The PE entry point remains at RVA `0xA6520`, inside the high-entropy `ogojilna` section. A mapped-image disassembly still produces heavily obfuscated/virtualized-looking instructions there; ordinary static x86 decoding does not recover a readable file transform.
+- The mapped image contains dynamically resolved API names including `ReadFile`, `WriteFile`, `CreateFileW`, `GetProcAddress`, and `VirtualProtect`. The import table alone therefore understates its runtime API use.
+
+This confirms that the earlier static disassembly was incomplete because most executable sections have no raw-file data. The loader snapshot improves the analysis, but it does not expose a usable cipher or key. No decode is claimed.
+
+## Next technical target
+
+Trace the exact client file-read chain after the engine's own file subsystem is initialized. Core.dll exports `FFileStream::Init`, `FFileStream::CreateStream`, and `FFileStream::Read`; their implementations call the Win32 file APIs. The existing worker merely loads Core/engine and performs a .NET file read, so it has not exercised this engine stream path. Build a controlled x86 probe for that path and verify whether it produces a post-protection stream before attempting the standard Lineage II second layer.
