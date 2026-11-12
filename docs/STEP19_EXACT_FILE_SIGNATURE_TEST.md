@@ -32,3 +32,15 @@ Next required validation:
 5. Validate the resulting U package and XDAT structure with independent parsers and record hashes.
 
 Original files remain unchanged in the repository.
+
+
+## Independent format check for both outputs (2026-11-12)
+
+| File | Observed bytes | Expected inner format | Current verdict |
+|---|---|---|---|
+| interface.u | `FF ED FA CE 01 00` | Unreal package after protection layers are removed; expected package tag `C1 83 2A 9E` or a recognized intermediate `Lineage2Ver###` header | Still protected; no valid Unreal package produced |
+| interface.xdat | `FF ED FA CE 01 00` | Interlude XDAT serialized window/layout stream; not an Unreal package | Still protected; no valid XDAT payload produced |
+
+The two files share the outer six-byte candidate marker, but their inner formats are different. A successful U validation must parse the Unreal package summary/tables and offsets. A successful XDAT validation must parse the XDAT window/layout records and verify all lengths and references. The Unreal package magic must never be used to classify a file as XDAT merely because its extension is `.xdat`.
+
+The current capture worker did not generate either decoded result. Its U capture hash equals the original U hash exactly, proving that it performed an ordinary file read rather than the required post-protection extraction. No valid output exists yet for either file. The format check therefore fails for both, and the pipeline must keep both originals blocked from editing until real decoded payloads pass their respective parsers.
