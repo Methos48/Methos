@@ -4,7 +4,7 @@ using MethosUEngine;
 
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
-    if (args.Length != 3)
+    if (args.Length is < 3 or > 4)
         throw new ArgumentException("Usage: --ucc-decompile <package.u> <outputDirectory> [referenceSourceDirectory]");
     UnrealPackageDecompileResult result = UnrealPackageDecompiler.DecompileToFolder(args[1], args[2], args.Length == 4 ? args[3] : null);
     Console.WriteLine($"PASS: UELib exported {result.ExportedCount}/{result.ClassCount} classes from package {result.PackageVersion}/{result.LicenseeVersion}; objects={result.ObjectCount}; failed={result.FailedCount}.");
