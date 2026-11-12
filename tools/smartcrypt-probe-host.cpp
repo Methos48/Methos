@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+typedef HANDLE (WINAPI *PFN_NpkCreateFileW)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef BOOL (WINAPI *PFN_NpkReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 
 int main() {
@@ -49,8 +50,9 @@ int main() {
     HMODULE npk = GetModuleHandleA("npkscrypt.dll");
     printf("HOST_NPK_MODULE=%p\n", npk);
     if (npk) {
+        PFN_NpkCreateFileW npkCreate = (PFN_NpkCreateFileW)((BYTE*)npk + 0x119A7C);
         PFN_NpkReadFile npkRead = (PFN_NpkReadFile)((BYTE*)npk + 0x119C6C);
-        HANDLE file2 = CreateFileW(
+        HANDLE file2 = npkCreate(
             L"SysString-e.dat",
             GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE,
