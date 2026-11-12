@@ -23,6 +23,12 @@ jobs:
           if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll -Force }
           Copy-Item interface.u probe/SysString-e.dat
           if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
+          Write-Host "=== DLL inventory ==="
+          Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
+          Write-Host "=== Core dependencies ==="
+          dumpbin /dependents probe\Core.dll
+          Write-Host "=== Engine dependencies ==="
+          dumpbin /dependents probe\engine.dll
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
