@@ -70,6 +70,54 @@ foreach (int protocol in new[] { 111, 413 })
 }
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
 
+if (File.Exists("Engine.u"))
+{
+    byte[] realEngine = File.ReadAllBytes("Engine.u");
+    var realDetection = ProtectionPipelinePlanner.Inspect(realEngine, "Engine.u");
+    Check(realDetection.Status == "recognized-supported-encryption" &&
+          realDetection.Layers.Any(x => x.Id == "lineage2-111"),
+        "Real Engine.u must be identified as Lineage2Ver111.");
+
+    var realPlan = new ProtectionPlan(".u", new[]
+    {
+        new ProtectionLayer(ProtectionLayerKind.Lineage2Standard, "lineage2-111", "verified", true, true,
+            "Real client Engine.u sample")
+    }, true, true, "real-sample", "Real Lineage2Ver111 Engine.u decode.");
+
+    byte[] realPlain = standard.Decode(realPlan, realEngine, "Engine.u");
+    Check(realPlain.Length > 65536 &&
+          BitConverter.ToUInt32(realPlain, 0) == UnrealPackageIndex.PackageTag,
+        "Decoded Engine.u must begin with a classic Unreal package signature.");
+
+    var realPackage = UnrealPackageIndex.Parse(realPlain);
+    Check(realPackage.Summary.Version == 123 && realPackage.Summary.LicenseeVersion == 30,
+        "Decoded Engine.u package profile must be 123/30.");
+    Check(realPackage.Names.Count > 1000 && realPackage.Imports.Count > 100 &&
+          realPackage.Exports.Count > 1000,
+        "Decoded Engine.u must contain plausible name/import/export tables.");
+
+    byte[] rebuiltPlain = new UnrealPackageBuilder(realPackage).Build();
+    var rebuiltPackage = UnrealPackageIndex.Parse(rebuiltPlain);
+    Check(rebuiltPackage.Names.SequenceEqual(realPackage.Names) &&
+          rebuiltPackage.Imports.SequenceEqual(realPackage.Imports) &&
+          rebuiltPackage.Exports.SequenceEqual(realPackage.Exports),
+        "Engine.u package rebuild must preserve all name/import/export tables.");
+
+    byte[] rebuiltEncrypted = standard.Encode(realPlan, rebuiltPlain, "Engine.u");
+    byte[] finalPlain = standard.Decode(realPlan, rebuiltEncrypted, "Engine.u");
+    var finalPackage = UnrealPackageIndex.Parse(finalPlain);
+    Check(finalPackage.Names.SequenceEqual(realPackage.Names) &&
+          finalPackage.Imports.SequenceEqual(realPackage.Imports) &&
+          finalPackage.Exports.SequenceEqual(realPackage.Exports),
+        "Engine.u 111 encode/decode after package rebuild must preserve all tables.");
+
+    Console.WriteLine($"PASS: REAL Engine.u Lineage2Ver111 decode, Unreal parse, rebuild, and re-encrypt; names={realPackage.Names.Count}, imports={realPackage.Imports.Count}, exports={realPackage.Exports.Count}.");
+}
+else
+{
+    Console.WriteLine("SKIP: Engine.u real-client fixture is not present in this checkout.");
+}
+
 sealed class XorTestCodec(string layerId, byte key) : IProtectionCodec
 {
     public string LayerId => layerId;
