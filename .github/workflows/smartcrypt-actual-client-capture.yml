@@ -6,6 +6,7 @@ on:
       - ".github/workflows/smartcrypt-actual-client-capture.yml"
       - "tools/smartcrypt-capture.cpp"
       - "tools/smartcrypt-probe-host.cpp"
+      - "tools/core-filestream-probe.cpp"
       - "tools/make_probe_systextures.py"
       - "tools/patch_ogg_imports.py"
       - "tools/smartcrypt-capture.def"
