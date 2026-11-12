@@ -9,6 +9,9 @@ static void* __fastcall HeapMalloc(void*,void*,uint32_t n,const wchar_t*){return
 static void* __fastcall HeapRealloc(void*,void*,void* p,uint32_t n,const wchar_t*){if(!p)return HeapMalloc(nullptr,nullptr,n,nullptr);return HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,p,n?n:1);}
 static void __fastcall AllocFree(void*,void*,void* p){if(p)HeapFree(GetProcessHeap(),0,p);}
 int main(){
+ HMODULE dsetup=LoadLibraryA("dsetup.dll");
+ FARPROC dsetupOrdinal=dsetup?GetProcAddress(dsetup,(LPCSTR)0x67):nullptr;
+ printf("DSETUP_MODULE=%p ORDINAL_67=%p\\n",dsetup,dsetupOrdinal);
  HMODULE ogg=LoadLibraryW(L"ogg.dll");
  printf("OGG=%p err=%lu\n",ogg,GetLastError());
  HMODULE core=GetModuleHandleW(L"Core.dll");
