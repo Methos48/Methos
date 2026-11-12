@@ -80,7 +80,7 @@ The SmartCrypt runtime capture is not yet a standalone offline codec. The standa
 
 ## Remaining work
 
-- [ ] Run the revised actual-client capture workflow and recover a complete intermediate file.
+- [ ] Obtain the exact Window.dll matching the uploaded l2.exe, then run the actual-client capture workflow and recover a complete intermediate file.
 - [ ] Confirm whether the intermediate begins with Lineage2Ver111, Lineage2Ver413, another supported header, or an unrecognized format.
 - [ ] Run the integrated standard codec against the actual intermediate and validate checksum/decompression.
 - [ ] Validate interface.u as a real Unreal package and interface.xdat with the Interlude XDAT parser.
