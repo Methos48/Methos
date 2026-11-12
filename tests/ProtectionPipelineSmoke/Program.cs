@@ -270,22 +270,24 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
           customPlan.CanDecode && customPlan.CanEncode,
         $"{targetName}: planner did not recognize the original custom protocol-111 trailer.");
 
-    var smartLayer = new ProtectionLayer(ProtectionLayerKind.SmartCrypt1522Candidate,
-        "smartcrypt-1.5.2.2", "real-file-roundtrip-verified", true, true,
-        "Embedded per-file seed profile reconstructed from the original file.");
-    var tailLayer = new ProtectionLayer(ProtectionLayerKind.Lineage2CustomTrailer,
-        "lineage2-111-custom-tail", "original-trailer-preserved-and-roundtrip-verified", true, true,
-        "Original 20-byte trailer preserved verbatim; no stock trailer is invented.");
-    var fullPlan = new ProtectionPlan(Path.GetExtension(targetName),
-        new[] { smartLayer, tailLayer }, true, true,
-        "real-file-roundtrip-verified", "SmartCrypt + custom Lineage2Ver111 trailer.");
-    var runtime = ProtectionCodecRuntime.CreateDefault(
-        smartCryptProfile: smartProfile, lineage2CustomTailProfile: tailProfile);
+    var inspection = ProtectionPipelinePlanner.InspectFullPipeline(original, targetName);
+    Check(inspection.Plan.Layers.Count == 2 &&
+          inspection.Plan.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate &&
+          inspection.Plan.Layers[1].Kind == ProtectionLayerKind.Lineage2CustomTrailer &&
+          inspection.Plan.CanDecode && inspection.Plan.CanEncode &&
+          inspection.IsPlaintextCandidate,
+        $"{targetName}: automatic multi-layer inspection did not verify both original protection layers.");
+    Check(inspection.DecodedPayload.SequenceEqual(plainPayload),
+        $"{targetName}: automatic inspection returned a different plaintext payload.");
 
-    byte[] runtimeDecoded = runtime.Decode(fullPlan, original, targetName);
+    var runtime = ProtectionCodecRuntime.CreateDefault(
+        smartCryptProfile: inspection.SmartCryptProfile,
+        lineage2CustomTailProfile: inspection.Lineage2CustomTailProfile);
+
+    byte[] runtimeDecoded = runtime.Decode(inspection.Plan, original, targetName);
     Check(runtimeDecoded.SequenceEqual(plainPayload),
         $"{targetName}: complete layered runtime decode did not reproduce the validated payload.");
-    byte[] runtimeRebuilt = runtime.Encode(fullPlan, plainPayload, targetName);
+    byte[] runtimeRebuilt = runtime.Encode(inspection.Plan, plainPayload, targetName);
     Check(runtimeRebuilt.SequenceEqual(original),
         $"{targetName}: complete layered runtime encode did not reproduce the original file byte for byte.");
 
