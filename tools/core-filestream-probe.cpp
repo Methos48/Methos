@@ -11,7 +11,12 @@ static void __fastcall AllocFree(void*,void*,void* p){if(p)HeapFree(GetProcessHe
 int main(){
  HMODULE dsetup=LoadLibraryA("dsetup.dll");
  FARPROC dsetupOrdinal=dsetup?GetProcAddress(dsetup,(LPCSTR)0x67):nullptr;
- printf("DSETUP_MODULE=%p ORDINAL_67=%p\\n",dsetup,dsetupOrdinal);
+ char localDsetupPath[MAX_PATH]={};if(dsetup)GetModuleFileNameA(dsetup,localDsetupPath,MAX_PATH);
+ char systemDsetupPath[MAX_PATH]={};GetSystemDirectoryA(systemDsetupPath,MAX_PATH);strcat_s(systemDsetupPath,"\\\\dsetup.dll");
+ HMODULE systemDsetup=LoadLibraryA(systemDsetupPath);
+ FARPROC systemDsetupOrdinal=systemDsetup?GetProcAddress(systemDsetup,(LPCSTR)0x67):nullptr;
+ printf("DSETUP_MODULE=%p PATH=%s ORDINAL_67=%p\\n",dsetup,localDsetupPath,dsetupOrdinal);
+ printf("DSETUP_SYSTEM_PATH=%s MODULE=%p ORDINAL_67=%p\\n",systemDsetupPath,systemDsetup,systemDsetupOrdinal);
  HMODULE ogg=LoadLibraryW(L"ogg.dll");
  printf("OGG=%p err=%lu\n",ogg,GetLastError());
  HMODULE core=GetModuleHandleW(L"Core.dll");
