@@ -229,9 +229,7 @@ public sealed class UnrealPackageIndex
             {
                 // Unreal FCompactIndex's fifth byte contributes the full byte at
                 // bit 27. The 32-bit accumulator naturally discards overflow bits.
-                // Bit 7 cannot continue because the format is limited to five bytes.
-                if ((next & 0x80) != 0)
-                    throw new InvalidDataException("El índice compacto continúa después del quinto byte.");
+                // The fifth byte is fully data, including bit 7; it is not a continuation flag.
                 value |= (uint)next << shift;
                 bytes++;
                 more = false;
