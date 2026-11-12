@@ -24,15 +24,25 @@ jobs:
         run: |
           Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
           Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
-          New-Item -ItemType Directory -Force probe | Out-Null
-          Get-ChildItem client-system,client-engine -Recurse -File | ForEach-Object { Copy-Item $_.FullName (Join-Path probe $_.Name) -Force }
+          New-Item -ItemType Directory -Force probe/system,probe/Crest,probe/SysTextures | Out-Null
+          foreach ($sourceRoot in @("client-system","client-engine")) {
+            Get-ChildItem $sourceRoot -Recurse -File | ForEach-Object {
+              $relative = $_.FullName.Substring((Resolve-Path $sourceRoot).Path.Length).TrimStart("\\")
+              $destination = Join-Path "probe/system" $relative
+              $parent = Split-Path $destination -Parent
+              New-Item -ItemType Directory -Force $parent | Out-Null
+              Copy-Item $_.FullName $destination -Force
+            }
+          }
           foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll")) {
-            if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
+            if (Test-Path $name) { Copy-Item $name (Join-Path "probe/system" $name) -Force }
           }
           if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
-          Copy-Item Window.dll probe/Window.dll -Force
-          Copy-Item l2.exe probe/l2.exe -Force
-          Copy-Item interface.u probe/SysString-e.dat -Force
+          Copy-Item Window.dll probe/system/Window.dll -Force
+          Copy-Item l2.exe probe/system/l2.exe -Force
+          Copy-Item interface.u probe/system/SysString-e.dat -Force
+          if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force }
+          if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force }
           $vc = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vc) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vc "VC\Auxiliary\Build\vcvars32.bat"
@@ -40,14 +50,14 @@ jobs:
           cmd.exe /c $cmd
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture build failed" }
           python -m pip install lief
-          python tools/patch_ogg_imports.py probe/ogg.dll probe/ogg.patched.dll
-          Move-Item probe/ogg.patched.dll probe/ogg.dll -Force
+          python tools/patch_ogg_imports.py probe/system/ogg.dll probe/system/ogg.patched.dll
+          Move-Item probe/system/ogg.patched.dll probe/system/ogg.dll -Force
           Write-Host "=== Prepared files ==="
-          Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
+          Get-ChildItem probe/system -Filter *.dll | Select-Object -ExpandProperty Name
       - name: Launch exact client and collect post-hook buffer
         shell: pwsh
         run: |
-          Push-Location probe
+          Push-Location probe/system
           try {
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
             Write-Host "L2_PID=$($p.Id)"
