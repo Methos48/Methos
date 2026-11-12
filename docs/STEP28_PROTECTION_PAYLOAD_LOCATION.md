@@ -1,29 +1,33 @@
-# Step 28 — Protection payload location cross-check
+# Step 28 — Retired SGuard hypothesis; correct target provenance
 
 Date: 2026-11-12
 
-## Finding
+## Correct target identity
 
-The absence of `dsetup.u` from `system.zip` and `engine.zip` does not establish that it is absent from the client installation. Public SGuard installation discussion lists the client-side protection set alongside the client launcher files: `L2.exe`, `L2.bin`, `dsetup.u`, `dsetup.dll`, and `SmartGuard.ini`. This places the relevant payload in the client root/installation set, not necessarily in `system/`.
+The files under investigation, `interface.u` (1,241,967 bytes) and `interface.xdat` (705,813 bytes), belong to an interface made by the Lineage II player/creator **Dunk3l**. They are not original interface files supplied by L2Sudamerica.
 
-Evidence:
-- SGuard forum discussion, post #3, 2022-09-30: https://forum.lucera2.com/threads/smartguard.3025/
-- L2-Scripts SGuard presentation: https://l2-scripts.com/demo/sguard.pdf
+This distinction is central. The server/client installation is only a possible runtime environment for testing compatibility and observing file access. It is not evidence that Dunk3l used the server's own protection, encryption, or packaging method.
 
-This is corroborating ecosystem documentation, not proof that the exact L2Sudamerica build uses the same SGuard package. The exact DLL must be matched by architecture, exports, hash/build compatibility, and ordinal 0x67 behavior.
+## Withdrawn hypothesis
 
-## Repository inventory cross-check
+The earlier SGuard/`dsetup.u`/`SmartGuard.ini` path is not established as relevant to Dunk3l's files. The user explicitly confirmed those files do not exist in the game installation. Do not request them again, do not treat them as required, and do not substitute unrelated DirectX `dsetup.dll` files.
 
-Current Methos-XDAT tree contains `dsetup.dll` and `l2.exe`, but no `dsetup.u`, `l2.bin`, or `SmartGuard.ini`. The uploaded `dsetup.dll` has already been identified as the unrelated DirectX setup library and must not be substituted for the protection module.
+The observed conditional `dsetup.dll`/ordinal-0x67 branch inside the uploaded `npkscrypt.dll` remains a static reverse-engineering observation only. It does not prove that this DLL encrypted the Dunk3l interface or that the branch participates in its decoding.
 
-## Consequence
+## Required investigation direction
 
-Do not keep searching only inside `system.zip`. The remaining required evidence is the client-root protection payload (if supplied by this server build), especially the matching `dsetup.dll`, `dsetup.u`, and `SmartGuard.ini`, plus `l2.bin` if present. Do not download a random SGuard DLL or mix files from another server: that could execute incompatible or malicious code and cannot establish the correct key state.
+1. Identify the original distribution package and any readme/version/author metadata for Dunk3l's interface.
+2. Inspect the two file headers, section/layout patterns, entropy, and known Unreal package/XDAT signatures independently.
+3. Search for Dunk3l-specific tools, loaders, patchers, release notes, and community documentation; distinguish a wrapper from the underlying Unreal/XDAT serialization.
+4. Treat `npkscrypt.dll` as a candidate runtime component only. Confirm its involvement with a call trace from the actual interface-loading path before attributing encryption to it.
+5. Recover the actual key/state source only after the responsible transform is demonstrated.
+6. Validate decoded U as a structurally valid Unreal package and XDAT as a valid interface data stream; preserve original bytes and prove round-trip behavior.
 
 ## Status
 
-- [x] Establish that the system/engine archive search was too narrow to rule out client-root payloads.
-- [x] Identify the exact filenames and expected client-root placement reported by SGuard installation documentation.
-- [ ] Locate the matching L2Sudamerica protection payload.
-- [ ] Trace ordinal 0x67 and recover the per-handle key state.
-- [ ] Decode and validate both U and XDAT samples.
+- [x] Record correct provenance: Dunk3l-created interface, not L2Sudamerica original assets.
+- [x] Withdraw SGuard files as assumed prerequisites.
+- [ ] Establish Dunk3l's exact release/toolchain and protection layer.
+- [ ] Prove or rule out `npkscrypt.dll` involvement at runtime.
+- [ ] Decode and structurally validate U and XDAT independently.
+- [ ] Implement tested automatic decode/encode support in Methos-XDAT.
