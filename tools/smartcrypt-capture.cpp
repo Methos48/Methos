@@ -6,10 +6,12 @@
 #include <wchar.h>
 #include <stdarg.h>
 #include <intrin.h>
+#include <winternl.h>
 #include "MinHook.h"
 typedef HANDLE (WINAPI *PFN_CreateFileW)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef HANDLE (WINAPI *PFN_CreateFileA)(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef BOOL (WINAPI *PFN_ReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+typedef NTSTATUS (NTAPI *PFN_NtReadFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,PVOID,ULONG,PLARGE_INTEGER,PULONG);
 typedef FARPROC (WINAPI *PFN_GetProcAddress)(HMODULE,LPCSTR);
 typedef HMODULE (WINAPI *PFN_LoadLibraryA)(LPCSTR);
 typedef BOOL (WINAPI *PFN_VirtualProtect)(LPVOID,SIZE_T,DWORD,PDWORD);
@@ -20,7 +22,7 @@ typedef DWORD (WINAPI *PFN_GetModuleFileNameA)(HMODULE,LPSTR,DWORD);
 typedef HLOCAL (WINAPI *PFN_LocalAlloc)(UINT,SIZE_T);
 typedef HLOCAL (WINAPI *PFN_LocalFree)(HLOCAL);
 typedef BOOL (WINAPI *PFN_InitCriticalSection)(LPCRITICAL_SECTION,DWORD);
-static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL;
+static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL; static PFN_NtReadFile realNtReadFile=NULL;
 static PFN_GetProcAddress realGetProcAddress=NULL; static PFN_LoadLibraryA realLoadLibraryA=NULL;
 static PFN_VirtualProtect realVirtualProtect=NULL; static PFN_CreateThread realCreateThread=NULL;
 static PFN_GetModuleFileNameW realGetModuleFileNameW=NULL;
@@ -40,7 +42,26 @@ static void Trace(const char* fmt,...){
 static BOOL IsTarget(LPCWSTR s){if(!s)return FALSE;const wchar_t*p=wcsrchr(s,L'\\');p=p?p+1:s;return _wcsicmp(p,L"SysString-e.dat")==0;}
 static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE){EnterCriticalSection(&lock);if(IsTarget(n)){targetHandle=h;Trace("TARGET_CREATE_W opened\\n");}LeaveCriticalSection(&lock);}return h;}
 static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE&&n){const char*p=strrchr(n,'\\');p=p?p+1:n;if(_stricmp(p,"SysString-e.dat")==0){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_A path=%s handle=%p\\n",n,h);LeaveCriticalSection(&lock);}}return h;}
-static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){BOOL ok=realReadFile(h,b,req,got,ov);DWORD n=(ok&&got)?*got:0;if(ok&&h==targetHandle&&b&&n){LARGE_INTEGER pos;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;}else{LARGE_INTEGER zero,cur;zero.QuadPart=0;cur.QuadPart=0;if(SetFilePointerEx(h,zero,&cur,FILE_CURRENT))cur.QuadPart-=n;pos=cur;}EnterCriticalSection(&lock);if(outputHandle==INVALID_HANDLE_VALUE)outputHandle=realCreateFileW(L"smartcrypt-capture.bin",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);if(outputHandle!=INVALID_HANDLE_VALUE){SetFilePointerEx(outputHandle,pos,NULL,FILE_BEGIN);DWORD wrote=0;WriteFile(outputHandle,b,n,&wrote,NULL);LONGLONG end=pos.QuadPart+wrote;if(end>maxEnd)maxEnd=end;}LeaveCriticalSection(&lock);}return ok;}
+static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* explicitPos,const char* api){
+ if(h!=targetHandle||!b||!n)return;
+ LARGE_INTEGER pos={};
+ if(explicitPos)pos=*explicitPos;
+ else {LARGE_INTEGER zero,cur;zero.QuadPart=0;cur.QuadPart=0;if(SetFilePointerEx(h,zero,&cur,FILE_CURRENT))cur.QuadPart-=n;pos=cur;}
+ EnterCriticalSection(&lock);
+ if(outputHandle==INVALID_HANDLE_VALUE)outputHandle=realCreateFileW(L"smartcrypt-capture.bin",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+ if(outputHandle!=INVALID_HANDLE_VALUE){SetFilePointerEx(outputHandle,pos,NULL,FILE_BEGIN);DWORD wrote=0;WriteFile(outputHandle,b,n,&wrote,NULL);LONGLONG end=pos.QuadPart+wrote;if(end>maxEnd)maxEnd=end;Trace("CAPTURE_%s offset=%I64d bytes=%lu\\n",api,pos.QuadPart,wrote);}
+ LeaveCriticalSection(&lock);
+}
+static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
+ BOOL ok=realReadFile(h,b,req,got,ov);DWORD n=(ok&&got)?*got:0;
+ if(ok&&n){LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
+ return ok;
+}
+static NTSTATUS NTAPI HookNtReadFile(HANDLE h,HANDLE ev,PIO_APC_ROUTINE apc,PVOID apcCtx,PIO_STATUS_BLOCK iosb,PVOID b,ULONG req,PLARGE_INTEGER offset,PULONG key){
+ NTSTATUS status=realNtReadFile(h,ev,apc,apcCtx,iosb,b,req,offset,key);
+ if(status>=0&&iosb&&iosb->Information){LARGE_INTEGER pos,*pp=NULL;if(offset){pos=*offset;pp=&pos;}CaptureReadBuffer(h,b,(DWORD)iosb->Information,pp,"NtReadFile");}
+ return status;
+}
 static FARPROC WINAPI HookGetProcAddress(HMODULE m,LPCSTR n){FARPROC p=realGetProcAddress(m,n);if(n&&(uintptr_t)n>0xFFFF)Trace("GetProcAddress caller=%p module=%p name=%s result=%p\n",_ReturnAddress(),m,n,p);return p;}
 static HMODULE WINAPI HookLoadLibraryA(LPCSTR n){HMODULE h=realLoadLibraryA(n);Trace("LoadLibraryA caller=%p name=%s result=%p\n",_ReturnAddress(),n?n:"(null)",h);return h;}
 static BOOL WINAPI HookVirtualProtect(LPVOID a,SIZE_T s,DWORD p,PDWORD o){BOOL r=realVirtualProtect(a,s,p,o);Trace("VirtualProtect caller=%p address=%p size=%Ix protect=%08lX result=%d\n",_ReturnAddress(),a,s,p,r);return r;}
@@ -71,6 +92,7 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  MH_CreateHookApi(L"kernel32.dll","CreateFileW",(LPVOID)HookCreateFileW,(LPVOID*)&realCreateFileW);
  MH_CreateHookApi(L"kernel32.dll","CreateFileA",(LPVOID)HookCreateFileA,(LPVOID*)&realCreateFileA);
  MH_CreateHookApi(L"kernel32.dll","ReadFile",(LPVOID)HookReadFile,(LPVOID*)&realReadFile);
+ MH_CreateHookApi(L"ntdll.dll","NtReadFile",(LPVOID)HookNtReadFile,(LPVOID*)&realNtReadFile);
  if(MH_EnableHook(MH_ALL_HOOKS)!=MH_OK)return FALSE;
  hookReady=TRUE; return TRUE;
 }
