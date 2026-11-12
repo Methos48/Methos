@@ -10,8 +10,8 @@ internal static class Probe {
   Console.WriteLine("PID="+System.Diagnostics.Process.GetCurrentProcess().Id+" BITNESS="+(IntPtr.Size*8));
   IntPtr shim=LoadLibraryW(Path.Combine(Environment.CurrentDirectory,"SmartCapture.dll"));
   if(shim==IntPtr.Zero){Console.WriteLine("SHIM_LOAD_FAIL "+Marshal.GetLastWin32Error());return 2;}
-  var init=(InitFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Initialize"),typeof(InitFn));
-  var flush=(FlushFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Flush"),typeof(FlushFn));
+  var init=(InitFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"_SmartCapture_Initialize@0"),typeof(InitFn));
+  var flush=(FlushFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"_SmartCapture_Flush@0"),typeof(FlushFn));
   IntPtr engine=LoadLibraryW(Path.Combine(Environment.CurrentDirectory,"engine.dll"));
   Console.WriteLine("ENGINE_LOAD="+(engine!=IntPtr.Zero)+" ERROR="+Marshal.GetLastWin32Error());
   IntPtr ogg=LoadLibraryW(Path.Combine(Environment.CurrentDirectory,"ogg.dll"));
