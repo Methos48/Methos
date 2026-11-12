@@ -63,6 +63,13 @@ int main() {
             LARGE_INTEGER zero = {};
             SetFilePointerEx(file2, zero, NULL, FILE_BEGIN);
             unsigned long long npkTotal = 0;
+            DWORD firstRead = 0;
+            if (npkRead(file2, buffer, 0x400, &firstRead, NULL)) {
+                npkTotal += firstRead;
+                printf("HOST_NPK_FIRST_READ_REQUEST=1024 BYTES=%lu\n", firstRead);
+            } else {
+                printf("HOST_NPK_FIRST_READ_FAILED=%lu\n", GetLastError());
+            }
             for (;;) {
                 DWORD received = 0;
                 if (!npkRead(file2, buffer, sizeof(buffer), &received, NULL)) {
