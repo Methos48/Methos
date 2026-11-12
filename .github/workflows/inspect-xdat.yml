@@ -38,6 +38,28 @@ jobs:
               print("LINEAGE2VER_MAGIC:", b.startswith(b"Lineage2Ver"))
               print("UNREAL_PACKAGE_MAGIC_C1_83_2A_9E:", b.startswith(bytes.fromhex("C1 83 2A 9E")))
           PY
+      - name: Inspect reference build kit and nested source archives
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          for archive in sorted(Path(".").glob("*.zip")):
+              print(f"\\nARCHIVE: {archive.name} SIZE: {archive.stat().st_size}")
+              try:
+                  with zipfile.ZipFile(archive) as z:
+                      files = [x for x in z.infolist() if not x.is_dir()]
+                      print("ENTRIES:", len(files))
+                      for item in files:
+                          name = item.filename
+                          if name.lower().endswith((".uc", ".xdat", ".u", ".dat", ".ini", ".json", ".txt")) or "xdat" in name.lower():
+                              print(f"  {name} | {item.file_size} bytes")
+                          if item.file_size > 0 and name.lower().endswith((".xdat", ".u")):
+                              with z.open(item) as stream:
+                                  print("    FIRST_16:", stream.read(16).hex(" "))
+              except zipfile.BadZipFile:
+                  print("NOT_A_ZIP")
+          PY
       - name: Preserve both originals for deeper analysis
         uses: actions/upload-artifact@v4
         with:
