@@ -18,6 +18,18 @@ int main(){
  CaptureInitFn captureInit=shim?(CaptureInitFn)GetProcAddress(shim,"SmartCapture_Initialize"):nullptr;
  printf("CAPTURE_HOOK_INIT=%d\\n",captureInit?captureInit():0);
  printf("NPK_LOADED=%p\\n",npk);
+ if(npk){
+  BYTE* base=(BYTE*)npk;
+  IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)base;
+  IMAGE_NT_HEADERS32* nt=(IMAGE_NT_HEADERS32*)(base+dos->e_lfanew);
+  DWORD imageSize=nt->OptionalHeader.SizeOfImage;
+  printf("NPK_IMAGE_BASE=%p SIZE=%08lX\\n",base,imageSize);
+  printf("NPK_GLOBAL_51430=%08lX 51468=%08lX 5146C=%08lX 514E8=%08lX 514EC=%08lX\\n",
+    *(DWORD*)(base+0x51430),*(DWORD*)(base+0x51468),*(DWORD*)(base+0x5146c),*(DWORD*)(base+0x514e8),*(DWORD*)(base+0x514ec));
+  HANDLE dump=CreateFileW(L"npkscrypt-memory.bin",GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+  if(dump!=INVALID_HANDLE_VALUE){DWORD w=0;WriteFile(dump,base,imageSize,&w,nullptr);CloseHandle(dump);printf("NPK_IMAGE_DUMP=%lu\\n",w);}
+ }
+
  typedef void (__stdcall *FlushFn)(void);
  FlushFn flush=shim?(FlushFn)GetProcAddress(shim,"SmartCapture_Flush"):nullptr;
  printf("CORE=%p\n",core);
