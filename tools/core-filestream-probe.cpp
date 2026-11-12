@@ -29,8 +29,9 @@ int main(){
   IMAGE_NT_HEADERS32* nt=(IMAGE_NT_HEADERS32*)(base+dos->e_lfanew);
   DWORD imageSize=nt->OptionalHeader.SizeOfImage;
   printf("NPK_IMAGE_BASE=%p SIZE=%08lX\\n",base,imageSize);
-  printf("NPK_GLOBAL_51430=%08lX 51468=%08lX 5146C=%08lX 514E8=%08lX 514EC=%08lX\\n",
-    *(DWORD*)(base+0x51430),*(DWORD*)(base+0x51468),*(DWORD*)(base+0x5146c),*(DWORD*)(base+0x514e8),*(DWORD*)(base+0x514ec));
+  printf("NPK_GLOBAL_51430=%08lX 51438=%08lX 51468=%08lX 5146C=%08lX 514F8=%08lX 514E8=%08lX 514EC=%08lX\\n",
+    *(DWORD*)(base+0x51430),*(DWORD*)(base+0x51438),*(DWORD*)(base+0x51468),*(DWORD*)(base+0x5146c),*(DWORD*)(base+0x514f8),*(DWORD*)(base+0x514e8),*(DWORD*)(base+0x514ec));
+  printf("NPK_WRAPPERS_OPEN=%p SEEK=%p CLOSE=%p READ=%p\\n",base+0x19A7C,base+0x19B5C,base+0x19C3C,base+0x19C6C);
   HANDLE dump=CreateFileW(L"npkscrypt-memory.bin",GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
   if(dump!=INVALID_HANDLE_VALUE){DWORD w=0;WriteFile(dump,base,imageSize,&w,nullptr);CloseHandle(dump);printf("NPK_IMAGE_DUMP=%lu\\n",w);}
  }
@@ -39,6 +40,8 @@ int main(){
  FlushFn flush=shim?(FlushFn)GetProcAddress(shim,"SmartCapture_Flush"):nullptr;
  printf("CORE=%p\n",core);
  if(!core)return 2;
+ printf("CORE_IAT_READFILE=%p CREATEFILEA=%p CREATEFILEW=%p CLOSEHANDLE=%p SETFILEPOINTER=%p\n",
+   *(void**)((BYTE*)core+0x240570),*(void**)((BYTE*)core+0x240574),*(void**)((BYTE*)core+0x240578),*(void**)((BYTE*)core+0x24057c),*(void**)((BYTE*)core+0x2405f8));
  void** gMalloc=(void**)GetProcAddress(core,"?GMalloc@@3PAVFMalloc@@A");
  FARPROC initProc=GetProcAddress(core,"?Init@FFileStream@@SAPAV1@H@Z");
  printf("GMALLOC_EXPORT=%p FSTREAM_INIT=%p\n",gMalloc,initProc);
