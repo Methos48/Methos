@@ -54,6 +54,8 @@ public sealed class ProtectionCodecRuntime
         CancellationToken cancellationToken = default)
     {
         ValidatePlan(plan);
+        if (!plan.CanDecode)
+            throw new NotSupportedException("The protection plan does not have a verified decoder/key profile. The input is left unchanged.");
         var missing = MissingCodecs(plan);
         if (missing.Count != 0)
             throw new NotSupportedException("No verified decoder is registered for: " + string.Join(", ", missing));
@@ -71,6 +73,8 @@ public sealed class ProtectionCodecRuntime
         CancellationToken cancellationToken = default)
     {
         ValidatePlan(plan);
+        if (!plan.CanEncode)
+            throw new NotSupportedException("The protection plan does not have a verified encoder. No output file was produced.");
         var missing = MissingCodecs(plan);
         if (missing.Count != 0)
             throw new NotSupportedException("No verified encoder is registered for: " + string.Join(", ", missing));
@@ -81,6 +85,10 @@ public sealed class ProtectionCodecRuntime
             cancellationToken.ThrowIfCancellationRequested();
             current = _codecs[layer.Id].Encode(current, originalFileName, cancellationToken);
         }
+
+        byte[] verified = Decode(plan, current, originalFileName, cancellationToken);
+        if (!verified.AsSpan().SequenceEqual(editedPlaintext.Span))
+            throw new InvalidDataException("Re-encoded output failed the full decode round-trip check. No output file should be saved.");
         return current;
     }
 
