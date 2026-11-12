@@ -110,9 +110,10 @@ static void DumpNpkKeyState(HANDLE h){
  if(!realNpkGetState)return;
  int kind=TARGET_NONE;
  EnterCriticalSection(&lock);for(int i=1;i<=3;i++)if(h==targetHandles[i]){kind=i;break;}LeaveCriticalSection(&lock);
- if(kind==TARGET_NONE||InterlockedCompareExchange(&keyDumped[kind],1,0)!=0)return;
+ if(kind==TARGET_NONE||keyDumped[kind])return;
  void* state=realNpkGetState(h);
  if(!state){DebugLog("NPK_KEY_STATE kind=%d handle=%p state=NULL\\r\\n",kind,h);return;}
+ if(InterlockedCompareExchange(&keyDumped[kind],1,0)!=0)return;
  BYTE* s=(BYTE*)state;char k6[32]={},k16[64]={};
  for(int i=0;i<6;i++)sprintf_s(k6+i*2,3,"%02X",s[2+i]);
  for(int i=0;i<16;i++)sprintf_s(k16+i*2,3,"%02X",s[8+i]);
@@ -137,8 +138,10 @@ static BOOL InstallNpkReadHook(void){
  BYTE* readAddress=(BYTE*)npkModule+0x119C6C;
  BYTE* stateAddress=(BYTE*)npkModule+0x11983C;
  const BYTE readSig[]={0x55,0x8B,0xEC,0x83,0xEC,0x08,0x53,0x8B,0x5D,0x08,0x56,0x8B,0x75,0x10,0x57};
- if(memcmp(readAddress,readSig,sizeof(readSig))!=0){DebugLog("NPK_DIRECT_HOOK signature mismatch module=%p address=%p bytes=%02X %02X %02X %02X\\r\\n",npkModule,readAddress,readAddress[0],readAddress[1],readAddress[2],readAddress[3]);return FALSE;}
- realNpkGetState=(PFN_NpkGetState)stateAddress;
+ const BYTE stateSig[]={0x55,0x8B,0xEC,0x83,0xEC,0x08,0x83,0x3D,0x38,0x14,0x05,0x10,0x00};
+ if(memcmp(readAddress,readSig,sizeof(readSig))!=0){DebugLog("NPK_DIRECT_HOOK read signature mismatch module=%p address=%p\\r\\n",npkModule,readAddress);return FALSE;}
+ if(memcmp(stateAddress,stateSig,sizeof(stateSig))==0)realNpkGetState=(PFN_NpkGetState)stateAddress;
+ else {realNpkGetState=NULL;DebugLog("NPK_GET_STATE signature mismatch address=%p\\r\\n",stateAddress);}
  MH_STATUS st=MH_CreateHook(readAddress,(LPVOID)HookNpkReadFile,(LPVOID*)&realNpkReadFile);
  if(st==MH_OK||st==MH_ERROR_ALREADY_CREATED){MH_STATUS en=MH_EnableHook(readAddress);DebugLog("NPK_DIRECT_HOOK module=%p read=%p state=%p create=%d enable=%d\\r\\n",npkModule,readAddress,stateAddress,(int)st,(int)en);return en==MH_OK||en==MH_ERROR_ENABLED;}
  DebugLog("NPK_DIRECT_HOOK create failed module=%p read=%p status=%d\\r\\n",npkModule,readAddress,(int)st);return FALSE;
