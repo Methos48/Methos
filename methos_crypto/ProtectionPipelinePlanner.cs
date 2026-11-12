@@ -37,7 +37,7 @@ public static class ProtectionPipelinePlanner
     private const uint UnrealPackageTag = 0x9E2A83C1;
 
     public static ProtectionPlan Inspect(ReadOnlySpan<byte> data, string fileName,
-        bool activeAntiCheatPrivateKeyAvailable = false, bool activeAntiCheatPublicExponentAvailable = false)
+        bool activeAntiCheatPrivateKeyAvailable = false, bool activeAntiCheatEncoderVerified = false)
     {
         ArgumentNullException.ThrowIfNull(fileName);
         string extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -55,7 +55,7 @@ public static class ProtectionPipelinePlanner
         if (ActiveAntiCheatCodec.HasHeader(data))
         {
             bool canDecode = activeAntiCheatPrivateKeyAvailable;
-            bool canEncode = canDecode && activeAntiCheatPublicExponentAvailable;
+            bool canEncode = canDecode && activeAntiCheatEncoderVerified;
             var layer = new ProtectionLayer(ProtectionLayerKind.ActiveAntiCheatCrypt,
                 "active-anticheat-crypt",
                 canEncode ? "codec-ready" : canDecode ? "decode-key-available-encode-key-unverified" : "recognized-key-required",
