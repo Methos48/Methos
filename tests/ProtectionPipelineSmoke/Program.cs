@@ -96,41 +96,60 @@ foreach (int protocol in new[] { 111, 413 })
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
 
 {
-    byte[] key6 = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
-    byte[] key16 = Enumerable.Range(0, 16).Select(i => (byte)(0x80 + i)).ToArray();
-    var smartProfile = new SmartCryptKeyProfile(key6, key16, 0, 0x12345678, 0x01, 0x00, "synthetic-state");
-    var smartCodec = new SmartCrypt1522Codec(smartProfile);
-    byte[] smartPlain = Enumerable.Range(0, 2048).Select(i => (byte)((i * 37 + 19) & 0xFF)).ToArray();
-    byte[] smartMarker = { 0xFF, 0xED, 0xFA, 0xCE };
-    for (uint i = 0; i < 4; i++)
-    {
-        byte salt = (byte)(((i ^ 0x65u) * 0x93u) & 0xFF);
-        smartPlain[i] = (byte)(smartMarker[i] ^ key6[i % 6] ^ key16[i & 0x0F] ^ salt);
-    }
-    byte[] smartEncrypted = smartCodec.Encode(smartPlain, "Interface.u");
-    Check(SmartCrypt1522Codec.HasHeader(smartEncrypted),
-        "SmartCrypt 1.5.2.2 encoder did not reproduce FF ED FA CE.");
-    string smartProfileText =
-        $"NPK_GLOBAL_KEY=12345678\\nSTATE_SEED=0100\\nKEY6={Convert.ToHexString(key6)}\\nKEY16={Convert.ToHexString(key16)}\\nFLAG=00\\n";
-    var parsedSmartProfile = SmartCryptKeyProfile.ParseLog(smartProfileText, "synthetic-log");
-    Check(parsedSmartProfile.Key6.SequenceEqual(key6) &&
-          parsedSmartProfile.Key16.SequenceEqual(key16) &&
-          parsedSmartProfile.GlobalKey == 0x12345678 &&
-          parsedSmartProfile.Origin == "synthetic-log",
-        "SmartCrypt captured key profile import failed.");
-    var smartRuntime = ProtectionCodecRuntime.CreateDefault(smartCryptProfile: parsedSmartProfile);
-    var smartPlan = ProtectionPipelinePlanner.Inspect(smartEncrypted, "Interface.u",
-        smartCryptKeyAvailable: true, smartCryptEncoderVerified: false);
-    Check(smartPlan.CanDecode && !smartPlan.CanEncode &&
-          smartPlan.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate,
-        "SmartCrypt planner did not require real-file verification before re-encoding.");
-    byte[] smartDecoded = smartRuntime.Decode(smartPlan, smartEncrypted, "Interface.u");
-    Check(smartPlain.SequenceEqual(smartDecoded), "SmartCrypt 1.5.2.2 XOR round-trip failed.");
-    var smartNoKey = ProtectionPipelinePlanner.Inspect(smartEncrypted, "Interface.u");
-    Check(smartNoKey.Status == "recognized-key-required" && !smartNoKey.CanDecode,
-        "SmartCrypt must fail closed when its per-handle key profile is unavailable.");
-}
-Console.WriteLine("PASS: SmartCrypt 1.5.2.2 key-profile import, marker reproduction, and fail-closed decode.");
+    byte[] seedBlock = Enumerable.Range(0, 24).Select(i => (byte)(0x31 + i * 7)).ToArray();
+seedBlock[0] = 1;
+seedBlock[1] = 0;
+byte[] smartMarker = { 0xFF, 0xED, 0xFA, 0xCE };
+byte[] fakeEncryptedHeader = new byte[0x400];
+smartMarker.CopyTo(fakeEncryptedHeader, 0);
+seedBlock.CopyTo(fakeEncryptedHeader, 4);
+var smartProfile = SmartCryptKeyProfile.FromEncryptedFile(fakeEncryptedHeader);
+Check(smartProfile.Lineage2Version == 111 && smartProfile.SeedBlock.SequenceEqual(seedBlock),
+    "SmartCrypt per-file key derivation from embedded seed block failed.");
+
+var smartCodec = new SmartCrypt1522Codec(smartProfile);
+byte[] smartPlain = Enumerable.Range(0, 2048).Select(i => (byte)((i * 37 + 19) & 0xFF)).ToArray();
+Encoding.Unicode.GetBytes("Lineage2Ver111").CopyTo(smartPlain, 0);
+byte[] smartEncrypted = smartCodec.Encode(smartPlain, "Interface.u");
+Check(SmartCrypt1522Codec.HasHeader(smartEncrypted) &&
+      smartEncrypted.AsSpan(4, 24).SequenceEqual(seedBlock),
+    "SmartCrypt encoder did not restore the original marker and per-file seed block.");
+
+string smartProfileText =
+    $"NPK_GLOBAL_KEY=12345678\\nSTATE_SEED=0100\\nSEED_BLOCK={Convert.ToHexString(seedBlock)}\\nMARKER=FFEDFACE\\nLINEAGE2_VERSION=0000006F\\nKEY6={Convert.ToHexString(smartProfile.Key6)}\\nKEY16={Convert.ToHexString(smartProfile.Key16)}\\nFLAG=00\\n";
+var parsedSmartProfile = SmartCryptKeyProfile.ParseLog(smartProfileText, "synthetic-log");
+Check(parsedSmartProfile.Key6.SequenceEqual(smartProfile.Key6) &&
+      parsedSmartProfile.Key16.SequenceEqual(smartProfile.Key16) &&
+      parsedSmartProfile.SeedBlock.SequenceEqual(seedBlock) &&
+      parsedSmartProfile.Lineage2Version == 111 &&
+      parsedSmartProfile.GlobalKey == 0x12345678 &&
+      parsedSmartProfile.Origin == "synthetic-log",
+    "SmartCrypt captured key profile import failed.");
+
+var smartRuntime = ProtectionCodecRuntime.CreateDefault(smartCryptProfile: parsedSmartProfile);
+var smartPlan = ProtectionPipelinePlanner.Inspect(smartEncrypted, "Interface.u",
+    smartCryptKeyAvailable: false, smartCryptEncoderVerified: false);
+Check(smartPlan.CanDecode && !smartPlan.CanEncode &&
+      smartPlan.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate,
+    "SmartCrypt planner did not derive decode keys from the embedded seed block or kept unverified encoding disabled.");
+byte[] smartDecoded = smartRuntime.Decode(smartPlan, smartEncrypted, "Interface.u");
+Check(smartPlain.SequenceEqual(smartDecoded), "SmartCrypt 1.5.2.2 header reconstruction and XOR round-trip failed.");
+
+bool smartEncodeBlocked = false;
+try { _ = smartRuntime.Encode(smartPlan, smartPlain, "Interface.u"); }
+catch (NotSupportedException) { smartEncodeBlocked = true; }
+Check(smartEncodeBlocked, "SmartCrypt runtime must block re-encoding until a real-file round trip is verified.");
+
+byte[] externalKeySample = new byte[0x400];
+smartMarker.CopyTo(externalKeySample, 0);
+byte[] externalSeed = seedBlock.ToArray();
+externalSeed[1] = 1;
+externalSeed.CopyTo(externalKeySample, 4);
+var smartNeedsExternal = ProtectionPipelinePlanner.Inspect(externalKeySample, "Interface.u");
+Check(smartNeedsExternal.Status == "recognized-key-required" && !smartNeedsExternal.CanDecode,
+    "SmartCrypt must require the external key when the seed block sets its external-key bit.");
+Console.WriteLine("PASS: SmartCrypt 1.5.2.2 embedded seed derivation, Lineage2Ver header reconstruction, profile import, and fail-closed encode.");
+
 
 using (RSA aacRsa = RSA.Create(2048))
 {
