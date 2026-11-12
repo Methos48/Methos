@@ -44,7 +44,7 @@ public sealed class ActiveAntiCheatCodec : IProtectionCodec
     public const int RsaBlockLength = 256;
     public const int PayloadOffset = 0x114;
     public const int Rc4KeyLength = 20;
-    private static readonly byte[] Magic = "ActiveAntiCheatCrypt"u8.ToArray();
+    private static readonly byte[] Magic = "ActiveAnticheatCrypt"u8.ToArray();
     private readonly ActiveAntiCheatRsaProfile _profile;
 
     public ActiveAntiCheatCodec(ActiveAntiCheatRsaProfile profile) =>
