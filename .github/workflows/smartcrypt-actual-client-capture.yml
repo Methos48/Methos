@@ -24,7 +24,7 @@ jobs:
         run: |
           Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
           Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
-          New-Item -ItemType Directory -Force probe/system,probe/Crest,probe/SysTextures | Out-Null
+          New-Item -ItemType Directory -Force probe/system | Out-Null
           foreach ($sourceRoot in @("client-system","client-engine")) {
             Get-ChildItem $sourceRoot -Recurse -File | ForEach-Object {
               $relative = $_.FullName.Substring((Resolve-Path $sourceRoot).Path.Length).TrimStart("\\")
@@ -41,8 +41,8 @@ jobs:
           Copy-Item Window.dll probe/system/Window.dll -Force
           Copy-Item l2.exe probe/system/l2.exe -Force
           Copy-Item interface.u probe/system/SysString-e.dat -Force
-          if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force }
-          if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force }
+          if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force } else { New-Item -ItemType Directory -Force probe/Crest | Out-Null }
+          if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force } else { New-Item -ItemType Directory -Force probe/SysTextures | Out-Null }
           $vc = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vc) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vc "VC\Auxiliary\Build\vcvars32.bat"
