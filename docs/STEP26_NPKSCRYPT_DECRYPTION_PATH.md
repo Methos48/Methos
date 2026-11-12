@@ -29,14 +29,7 @@ This is a reconstructed transform shape, not yet a working codec: the exact per-
 
 ## Key initialization gate
 
-The initialization path at preferred VA `0x1011A02C`:
-1. Requires the process main image to be mapped at `0x10900000`.
-2. Parses the PE header at that address.
-3. Looks for an already-loaded module named `dsetup.dll`.
-4. Checks an ordinal-0x67 entry and then processes a `dsetup.u` data/resource path.
-5. Only after that path succeeds does it populate the global key pointer/activation flag used by the stream transform.
-
-The public SGuard protection description independently identifies `dsetup.dll` as the protection loader and `dsetup.u` as customer-specific encrypted data. This is consistent with the strings and control flow found in the supplied DLL, but the exact build/customer match remains to be verified against the user's two files.
+The initialization path at preferred VA `0x1011A02C` in the supplied `npkscrypt.dll` contains a branch that looks for an already-loaded module named `dsetup.dll`, resolves ordinal `0x67`, and references the string `dsetup.u`. This is a real code path in this DLL, but it is not proof that the user's installed client ships or uses those files. The user has explicitly confirmed that neither `dsetup.u` nor `SmartGuard.ini` exists in their game installation. Therefore the SGuard identification and any assumption that those files are required for this specific client are withdrawn. Treat this as an observed optional/conditional initialization branch until its caller and activation conditions are reverse-engineered.
 
 ## Headless test result
 
@@ -48,13 +41,9 @@ However:
 - The key globals remained zero (`0x51430=0`, `0x51468=0`).
 - The real interface read remained byte-identical to the original; no decryption is claimed.
 
-## Required exact inputs
+## Next investigation
 
-The next real test requires the matching client copies of:
-- `dsetup.dll`
-- `dsetup.u`
-
-They must come from the same L2Sudamerica client installation as the supplied `npkscrypt.dll`, not from another server or a random DirectX download. Once present, the loader/key path can be traced and the reconstructed byte transform can be validated against both original files.
+Do not ask the user for `dsetup.u` or `SmartGuard.ini`; they do not exist in this installation. Investigate alternate callers/initializers and determine whether this branch is optional, legacy, or activated only for a different protection mode. The last read-capture experiment observes the raw API buffer; because the hook runs inside the underlying ReadFile/NtReadFile call, that observation alone cannot prove whether a caller-side wrapper transforms the buffer after the API returns. Trace the read caller address and capture the buffer after the candidate wrapper returns before concluding the transform is inactive.
 
 ## Status
 
@@ -63,7 +52,7 @@ They must come from the same L2Sudamerica client installation as the supplied `n
 - [x] Identify the image-base initialization gate.
 - [x] Identify the dsetup.dll / dsetup.u key-provider dependency.
 - [x] Confirm those two files are absent from the uploaded archives.
-- [ ] Recover the matching dsetup key state.
+- [ ] Identify the actual key-state provider/initializer for this client build.
 - [ ] Decode `interface.u` and validate a real Unreal package.
 - [ ] Decode `interface.xdat` and validate a real XDAT layout stream.
 - [ ] Verify encode/decode round trips without modifying originals.
