@@ -1,7 +1,24 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 typedef void* (__cdecl *PFN_NpkCreateReader)(LPCWSTR,DWORD,void*);
+static void ProbeLog(const char* format, ...) {
+    char line[2048] = {};
+    va_list args;
+    va_start(args, format);
+    vsnprintf_s(line, sizeof(line), _TRUNCATE, format, args);
+    va_end(args);
+    HANDLE h = CreateFileA("smartcrypt-engine-probe.log", FILE_APPEND_DATA,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+        DWORD written = 0;
+        WriteFile(h, line, (DWORD)strlen(line), &written, NULL);
+        CloseHandle(h);
+    }
+}
 
 int main() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
@@ -51,18 +68,22 @@ int main() {
     if (npk) {
         void* originalCreateReader = *(void**)((BYTE*)npk + 0x51434);
         PFN_NpkCreateReader npkCreateReader = (PFN_NpkCreateReader)((BYTE*)npk + 0x119A7C);
-        printf("HOST_NPK_CREATE_READER=%p ORIGINAL=%p\\n", npkCreateReader, originalCreateReader);
+        ProbeLog("HOST_NPK_CREATE_READER=%p ORIGINAL=%p\\r\\n", npkCreateReader, originalCreateReader);
         if (originalCreateReader) {
-            void* archive = npkCreateReader(L"SysString-e.dat", 0, NULL);
-            printf("HOST_NPK_ARCHIVE=%p\\n", archive);
-            if (archive) {
-                void** vtable = *(void***)archive;
-                printf("HOST_NPK_ARCHIVE_VTABLE=%p\\n", vtable);
-                for (int slot = 0; slot < 8; ++slot)
-                    printf("HOST_NPK_ARCHIVE_VT[%d]=%p\\n", slot, vtable[slot]);
+            __try {
+                void* archive = npkCreateReader(L"SysString-e.dat", 0, NULL);
+                ProbeLog("HOST_NPK_ARCHIVE=%p\\r\\n", archive);
+                if (archive) {
+                    void** vtable = *(void***)archive;
+                    ProbeLog("HOST_NPK_ARCHIVE_VTABLE=%p\\r\\n", vtable);
+                    for (int slot = 0; slot < 8; ++slot)
+                        ProbeLog("HOST_NPK_ARCHIVE_VT[%d]=%p\\r\\n", slot, vtable[slot]);
+                }
+            } __except(EXCEPTION_EXECUTE_HANDLER) {
+                ProbeLog("HOST_NPK_CREATE_READER_EXCEPTION=0x%08lX\\r\\n", GetExceptionCode());
             }
         } else {
-            printf("HOST_NPK_CREATE_READER_UNAVAILABLE\\n");
+            ProbeLog("HOST_NPK_CREATE_READER_UNAVAILABLE\\r\\n");
         }
     }
     Sleep(1000);
