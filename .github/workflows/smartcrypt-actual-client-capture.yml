@@ -26,8 +26,10 @@ jobs:
           Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
           New-Item -ItemType Directory -Force probe/system | Out-Null
           foreach ($sourceRoot in @("client-system","client-engine")) {
-            Get-ChildItem $sourceRoot -Recurse -File | ForEach-Object {
-              $relative = $_.FullName.Substring((Resolve-Path $sourceRoot).Path.Length).TrimStart("\\")
+            $payloadRoot = $sourceRoot
+            if (Test-Path (Join-Path $sourceRoot "system")) { $payloadRoot = Join-Path $sourceRoot "system" }
+            Get-ChildItem $payloadRoot -Recurse -File | ForEach-Object {
+              $relative = $_.FullName.Substring((Resolve-Path $payloadRoot).Path.Length).TrimStart("\\")
               $destination = Join-Path "probe/system" $relative
               $parent = Split-Path $destination -Parent
               New-Item -ItemType Directory -Force $parent | Out-Null
