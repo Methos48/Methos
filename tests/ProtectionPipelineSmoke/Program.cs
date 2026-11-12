@@ -30,7 +30,7 @@ static void Check(bool value, string message)
     if (!value) throw new Exception(message);
 }
 
-byte[] fiveByteCompact = { 0x75, 0xFF, 0xFF, 0xFF, 0xFF, 0x1F };
+byte[] fiveByteCompact = { 0x75, 0xFF, 0xFF, 0xFF, 0xFF };
 int fiveBytePosition = 0;
 Check(UnrealPackageIndex.DecodeCompactIndex(fiveByteCompact, ref fiveBytePosition) == -11 &&
       fiveBytePosition == fiveByteCompact.Length,
