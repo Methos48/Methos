@@ -109,87 +109,10 @@ jobs:
           $lines = Get-Content -LiteralPath $file.FullName
           for ($i = 0; $i -lt $lines.Count; $i++) { Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i]) }
           Write-Host "=== DUELMANAGER SOURCE END ==="
-          Write-Host "LINES=$($lines.Count) OPEN_BRACES=$(([regex]::Matches(($lines -join `n), '\\{')).Count) CLOSE_BRACES=$(([regex]::Matches(($lines -join `n), '\\}')).Count)"
-          $all = Get-ChildItem -LiteralPath $env:SILENT_U_SOURCES -Filter "*.uc" -File -Recurse
-          foreach ($f in $all) {
-            $raw = Get-Content -LiteralPath $f.FullName -Raw
-            if ($raw -match '(?s)/\\*.*        shell: pwsh
-        run: |
-          $h = Join-Path $env:RUNNER_TEMP "MethosRoundTrip"
-          New-Item -ItemType Directory -Force $h | Out-Null
-          $engine = (Resolve-Path "u-editor\src\MethosUEngine\MethosUEngine.csproj").Path
-          @"
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
-            <ItemGroup><ProjectReference Include="$engine" /></ItemGroup>
-          </Project>
-          "@ | Set-Content (Join-Path $h "RoundTrip.csproj")
-          @'
-          using MethosUEngine;
-          using UELib;
-          using UELib.Core;
-          var cli = Environment.GetCommandLineArgs().Skip(1).ToArray();
-          if (cli.Length != 4) throw new ArgumentException("Expected mode, runtime, sources/package, output");
-          if (cli[0] == "compile") {
-              var result = UccCompiler.CompileInterface(cli[1], cli[2]);
-              File.WriteAllBytes(cli[3], result.PackageBytes);
-              Console.WriteLine($"UCC_COMPILE_OK bytes={result.PackageBytes.Length} profile={result.ProfileDescription} names={result.NameCount} imports={result.ImportCount} exports={result.ExportCount}");
-          } else if (cli[0] == "decompile") {
-              Directory.CreateDirectory(cli[3]);
-              using var package = UnrealLoader.LoadPackage(cli[2], FileAccess.Read);
-              package.InitializePackage();
-              var classes = package.Objects.OfType<UClass>().Where(o => (int)o > 0).ToList();
-              int ok = 0, failed = 0;
-              foreach (var obj in classes) {
-                  try {
-                      var source = obj.Decompile();
-                      var name = obj.Name?.ToString() ?? $"Class_{ok}";
-                      var safe = string.Concat(name.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch));
-                      File.WriteAllText(Path.Combine(cli[3], safe + ".uc"), source);
-                      ok++;
-                  } catch (Exception ex) { failed++; Console.WriteLine($"DECOMPILE_WARNING {obj.Name}: {ex.Message}"); }
-              }
-              Console.WriteLine($"UELIB_DECOMPILE classes={classes.Count} ok={ok} failed={failed}");
-              if (ok < 100 || failed > 0) throw new Exception("Decompile validation failed");
-          } else throw new ArgumentException("Unknown mode");
-          '@ | Set-Content (Join-Path $h "Program.cs")
-          dotnet build (Join-Path $h "RoundTrip.csproj") --configuration Release
-          if ($LASTEXITCODE -ne 0) { throw "Methos test harness build failed" }
-          "HARNESS_PROJECT=$h\RoundTrip.csproj" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Compile Silent Dark Interface.u using Methos UCC pipeline
-        shell: pwsh
-        run: |
-          $out = Join-Path $env:RUNNER_TEMP "SilentDark-Compiled-Interface.u"
-          dotnet run --project $env:HARNESS_PROJECT --configuration Release --no-build -- compile $env:UCC_KIT $env:SILENT_U_SOURCES $out
-          if ($LASTEXITCODE -ne 0) { throw "Silent Dark UCC compile failed" }
-          if (!(Test-Path $out) -or (Get-Item $out).Length -lt 65536) { throw "Compiled Silent Dark Interface.u missing or invalid" }
-          "SILENT_U_OUTPUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Get-FileHash $out -Algorithm SHA256 | Format-List
-
-      - name: Decompile compiled package and verify all classes
-        shell: pwsh
-        run: |
-          $out = Join-Path $env:RUNNER_TEMP "SilentDark-Decompiled"
-          dotnet run --project $env:HARNESS_PROJECT --configuration Release --no-build -- decompile $env:UCC_KIT $env:SILENT_U_OUTPUT $out
-          if ($LASTEXITCODE -ne 0) { throw "Compiled Silent Dark package could not be decompiled" }
-          $classes = @(Get-ChildItem $out -Filter "*.uc" -File).Count
-          if ($classes -lt 100) { throw "Compiled package has too few decompiled classes: $classes" }
-          Write-Host "SILENT_DARK_U_ROUNDTRIP_OK classes=$classes"
-
-      - name: Upload round-trip evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: silent-dark-roundtrip-evidence
-          path: |
-            ${{ runner.temp }}/SilentDark-Compiled-Interface.u
-            ${{ runner.temp }}/SilentDark-Decompiled/*.uc
-            ${{ runner.temp }}/SilentDark-Diagnostics/**
-          if-no-files-found: warn
-          retention-days: 14
- -or $raw -match '(?m)^\\s*class\\b' -and $raw -notmatch '(?m)^\\s*defaultproperties\\s*\\{') { }
-          }
+          $source = $lines -join [Environment]::NewLine
+          $opens = ([regex]::Matches($source, "\\{")).Count
+          $closes = ([regex]::Matches($source, "\\}")).Count
+          Write-Host "LINES=$($lines.Count) OPEN_BRACES=$opens CLOSE_BRACES=$closes"
 
       - name: Create isolated Methos U compile/decompile test harness
         shell: pwsh
