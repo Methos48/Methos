@@ -199,6 +199,39 @@ Check(restoredLiteralBody == literalBody,
 Console.WriteLine("PASS: native UnrealScript literal return compile/decompile round-trip.");
 
 
+foreach (string targetName in new[] { "interface.u", "interface.xdat" })
+{
+    if (!File.Exists(targetName)) continue;
+    byte[] original = File.ReadAllBytes(targetName);
+    var smartProfile = SmartCryptKeyProfile.FromEncryptedFile(original);
+    var smartCodec = new SmartCrypt1522Codec(smartProfile);
+    byte[] lineageEnvelope = smartCodec.Decode(original, targetName);
+    Check(lineageEnvelope.AsSpan(0, 28).SequenceEqual(Encoding.Unicode.GetBytes($"Lineage2Ver{smartProfile.Lineage2Version:D3}")),
+        $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver header.");
+
+    var standardCodec = new Lineage2StandardCodec(smartProfile.Lineage2Version);
+    byte[] plain = standardCodec.Decode(lineageEnvelope, targetName);
+    if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
+    {
+        Check(plain.Length >= 4 && plain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
+            "Dunk3l interface.u did not produce a valid Unreal package signature after both layers.");
+    }
+    else
+    {
+        string visibleXdat = Encoding.ASCII.GetString(plain);
+        Check(visibleXdat.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
+            "Dunk3l interface.xdat did not expose expected XDAT window names after both layers.");
+    }
+
+    byte[] standardRebuilt = standardCodec.Encode(plain, targetName);
+    Check(standardRebuilt.SequenceEqual(lineageEnvelope),
+        $"{targetName}: standard Lineage2 protocol failed byte-for-byte round-trip.");
+    byte[] smartRebuilt = smartCodec.Encode(standardRebuilt, targetName);
+    Check(smartRebuilt.SequenceEqual(original),
+        $"{targetName}: SmartCrypt failed byte-for-byte round-trip.");
+    Console.WriteLine($"PASS: REAL Dunk3l {targetName} SmartCrypt + Lineage2Ver{smartProfile.Lineage2Version} decode/re-encode exact round-trip ({original.Length} bytes).");
+}
+
 if (File.Exists("Engine.u"))
 {
     byte[] realEngine = File.ReadAllBytes("Engine.u");
