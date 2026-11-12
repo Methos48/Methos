@@ -19,6 +19,7 @@ on:
       - "Window.dll"
       - "interface.u"
       - "interface.xdat"
+      - "sysstring-e.dat"
 jobs:
   actual-client:
     runs-on: windows-2022
@@ -50,7 +51,8 @@ jobs:
           if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
           Copy-Item Window.dll probe/system/Window.dll -Force
           Copy-Item l2.exe probe/system/l2.exe -Force
-          Copy-Item interface.u probe/system/SysString-e.dat -Force
+          if (!(Test-Path "sysstring-e.dat")) { throw "The real SysString-e.dat resource is required for the baseline client-load probe." }
+          Copy-Item sysstring-e.dat probe/system/SysString-e.dat -Force
           Copy-Item interface.u probe/system/Interface.u -Force
           Copy-Item interface.xdat probe/system/Interface.xdat -Force
           Write-Host "DUNK3L_INTERFACE_READY U=$((Get-Item probe/system/Interface.u).Length) XDAT=$((Get-Item probe/system/Interface.xdat).Length)"
