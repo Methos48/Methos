@@ -50,7 +50,7 @@ Source: https://github.com/ritsuwastaken/open-l2encdec
 
 Methos now includes Lineage2StandardCodec.cs for protocols 111 and 413. Protocol 413 decode attempts both the modern and legacy RSA private-key sets; encode uses the modern public-key set. The codec validates the header, tail CRC32, RSA block structure, decompressed length, and zlib stream. It is registered in ProtectionCodecRuntime.CreateDefault() and exposed by the planner when the corresponding header is present.
 
-A synthetic encode/decode round-trip test has been added for both 111 and 413. The test code has been committed, but a fresh .NET 8 CI execution is still pending; therefore this integration is implemented but not yet marked runtime-verified.
+A synthetic encode/decode round-trip test has been added for both 111 and 413. Windows CI run 43191919868 passed all protection planner checks, generic pipeline checks, and both integrated standard codec round-trips using .NET 8.0.428. The standard layer is runtime-verified against synthetic vectors; real SmartCrypt intermediate validation is still pending.
 
 ## Current end-to-end pipeline
 
