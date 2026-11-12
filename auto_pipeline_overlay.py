@@ -18,7 +18,8 @@ COMPLETE_DIR = DATA_DIR / 'xdat completo'
 PARTS_DIR = DATA_DIR / 'xdat por partes'
 """
     new_paths = """APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
-DATA_DIR = APP_DIR.parent / 'Compilados' / 'XDAT'
+WORK_ROOT = APP_DIR.parent if getattr(sys, 'frozen', False) else APP_DIR
+DATA_DIR = WORK_ROOT / 'Compilados' / 'XDAT'
 COMPLETE_DIR = DATA_DIR / 'Archivo'
 PARTS_DIR = DATA_DIR / 'Decopilado'
 """
