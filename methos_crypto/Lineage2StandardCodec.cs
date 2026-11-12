@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace MethosUEngine;
@@ -114,7 +115,7 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
             if (cipher >= modulus) throw new InvalidDataException("RSA block is outside the selected modulus.");
             BigInteger plain = BigInteger.ModPow(cipher, exponent, modulus);
             byte[] block = ToFixedBigEndian(plain, RsaBlockSize);
-            int count = Math.Min(block[3], RsaPayloadSize);
+            int count = Math.Min((int)block[3], RsaPayloadSize);
             int start = RsaBlockSize - Align4(count);
             compressed.Write(block, start, count);
         }
