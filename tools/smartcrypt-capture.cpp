@@ -26,7 +26,7 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
 }
 extern "C" __declspec(dllexport) void WINAPI SmartCapture_Flush(void){if(!hookReady||!initialized)return;EnterCriticalSection(&lock);if(outputHandle!=INVALID_HANDLE_VALUE){LARGE_INTEGER end;end.QuadPart=maxEnd;SetFilePointerEx(outputHandle,end,NULL,FILE_BEGIN);SetEndOfFile(outputHandle);FlushFileBuffers(outputHandle);CloseHandle(outputHandle);outputHandle=INVALID_HANDLE_VALUE;}LeaveCriticalSection(&lock);}
 extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Status(void){return hookReady;}
-extern "C" __declspec(dllexport) int __cdecl load(void){return 0;}
+extern "C" __declspec(dllexport) int __stdcall load(void){return 0;}
 BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){
  if(r==DLL_PROCESS_ATTACH){
   DisableThreadLibraryCalls(h);
