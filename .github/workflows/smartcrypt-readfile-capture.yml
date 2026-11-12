@@ -25,7 +25,7 @@ jobs:
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
-          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE tools\smartcrypt-capture.cpp /link /OUT:probe\SmartCapture.dll'
+          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE tools\smartcrypt-capture.cpp /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
