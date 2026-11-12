@@ -12,17 +12,20 @@ public sealed class ActiveAntiCheatRsaProfile
     public BigInteger Modulus { get; }
     public BigInteger PrivateExponent { get; }
     public BigInteger? PublicExponent { get; }
+    public string Origin { get; }
 
     public ActiveAntiCheatRsaProfile(
         ReadOnlySpan<byte> modulusLittleEndian,
         ReadOnlySpan<byte> privateExponentLittleEndian,
-        ReadOnlySpan<byte> publicExponentLittleEndian = default)
+        ReadOnlySpan<byte> publicExponentLittleEndian = default,
+        string origin = "imported")
     {
         Modulus = new BigInteger(modulusLittleEndian, isUnsigned: true, isBigEndian: false);
         PrivateExponent = new BigInteger(privateExponentLittleEndian, isUnsigned: true, isBigEndian: false);
         PublicExponent = publicExponentLittleEndian.IsEmpty
             ? null
             : new BigInteger(publicExponentLittleEndian, isUnsigned: true, isBigEndian: false);
+        Origin = string.IsNullOrWhiteSpace(origin) ? "imported" : origin.Trim();
 
         if (Modulus <= BigInteger.Zero || Modulus.IsEven)
             throw new ArgumentException("RSA modulus must be positive and odd.", nameof(modulusLittleEndian));
@@ -30,6 +33,31 @@ public sealed class ActiveAntiCheatRsaProfile
             throw new ArgumentException("RSA private exponent must be positive.", nameof(privateExponentLittleEndian));
         if (PublicExponent.HasValue && PublicExponent.Value <= BigInteger.One)
             throw new ArgumentException("RSA public exponent must be greater than one.", nameof(publicExponentLittleEndian));
+    }
+
+    public static ActiveAntiCheatRsaProfile ParseLog(string text,
+        ReadOnlySpan<byte> publicExponentLittleEndian = default, string origin = "imported")
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        byte[] modulus = ParseHexComponent(text, "N_LE");
+        byte[] privateExponent = ParseHexComponent(text, "D_LE");
+        return new ActiveAntiCheatRsaProfile(modulus, privateExponent,
+            publicExponentLittleEndian, origin);
+    }
+
+    private static byte[] ParseHexComponent(string text, string name)
+    {
+        string needle = name + "=";
+        int start = text.IndexOf(needle, StringComparison.OrdinalIgnoreCase);
+        if (start < 0)
+            throw new InvalidDataException($"RSA profile is missing {name}.");
+        start += needle.Length;
+        int end = start;
+        while (end < text.Length && Uri.IsHexDigit(text[end])) end++;
+        if (end == start || ((end - start) & 1) != 0)
+            throw new InvalidDataException($"RSA profile component {name} is not valid hexadecimal.");
+        try { return Convert.FromHexString(text.AsSpan(start, end - start)); }
+        catch (FormatException ex) { throw new InvalidDataException($"RSA profile component {name} is not valid hexadecimal.", ex); }
     }
 }
 
