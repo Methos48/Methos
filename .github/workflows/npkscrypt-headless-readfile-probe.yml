@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - ".github/workflows/npkscrypt-headless-readfile-probe.yml"
-      - "(Resolve-Path .\\tools\\npkscrypt-headless-probe.cs).Path"
+      - "tools/npkscrypt-headless-probe.cs"
 
 jobs:
   probe:
@@ -23,7 +23,7 @@ jobs:
           Copy-Item $engine.FullName probe/system/engine.dll -Force
           Copy-Item interface.u probe/system/SysString-e.dat -Force
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-          & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe tools/npkscrypt-headless-probe.cs
+          & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe (Resolve-Path .\\tools\\npkscrypt-headless-probe.cs).Path
           if ($LASTEXITCODE -ne 0) { throw "C# compile failed" }
       - name: Run without l2.exe
         shell: pwsh
