@@ -94,6 +94,43 @@ foreach (int protocol in new[] { 111, 413 })
 }
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
 
+{
+    byte[] key6 = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
+    byte[] key16 = Enumerable.Range(0, 16).Select(i => (byte)(0x80 + i)).ToArray();
+    var smartProfile = new SmartCryptKeyProfile(key6, key16, 0, 0x12345678, 0x01, 0x00, "synthetic-state");
+    var smartCodec = new SmartCrypt1522Codec(smartProfile);
+    byte[] smartPlain = Enumerable.Range(0, 2048).Select(i => (byte)((i * 37 + 19) & 0xFF)).ToArray();
+    byte[] smartMarker = { 0xFF, 0xED, 0xFA, 0xCE };
+    for (uint i = 0; i < 4; i++)
+    {
+        byte salt = (byte)(((i ^ 0x65u) * 0x93u) & 0xFF);
+        smartPlain[i] = (byte)(smartMarker[i] ^ key6[i % 6] ^ key16[i & 0x0F] ^ salt);
+    }
+    byte[] smartEncrypted = smartCodec.Encode(smartPlain, "Interface.u");
+    Check(SmartCrypt1522Codec.HasHeader(smartEncrypted),
+        "SmartCrypt 1.5.2.2 encoder did not reproduce FF ED FA CE.");
+    string smartProfileText =
+        $"NPK_GLOBAL_KEY=12345678\\nSTATE_SEED=0100\\nKEY6={Convert.ToHexString(key6)}\\nKEY16={Convert.ToHexString(key16)}\\nFLAG=00\\n";
+    var parsedSmartProfile = SmartCryptKeyProfile.ParseLog(smartProfileText, "synthetic-log");
+    Check(parsedSmartProfile.Key6.SequenceEqual(key6) &&
+          parsedSmartProfile.Key16.SequenceEqual(key16) &&
+          parsedSmartProfile.GlobalKey == 0x12345678 &&
+          parsedSmartProfile.Origin == "synthetic-log",
+        "SmartCrypt captured key profile import failed.");
+    var smartRuntime = ProtectionCodecRuntime.CreateDefault(smartCryptProfile: parsedSmartProfile);
+    var smartPlan = ProtectionPipelinePlanner.Inspect(smartEncrypted, "Interface.u",
+        smartCryptKeyAvailable: true, smartCryptEncoderVerified: false);
+    Check(smartPlan.CanDecode && !smartPlan.CanEncode &&
+          smartPlan.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate,
+        "SmartCrypt planner did not require real-file verification before re-encoding.");
+    byte[] smartDecoded = smartRuntime.Decode(smartPlan, smartEncrypted, "Interface.u");
+    Check(smartPlain.SequenceEqual(smartDecoded), "SmartCrypt 1.5.2.2 XOR round-trip failed.");
+    var smartNoKey = ProtectionPipelinePlanner.Inspect(smartEncrypted, "Interface.u");
+    Check(smartNoKey.Status == "recognized-key-required" && !smartNoKey.CanDecode,
+        "SmartCrypt must fail closed when its per-handle key profile is unavailable.");
+}
+Console.WriteLine("PASS: SmartCrypt 1.5.2.2 key-profile import, marker reproduction, and fail-closed decode.");
+
 using (RSA aacRsa = RSA.Create(2048))
 {
     RSAParameters aacParameters = aacRsa.ExportParameters(true);
