@@ -26,3 +26,38 @@ Check(package.Status == "plain-format-candidate" && package.Layers[0].Kind == Pr
     "Unreal package signature was not recognized.");
 
 Console.WriteLine("PASS: SmartCrypt candidate, Lineage II header, unknown fail-closed, and Unreal signature checks.");
+
+var twoLayerPlan = new ProtectionPlan(".dat", new[]
+{
+    new ProtectionLayer(ProtectionLayerKind.Lineage2Standard, "test-a", "test", true, true, "test vector"),
+    new ProtectionLayer(ProtectionLayerKind.Lineage2Standard, "test-b", "test", true, true, "test vector")
+}, true, true, "test", "Synthetic known-answer pipeline test.");
+var runtime = new ProtectionCodecRuntime(new IProtectionCodec[] { new XorTestCodec("test-a", 0x35), new XorTestCodec("test-b", 0xA7) });
+byte[] plain = Encoding.UTF8.GetBytes("Methos reversible pipeline vector");
+byte[] encrypted = runtime.Encode(twoLayerPlan, plain, "vector.dat");
+byte[] decoded = runtime.Decode(twoLayerPlan, encrypted, "vector.dat");
+Check(plain.SequenceEqual(decoded), "Two-layer encode/decode round-trip failed.");
+
+var noSmartCodec = new ProtectionCodecRuntime(Array.Empty<IProtectionCodec>());
+bool blocked = false;
+try { noSmartCodec.Decode(smart, smartSample, "interface.xdat"); }
+catch (NotSupportedException) { blocked = true; }
+Check(blocked, "Runtime must refuse the real SmartCrypt candidate until a verified codec is registered.");
+
+Console.WriteLine("PASS: synthetic two-layer encode/decode round-trip and missing SmartCrypt codec rejection.");
+
+sealed class XorTestCodec(string layerId, byte key) : IProtectionCodec
+{
+    public string LayerId => layerId;
+    public byte[] Decode(ReadOnlyMemory<byte> input, string originalFileName, CancellationToken cancellationToken = default)
+        => Transform(input, cancellationToken);
+    public byte[] Encode(ReadOnlyMemory<byte> input, string originalFileName, CancellationToken cancellationToken = default)
+        => Transform(input, cancellationToken);
+    private byte[] Transform(ReadOnlyMemory<byte> input, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        byte[] result = input.ToArray();
+        for (int i = 0; i < result.Length; i++) result[i] ^= key;
+        return result;
+    }
+}
