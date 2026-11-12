@@ -24,6 +24,14 @@ byte[] unreal = new byte[] { 0xC1, 0x83, 0x2A, 0x9E, 0, 0 };
 var package = ProtectionPipelinePlanner.Inspect(unreal, "Interface.u");
 Check(package.Status == "plain-format-candidate" && package.Layers[0].Kind == ProtectionLayerKind.UnrealPackage,
     "Unreal package signature was not recognized.");
+var wrongExtension = ProtectionPipelinePlanner.Inspect(unreal, "Interface.xdat");
+Check(wrongExtension.Layers[0].Kind == ProtectionLayerKind.UnrealPackage &&
+      !wrongExtension.Explanation.Contains("XDAT válido", StringComparison.OrdinalIgnoreCase),
+    "An Unreal package signature must never be mislabeled as XDAT based only on extension.");
+var xdatSmart = ProtectionPipelinePlanner.Inspect(smartSample, "Interface.xdat");
+Check(xdatSmart.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate &&
+      !xdatSmart.CanDecode && !xdatSmart.CanEncode,
+    "Encrypted XDAT must remain a SmartCrypt candidate until decoded and structurally validated.");
 
 Console.WriteLine("PASS: SmartCrypt candidate, Lineage II header, unknown fail-closed, and Unreal signature checks.");
 
