@@ -68,6 +68,15 @@ static void SetTargetHandle(LPCWSTR path,HANDLE h,const char*api){
  DebugLog("TARGET_OPEN kind=%d api=%s path=%s handle=%p\\r\\n",(int)k,api,tmp,h);
  LeaveCriticalSection(&lock);
 }
+static LONG npkStateLogged=0;
+static void LogNpkStateOnce(void){
+ if(InterlockedCompareExchange(&npkStateLogged,1,0)!=0)return;
+ HMODULE n=GetModuleHandleA("npkscrypt.dll");
+ HMODULE d=GetModuleHandleA("dsetup.dll");
+ FARPROC ord=d?GetProcAddress(d,(LPCSTR)0x67):NULL;
+ if(n){BYTE*b=(BYTE*)n;DebugLog("NPK_RUNTIME_STATE module=%p globals_51430=%08lX 51438=%08lX 51468=%08lX 5146C=%08lX dsetup=%p ordinal67=%p\\r\\n",n,*(DWORD*)(b+0x51430),*(DWORD*)(b+0x51438),*(DWORD*)(b+0x51468),*(DWORD*)(b+0x5146c),d,ord);}
+ else DebugLog("NPK_RUNTIME_STATE module=NULL dsetup=%p ordinal67=%p\\r\\n",d,ord);
+}
 static void LogOpen(const char* api,LPCWSTR path,HANDLE h){LONG k=InterlockedIncrement(&openLogCount);if(k<=2000&&path){char tmp[2048]={};WideCharToMultiByte(CP_UTF8,0,path,-1,tmp,sizeof(tmp),NULL,NULL);DebugLog("OPEN_%s #%ld path=%s handle=%p\\r\\n",api,k,tmp,h);}}
 static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);LogOpen("CreateFileW",n,h);SetTargetHandle(n,h,"CreateFileW");return h;}
 static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(n){WCHAR w[1024]={};MultiByteToWideChar(CP_ACP,0,n,-1,w,1024);LogOpen("CreateFileA",w,h);SetTargetHandle(w,h,"CreateFileA");}return h;}
@@ -90,7 +99,7 @@ static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* exp
  LeaveCriticalSection(&lock);
 }
 static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
- BOOL ok=realReadFile(h,b,req,got,ov);DWORD n=(ok&&got)?*got:0;
+ BOOL ok=realReadFile(h,b,req,got,ov);LogNpkStateOnce();DWORD n=(ok&&got)?*got:0;
  if(ok&&n){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
  return ok;
 }
