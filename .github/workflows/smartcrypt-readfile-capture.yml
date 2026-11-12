@@ -6,6 +6,7 @@ on:
       - ".github/workflows/smartcrypt-readfile-capture.yml"
       - "tools/smartcrypt-capture.cpp"
       - "tools/smartcrypt-capture-probe.cs"
+      - "third_party/minhook/**"
 jobs:
   capture:
     runs-on: windows-2022
@@ -25,7 +26,7 @@ jobs:
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
-          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE tools\smartcrypt-capture.cpp /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
+          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
