@@ -54,7 +54,7 @@ A synthetic encode/decode round-trip test has been added for both 111 and 413. T
 
 ## Current end-to-end pipeline
 
-    Dunkl interface file (original preserved)
+    Dunk3l interface file (original preserved)
              |
              v
     SmartCrypt 1.5.2.2 runtime capture (real-client validation pending)
