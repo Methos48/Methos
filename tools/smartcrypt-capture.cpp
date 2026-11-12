@@ -72,6 +72,13 @@ static void SetTargetHandle(LPCWSTR path,HANDLE h,const char*api){
  DebugLog("TARGET_OPEN kind=%d api=%s path=%s handle=%p\\r\\n",(int)k,api,tmp,h);
  LeaveCriticalSection(&lock);
 }
+static void EnsureTargetHandle(HANDLE h){
+ if(!h||h==INVALID_HANDLE_VALUE)return;
+ for(int i=1;i<=3;i++)if(h==targetHandles[i])return;
+ WCHAR path[1024]={};
+ DWORD n=GetFinalPathNameByHandleW(h,path,1024,FILE_NAME_NORMALIZED);
+ if(n&&n<1024&&GetTargetKindW(path)!=TARGET_NONE)SetTargetHandle(path,h,"NpkReadFile");
+}
 static LONG npkStateLogged=0;
 static void LogNpkStateOnce(void){
  if(InterlockedCompareExchange(&npkStateLogged,1,0)!=0)return;
@@ -137,7 +144,7 @@ static BOOL WINAPI HookNpkReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVE
  inNpkRead--;
  LogNpkStateOnce();
  DWORD n=(ok&&got)?*got:0;
- if(ok&&n){LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"NpkReadFilePostTransform");DumpNpkKeyState(h);}
+ if(ok&&n){EnsureTargetHandle(h);LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"NpkReadFilePostTransform");DumpNpkKeyState(h);}
  return ok;
 }
 static BOOL InstallNpkReadHook(void){
