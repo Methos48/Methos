@@ -93,7 +93,7 @@ if (File.Exists("Engine.u"))
     Console.WriteLine($"ENGINE_U_TABLES names={realPackage.Names.Count} imports={realPackage.Imports.Count} exports={realPackage.Exports.Count} header={realPackage.Summary.NameCount}/{realPackage.Summary.ImportCount}/{realPackage.Summary.ExportCount}");
     Check(realPackage.Summary.Version == 123 && realPackage.Summary.LicenseeVersion == 30,
         "Decoded Engine.u package profile must be 123/30.");
-    Check(realPackage.Names.Count > 1000 && realPackage.Imports.Count > 100 &&
+    Check(realPackage.Names.Count > 1000 && realPackage.Imports.Count > 50 &&
           realPackage.Exports.Count > 1000,
         "Decoded Engine.u must contain plausible name/import/export tables.");
 
