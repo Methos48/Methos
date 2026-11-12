@@ -10,6 +10,7 @@ def main():
     shutil.copy2(repo/"tests"/"test_auto_pipeline.py",tests/"test_auto_pipeline.py")
     shutil.copy2(repo/"tests"/"test_package_origin_metadata.py",tests/"test_package_origin_metadata.py")
     shutil.copy2(repo/"tests"/"test_xdat_edit_roundtrip.py",tests/"test_xdat_edit_roundtrip.py")
+    shutil.copy2(repo/"tests"/"test_publish_transaction.py",tests/"test_publish_transaction.py")
     app=project/"app.py"; source=app.read_text(encoding="utf-8")
     line="from xdat_core import decompile_to_folder, compile_from_folder, parse_xdat\n"
     old_paths = """APP_DIR = Path(__file__).resolve().parent
