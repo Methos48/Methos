@@ -1,87 +1,90 @@
-# SmartCrypt 1.5.2.2 — hallazgos y plan de extracción
+# SmartCrypt 1.5.2.2 and standard Lineage II pipeline — corrected findings
 
-Fecha: 2026-11-11
+Date: 2026-11-12
 
-## Conclusión actual
+## Target identity
 
-La protección exterior de los archivos originales system/interface.u y system/interface.xdat queda identificada con alta confianza como SmartCrypt 1.5.2.2. La rutina exacta de cifrado todavía no está reconstruida; el método documentado disponible recupera los bytes después de que el cliente los procesa en tiempo de ejecución.
+The supplied interface.u and interface.xdat are from an interface made by **Dunk3l**, not original L2Sudamerica interface assets. The server/client installation is a runtime environment and a source of possible loader components, not proof of the interface author's encryption method.
 
-## Evidencia reproducible del cliente L2Sudamérica
+The public MaxCheaters thread “Smart Crypt Decryptor 1.5.2.2” contains a method that explicitly names interface.u and interface.xdat. It also contains a post by Dunk3l in the discussion. This is a strong research lead, but the exact protection on our two files still requires runtime confirmation.
 
-Del ZIP system.zip del usuario se extrajeron los siguientes archivos sin modificar los originales:
+Source: https://maxcheaters.com/topic/249577-smart-crypt-decryptor-1522/
 
-| Archivo | Evidencia |
-|---|---|
-| system/npkscrypt.dll | Versión PE 1.5.2.2; MD5 5908c3ee24b40f6f08f1500723b1a41d |
-| system/ogg.dll | Su tabla de importación incluye npkscrypt.dll!Akumu_ICQ_10050005 |
-| system/interface.u | SHA-256 89fffcb34b0161033f6d2d1b9c650625cd6144fa575ccf3b170b4c0d5f31902d; comienza FF ED FA CE 01 00 |
-| system/interface.xdat | SHA-256 7ea4e8830c24b3d803b32429040eb673da87e15c5f83126c4b5c6904825b16bb; comienza FF ED FA CE 01 00 |
-| system/L2Patch.u | Comienza C1 83 2A 9E, firma de paquete Unreal normal; demuestra que no todos los .u del cliente llevan la misma envoltura |
+## What the public SmartCrypt method does
 
-El MD5 de npkscrypt.dll coincide exactamente con una muestra publicada que identifica la DLL como SmartCrypt 1.5.2.2. La coincidencia de versión/hash y la dependencia importada desde ogg.dll son evidencias mucho más fuertes que la entropía o la firma de seis bytes consideradas aisladamente.
+The published extraction procedure:
+1. Rename a copy of the target file to SysString-e.dat.
+2. Load an auxiliary DLL before npkscrypt.dll through the import order in ogg.dll.
+3. The helper loads engine.dll, hooks CreateFileW and ReadFile, and tracks the handle opened for SysString-e.dat.
+4. Capture the buffer returned by the chained read hook.
+5. The resulting intermediate may still have ordinary Lineage II encryption (the thread names 413/111), so a second decode stage may be necessary.
 
-## Método documentado encontrado
+The sample is not production-safe: it writes requested rather than actual byte counts, does not correctly handle overlapped I/O, and uses an unsynchronized handle map. Methos uses a safer capture implementation with actual returned counts, file offsets, synchronization, and non-destructive output.
 
-El tema público “Smart Crypt Decryptor 1.5.2.2” describe una técnica de captura en tiempo de ejecución:
+## Exact DLL evidence and limits
 
-1. Se carga una DLL auxiliar antes de npkscrypt.dll a través de la tabla de importaciones de ogg.dll.
-2. La DLL auxiliar intercepta CreateFileW para reconocer el archivo cuyo nombre contiene SysString-e.dat.
-3. Registra el identificador de archivo correspondiente.
-4. Intercepta ReadFile y copia los bytes que el cliente ya ha leído y procesado.
-5. Para probar otro archivo, se utiliza una copia con el nombre SysString-e.dat y se ejecuta L2.exe; el cliente puede mostrar un error después de leerlo. La técnica documentada indica que el resultado intermedio queda todavía cifrado con el cifrado estándar de Lineage II (por ejemplo 413/111), por lo que hace falta una segunda etapa.
+The uploaded npkscrypt.dll has MD5 5908c3ee24b40f6f08f1500723b1a41d and version metadata matching the SmartCrypt 1.5.2.2 family. The supplied ogg.dll imports npkscrypt.dll. The two Dunk3l interface files begin with FF ED FA CE 01 00.
 
-Fuente pública: https://maxcheaters.com/topic/249577-smart-crypt-decryptor-1522/
+Static analysis found that npkscrypt.dll contains comparisons for this marker and a ReadFile-compatible in-place transform. A conditional initialization path also references dsetup.dll, ordinal 0x67 and dsetup.u. The user explicitly confirmed that neither dsetup.u nor SmartGuard.ini exists in their game. This branch is not proof of the key provider used by these target files and must not be treated as a required file set.
 
-## Correcciones necesarias antes de integrar el método
+The earlier headless Core.dll stream test called ReadFile directly from Core.dll at RVA 0x76E5F; it bypassed the candidate NPK wrapper. Identical bytes from that test do not prove the real client transform is inactive.
 
-El ejemplo de código publicado no debe copiarse tal cual:
+## Integration defect found and corrected
 
-- Escribe nNumberOfBytesToRead, que es el tamaño solicitado, en vez de *lpNumberOfBytesRead, que es el tamaño realmente leído. Esto puede añadir bytes no válidos al archivo capturado.
-- Usa un std::map global sin sincronización; varios hilos pueden leer y modificarlo simultáneamente.
-- No gestiona de forma correcta lecturas superpuestas (OVERLAPPED) ni el caso de operaciones asíncronas.
-- No valida rigurosamente INVALID_HANDLE_VALUE, lecturas fallidas, lecturas de cero bytes ni cierre/reutilización de identificadores.
-- El filtro de nombre debe ser robusto frente a mayúsculas/minúsculas y rutas completas.
-- La captura debe ir a un archivo temporal, conservar el original y registrar tamaños/errores para validar que no se truncó ni duplicó información.
+The first Methos SmartCapture DLL only initialized diagnostic hooks from DllMain. It installed the actual ReadFile/CreateFileW hooks only when an exported initialization function was called manually by the test host. This did not match the published helper's lifecycle.
 
-## Arquitectura prevista para Methos
+Commits:
+- 7b9f7bbf9c1967fa7da74ac5457729d6ec13aa9c: install target hooks automatically during DLL attach.
+- 8a49625a177f31c375ace9b3e8bb67c96f3a3e11: make the headless test check automatic initialization rather than manually invoking it.
+- 80617f0af551df4e350968ad876866196980b913 and 5e6714a51c39d77a29ad0cd049fc3db076b5b638: add an isolated actual-client capture workflow using copies of the client files.
 
-El proceso debe ser independiente del tipo de archivo:
+The old capture artifact predates these changes. A fresh Windows run is still required; no successful real-client capture is claimed yet.
 
-1. Capa SmartCrypt: recuperar el flujo posterior a SmartCrypt mediante el cliente compatible.
-2. Capa Lineage II estándar: identificar y retirar la versión interna real (por ejemplo 413/111); no asumirla sin inspeccionar el encabezado intermedio.
-3. Parser específico: validar como paquete Unreal en el módulo U o como estructura XDAT en el módulo XDAT.
-4. Validación: comprobar estructura, recuentos, límites y posibilidad de volver a compilar; nunca reemplazar el archivo original automáticamente.
+## Standard Lineage II second-stage codec now integrated
 
-## Material que falta para ejecutar la primera prueba real
+The public-domain open-l2encdec project documents and implements standard Lineage II file formats:
+- 111: XOR with key 0xAC.
+- 413: RSA blocks (128 bytes, 124-byte payload) followed by zlib decompression, with a 28-byte UTF-16LE Lineage2Ver### header and 20-byte tail/checksum.
 
-El ZIP recibido contiene ogg.dll, npkscrypt.dll, l2ui.dll, L2Patch.u y los archivos interface.u/interface.xdat, pero no incluye L2.exe ni engine.dll. Para ejecutar la captura con el cliente real hacen falta esos binarios (y Core.dll si el cliente lo utiliza).
+Source: https://github.com/ritsuwastaken/open-l2encdec
 
-## Estado
+Methos now includes Lineage2StandardCodec.cs for protocols 111 and 413. Protocol 413 decode attempts both the modern and legacy RSA private-key sets; encode uses the modern public-key set. The codec validates the header, tail CRC32, RSA block structure, decompressed length, and zlib stream. It is registered in ProtectionCodecRuntime.CreateDefault() and exposed by the planner when the corresponding header is present.
 
-- [x] Identificar versión/hash de SmartCrypt en el cliente.
-- [x] Confirmar que ogg.dll importa npkscrypt.dll.
-- [x] Confirmar que U y XDAT originales comparten la cabecera exterior.
-- [x] Encontrar un procedimiento público específico para SmartCrypt 1.5.2.2.
-- [ ] Implementar una captura robusta y no destructiva.
-- [ ] Ejecutar una prueba con el L2.exe/engine.dll exactos del cliente.
-- [ ] Retirar la capa Lineage II estándar del resultado intermedio.
-- [ ] Validar U y XDAT con sus parsers independientes.
+A synthetic encode/decode round-trip test has been added for both 111 and 413. The test code has been committed, but a fresh .NET 8 CI execution is still pending; therefore this integration is implemented but not yet marked runtime-verified.
 
-Límite: todavía no se ha producido ni validado una decodificación completa de los dos archivos originales. La identificación de la protección está sustentada; la extracción real sigue pendiente de la prueba de ejecución.
+## Current end-to-end pipeline
 
-## Verificación cruzada adicional (11-11-2026)
+    Dunkl interface file (original preserved)
+             |
+             v
+    SmartCrypt 1.5.2.2 runtime capture (real-client validation pending)
+             |
+             v
+    Lineage2Ver111 / Lineage2Ver413 detection
+             |
+             v
+    Methos Lineage II standard codec (111 XOR / 413 RSA + zlib)
+             |
+             v
+    Format-specific validation
+       +-----+-----+
+       |           |
+    U package    XDAT layout
+       |           |
+       +-----+-----+
+             |
+             v
+    Edit / compile / reverse the layers in reverse order
 
-Se localizó una segunda guía pública de Smart Decryptor que describe el mismo flujo operativo: preparar una copia de ogg.dll con SmartDecrypt.dll por delante de npkscrypt.dll en la tabla de importaciones, renombrar una copia del archivo objetivo como SysString-e.dat, ejecutar L2.exe y recuperar decrypted_file.txt. La guía también advierte que puede quedar una capa de cifrado Lineage II anterior y que debe retirarse después con el decodificador estándar correspondiente.
+The SmartCrypt runtime capture is not yet a standalone offline codec. The standard second layer is now implemented in the .NET runtime. Do not mark a file decoded until the capture is complete, the standard codec succeeds, and the resulting U/XDAT structure passes independent validation.
 
-Referencias:
-- Smart Crypt Decryptor 1.5.2.2 (código de captura y orden de carga): https://maxcheaters.com/topic/249577-smart-crypt-decryptor-1522/
-- Guía independiente Smart Decryptor (pasos de importación y segunda etapa): https://mmo-dev.info/resources/smart-decryptor.3096/
+## Remaining work
 
-Esta verificación refuerza el método de extracción, pero no sustituye la prueba con el L2.exe y engine.dll exactos de L2Sudamérica. No se modificará el cliente original: la preparación del import table y la captura se harán sobre copias aisladas.
+- [ ] Run the revised actual-client capture workflow and recover a complete intermediate file.
+- [ ] Confirm whether the intermediate begins with Lineage2Ver111, Lineage2Ver413, another supported header, or an unrecognized format.
+- [ ] Run the integrated standard codec against the actual intermediate and validate checksum/decompression.
+- [ ] Validate interface.u as a real Unreal package and interface.xdat with the Interlude XDAT parser.
+- [ ] Determine how to reproduce/reverse the outer SmartCrypt layer for compiling edited files.
+- [ ] Prove round-trip behavior without modifying the original files.
 
-
-## Correction from Step 26 (2026-11-12)
-
-The exact `npkscrypt.dll` contains executable comparisons for the supplied `FF ED FA CE` marker and a ReadFile-compatible in-place XOR stream transform. Its activation path also checks for `dsetup.dll` and processes `dsetup.u`. This means the earlier generic SmartCrypt 1.5.2.2 identification should not be treated as the complete explanation of this client's protection. The dsetup loader/key-provider path is now the leading explanation for the missing key state.
-
-The exact matching `dsetup.dll` and `dsetup.u` were not found in either uploaded `system.zip` or `engine.zip`, nor in the Windows runner. The PE-base gate was emulated successfully at `0x10900000`, but key globals remained zero and no decryption occurred. See `docs/STEP26_NPKSCRYPT_DECRYPTION_PATH.md` for the disassembly findings and exact next inputs required.
+No original interface files have been changed.
