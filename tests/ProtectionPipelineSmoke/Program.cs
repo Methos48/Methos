@@ -268,6 +268,33 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
               parsedPackage.Exports.Count == 10308 &&
               parsedPackage.Imports.Count == 740,
             "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
+
+        byte[] tableRoundTrip = parsedPackage.CreateLosslessRoundTrip();
+        var tableVerified = UnrealPackageIndex.Parse(tableRoundTrip);
+        Check(tableVerified.Names.SequenceEqual(parsedPackage.Names) &&
+              tableVerified.Imports.SequenceEqual(parsedPackage.Imports) &&
+              tableVerified.Exports.SequenceEqual(parsedPackage.Exports),
+            "Dunk3l interface.u lossless table reconstruction changed original package metadata.");
+        Console.WriteLine($"PASS: Dunk3l interface.u UE 126/0 index tables lossless round-trip; names={tableVerified.Names.Count}, imports={tableVerified.Imports.Count}, exports={tableVerified.Exports.Count}.");
+
+        string diagnosticRoot = Path.Combine(Path.GetTempPath(), "Methos-Dunk3l-UELib-" + Guid.NewGuid().ToString("N"));
+        string diagnosticPackage = Path.Combine(diagnosticRoot, "Interface.u");
+        string diagnosticOutput = Path.Combine(diagnosticRoot, "Descompilado");
+        Directory.CreateDirectory(diagnosticRoot);
+        try
+        {
+            File.WriteAllBytes(diagnosticPackage, plainPayload);
+            var uelibResult = UnrealPackageDecompiler.DecompileToFolder(diagnosticPackage, diagnosticOutput);
+            Console.WriteLine($"DUNK3L_UELIB version={uelibResult.PackageVersion}/{uelibResult.LicenseeVersion} objects={uelibResult.ObjectCount} classes={uelibResult.ClassCount} exported={uelibResult.ExportedCount} failed={uelibResult.FailedCount}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DUNK3L_UELIB_DIAGNOSTIC_FAILED {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            try { if (Directory.Exists(diagnosticRoot)) Directory.Delete(diagnosticRoot, recursive: true); } catch { }
+        }
     }
     else
     {
