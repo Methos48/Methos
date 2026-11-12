@@ -66,6 +66,12 @@ jobs:
           "SILENT_U_SOURCES=$src" | Out-File -FilePath $env:GITHUB_ENV -Append
           "UCC_KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "SILENT_DARK_UC_SOURCE_COUNT=$count"
+          $offender = Join-Path $src "AutoSkillWnd.uc"
+          if (Test-Path $offender) {
+            Write-Host "=== AutoSkillWnd.uc lines 85-105 ==="
+            $lines = Get-Content -LiteralPath $offender
+            for ($i = 84; $i -lt [Math]::Min(105, $lines.Count); $i++) { Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i]) }
+          } else { Write-Host "AutoSkillWnd.uc not found at source root" }
 
       - name: Create isolated Methos U compile/decompile test harness
         shell: pwsh
