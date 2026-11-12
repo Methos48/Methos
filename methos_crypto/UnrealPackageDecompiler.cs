@@ -26,7 +26,7 @@ public sealed record UnrealNameReplacement(int Index, string SafeName, string Or
 public static class UnrealPackageDecompiler
 {
     public static UnrealPackageDecompileResult DecompileToFolder(
-        string packagePath, string outputDirectory)
+        string packagePath, string outputDirectory, string? referenceSourceDirectory = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packagePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputDirectory);
@@ -87,6 +87,22 @@ public static class UnrealPackageDecompiler
                     Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
                 if (string.IsNullOrWhiteSpace(safeName))
                     safeName = $"Object_{exported}";
+                // UELib can emit a redundant bare "return;" after a valid value return.
+                // UCC rejects that statement in non-void functions. When the exact
+                // Interlude reference source is available, remove only those invalid
+                // trailing returns whose reference function confirms the real body.
+                if (!string.IsNullOrWhiteSpace(referenceSourceDirectory))
+                {
+                    string referencePath = Path.Combine(
+                        Path.GetFullPath(referenceSourceDirectory), safeName + ".uc");
+                    if (File.Exists(referencePath))
+                    {
+                        string referenceSource = File.ReadAllText(referencePath);
+                        source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
+                            source, referenceSource, out _);
+                    }
+                }
+
                 string destination = Path.Combine(output, safeName + ".uc");
                 File.WriteAllText(destination, source, new UTF8Encoding(false));
                 exported++;
