@@ -13,8 +13,8 @@ Check(smart.Status == "recognized-candidate" && !smart.CanDecode && !smart.CanEn
 
 byte[] l2 = Encoding.Unicode.GetBytes("Lineage2Ver413");
 var lineage = ProtectionPipelinePlanner.Inspect(l2, "systemmsg-e.dat");
-Check(lineage.Status == "recognized-encryption" && !lineage.CanDecode && !lineage.CanEncode,
-    "Lineage2Ver413 must be identified without claiming a codec is available.");
+Check(lineage.Status == "recognized-supported-encryption" && lineage.CanDecode && lineage.CanEncode,
+    "Lineage2Ver413 must report the integrated codec as available.");
 
 var unknown = ProtectionPipelinePlanner.Inspect(new byte[] { 0x12, 0x34, 0x56 }, "unknown.bin");
 Check(unknown.Status == "unknown-or-unsupported" && !unknown.CanDecode,
@@ -53,6 +53,22 @@ catch (NotSupportedException) { blocked = true; }
 Check(blocked, "Runtime must refuse the real SmartCrypt candidate until a verified codec is registered.");
 
 Console.WriteLine("PASS: synthetic two-layer encode/decode round-trip and missing SmartCrypt codec rejection.");
+
+var standard = ProtectionCodecRuntime.CreateDefault();
+byte[] standardPlain = Encoding.UTF8.GetBytes("Methos standard Lineage II codec known-answer round-trip.");
+foreach (int protocol in new[] { 111, 413 })
+{
+    var standardPlan = new ProtectionPlan(".dat", new[]
+    {
+        new ProtectionLayer(ProtectionLayerKind.Lineage2Standard, $"lineage2-{protocol}", "test", true, true, "synthetic round-trip")
+    }, true, true, "test", "Synthetic Lineage II standard codec round-trip.");
+    byte[] standardEncrypted = standard.Encode(standardPlan, standardPlain, "vector.dat");
+    var detected = ProtectionPipelinePlanner.Inspect(standardEncrypted, "vector.dat");
+    Check(detected.CanDecode && detected.CanEncode, $"Protocol {protocol} header was not recognized as supported.");
+    byte[] standardDecoded = standard.Decode(standardPlan, standardEncrypted, "vector.dat");
+    Check(standardPlain.SequenceEqual(standardDecoded), $"Protocol {protocol} round-trip failed.");
+}
+Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
 
 sealed class XorTestCodec(string layerId, byte key) : IProtectionCodec
 {
