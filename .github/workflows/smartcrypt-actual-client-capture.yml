@@ -14,6 +14,7 @@ on:
       - "system.zip"
       - "engine.zip"
       - "l2.exe"
+      - "Engine.u"
       - "Window.dll"
       - "interface.u"
 jobs:
@@ -39,7 +40,7 @@ jobs:
               Copy-Item $_.FullName $destination -Force
             }
           }
-          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll")) {
+          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll","Engine.u")) {
             if (Test-Path $name) { Copy-Item $name (Join-Path "probe/system" $name) -Force }
           }
           if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
