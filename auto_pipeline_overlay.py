@@ -128,25 +128,26 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
         source=source.replace(parse_marker,parse_replacement,1)
     elif "backup_root=Path.home() / \"AppData\"" not in source:
         raise SystemExit("No se localizó el punto seguro para sustituir el contenido Archivo XDAT")
-    commit_marker = "            temp.replace(output)\\n"
-    commit_replacement = """            # Publicar solo después de validar el temporal; no borrar el temporal al limpiar Archivo.
-            backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
-            backup_root.mkdir(parents=True,exist_ok=True)
-            if COMPLETE_DIR.exists():
-                for old_file in COMPLETE_DIR.rglob("*"):
-                    if old_file.is_file() and old_file != temp:
-                        backup_name=f"{old_file.stem}_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{old_file.name}"
-                        shutil.copy2(old_file,backup_root/backup_name)
-                for old_item in COMPLETE_DIR.iterdir():
-                    if old_item.is_dir(): shutil.rmtree(old_item)
-                    elif old_item != temp: old_item.unlink()
-            COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
-            temp.replace(output)
-"""
-    if commit_marker in source:
-        source=source.replace(commit_marker,commit_replacement,1)
-    elif "Publicar solo después de validar el temporal" not in source:
-        raise SystemExit("No se localizó la publicación final XDAT")
+    import re
+    publish_pattern = r"(?m)^(\\s*)temp\\.write_bytes\\(data\\)\\s*\\n\\1if temp\\.read_bytes\\(\\)!=data:.*\\n\\1temp\\.replace\\(output\\)\\s*$"
+    publish_code = """\\1temp.write_bytes(data)
+\\1if temp.read_bytes()!=data: raise ValueError('El archivo temporal no coincide con el resultado compilado.')
+\\1# Solo ahora se respalda y limpia Archivo; el temporal queda fuera del borrado.
+\\1backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
+\\1backup_root.mkdir(parents=True,exist_ok=True)
+\\1if COMPLETE_DIR.exists():
+\\1    for old_file in COMPLETE_DIR.rglob("*"):
+\\1        if old_file.is_file() and old_file != temp:
+\\1            backup_name=f"{old_file.stem}_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{old_file.name}"
+\\1            shutil.copy2(old_file,backup_root/backup_name)
+\\1    for old_item in COMPLETE_DIR.iterdir():
+\\1        if old_item.is_dir(): shutil.rmtree(old_item)
+\\1        elif old_item != temp: old_item.unlink()
+\\1COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
+\\1temp.replace(output)"""
+    source, publish_count = re.subn(publish_pattern, lambda m: publish_code.replace("\\\\1", m.group(1)), source, count=1)
+    if publish_count != 1:
+        raise SystemExit("No se pudo localizar el bloque completo de escritura XDAT para publicarlo de forma segura.")
     source = source.replace(
         "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
         "messagebox.showerror('Error al descompilar',f'{e}\\n\\n{traceback.format_exc()}')"
