@@ -28,7 +28,7 @@ public sealed class ActiveAntiCheatRsaProfile
             throw new ArgumentException("RSA modulus must be positive and odd.", nameof(modulusLittleEndian));
         if (PrivateExponent <= BigInteger.Zero)
             throw new ArgumentException("RSA private exponent must be positive.", nameof(privateExponentLittleEndian));
-        if (PublicExponent is <= BigInteger.One)
+        if (PublicExponent.HasValue && PublicExponent.Value <= BigInteger.One)
             throw new ArgumentException("RSA public exponent must be greater than one.", nameof(publicExponentLittleEndian));
     }
 }
@@ -136,12 +136,10 @@ public sealed class ActiveAntiCheatCodec : IProtectionCodec
         byte[] block = new byte[RsaBlockLength];
         block[0] = 0;
         block[1] = 2;
+        RandomNumberGenerator.Fill(block.AsSpan(2, paddingLength));
         for (int i = 2; i < separator; i++)
-        {
-            byte value;
-            do { value = RandomNumberGenerator.GetBytes(1)[0]; } while (value == 0);
-            block[i] = value;
-        }
+            while (block[i] == 0)
+                block[i] = RandomNumberGenerator.GetBytes(1)[0];
         block[separator] = 0;
         message.CopyTo(block.AsSpan(separator + 1));
         return block;
