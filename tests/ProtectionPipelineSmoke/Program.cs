@@ -210,20 +210,20 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver header.");
 
     var standardCodec = new Lineage2StandardCodec(smartProfile.Lineage2Version);
-    byte[] plain = standardCodec.Decode(lineageEnvelope, targetName);
+    byte[] dunk3lPlain = standardCodec.Decode(lineageEnvelope, targetName);
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
-        Check(plain.Length >= 4 && plain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
+        Check(plain.Length >= 4 && dunk3lPlain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
             "Dunk3l interface.u did not produce a valid Unreal package signature after both layers.");
     }
     else
     {
-        string visibleXdat = Encoding.ASCII.GetString(plain);
+        string visibleXdat = Encoding.ASCII.GetString(dunk3lPlain);
         Check(visibleXdat.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
             "Dunk3l interface.xdat did not expose expected XDAT window names after both layers.");
     }
 
-    byte[] standardRebuilt = standardCodec.Encode(plain, targetName);
+    byte[] standardRebuilt = standardCodec.Encode(dunk3lPlain, targetName);
     Check(standardRebuilt.SequenceEqual(lineageEnvelope),
         $"{targetName}: standard Lineage2 protocol failed byte-for-byte round-trip.");
     byte[] smartRebuilt = smartCodec.Encode(standardRebuilt, targetName);
