@@ -73,9 +73,11 @@ def main() -> int:
             parts = Path(temp) / label / "Descomprimido"
             try:
                 windows, shortcuts = decompile_to_folder(payload, parts)
-                rebuilt_payload = compile_from_folder(parts, original_data=payload)
+                rebuilt_payload, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(parts, original_data=payload)
                 if rebuilt_payload != payload:
                     raise ValueError("El XDAT recompilado desde XML no coincide byte por byte.")
+                if rebuilt_windows != windows or rebuilt_shortcuts != shortcuts:
+                    raise ValueError("Las cantidades de ventanas/accesos cambiaron durante la recompilación.")
                 parsed = (label, payload, windows, shortcuts)
                 break
             except Exception as exc:
