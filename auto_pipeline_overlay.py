@@ -128,8 +128,8 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
         source=source.replace(parse_marker,parse_replacement,1)
     elif "backup_root=Path.home() / \"AppData\"" not in source:
         raise SystemExit("No se localizó el punto seguro para sustituir el contenido Archivo XDAT")
-    commit_marker = "            if temp.read_bytes()!=data: raise ValueError('El archivo temporal no coincide con el resultado compilado.')\\n"
-    commit_replacement = commit_marker + """            # Publicar solo después de validar el temporal; no borrar el temporal al limpiar Archivo.
+    commit_marker = "            temp.replace(output)\\n"
+    commit_replacement = """            # Publicar solo después de validar el temporal; no borrar el temporal al limpiar Archivo.
             backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
             backup_root.mkdir(parents=True,exist_ok=True)
             if COMPLETE_DIR.exists():
@@ -141,11 +141,12 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
                     if old_item.is_dir(): shutil.rmtree(old_item)
                     elif old_item != temp: old_item.unlink()
             COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
+            temp.replace(output)
 """
     if commit_marker in source:
         source=source.replace(commit_marker,commit_replacement,1)
     elif "Publicar solo después de validar el temporal" not in source:
-        raise SystemExit("No se localizó el punto seguro para publicar XDAT")
+        raise SystemExit("No se localizó la publicación final XDAT")
     source = source.replace(
         "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
         "messagebox.showerror('Error al descompilar',f'{e}\\n\\n{traceback.format_exc()}')"
