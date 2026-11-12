@@ -81,6 +81,10 @@ jobs:
             Write-Host "AutoSkillWnd.uc not found anywhere in extracted sources"
             Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse | Select-Object -First 30 -ExpandProperty FullName
           }
+          $eventClass = Get-ChildItem -LiteralPath $src -Filter "EventMatchGMWnd.uc" -File -Recurse | Select-Object -First 1
+          if ($eventClass) {
+            $eventClass | Get-Content | Set-Content -LiteralPath (Join-Path $diagnostics "EventMatchGMWnd.uc")
+          }
           $allSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
           "SOURCE_COUNT=$($allSources.Count)" | Set-Content (Join-Path $diagnostics "source-inventory.txt")
           $allSources | ForEach-Object { $_.FullName.Substring($src.Length).TrimStart('\','/') } | Add-Content (Join-Path $diagnostics "source-inventory.txt")
