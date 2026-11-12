@@ -330,6 +330,28 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
               parsedPackage.Imports.Count == 740,
             "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
 
+        string originalObfuscatedName = parsedPackage.Names[31];
+        const string temporarySafeName = "MethosRoundTripProbeName";
+        byte[] renamedNameTable = parsedPackage.CreateWithReplacedNames(
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                [originalObfuscatedName] = temporarySafeName
+            });
+        var renamedNameIndex = UnrealPackageIndex.Parse(renamedNameTable);
+        Check(renamedNameIndex.Names.Contains(temporarySafeName) &&
+              renamedNameIndex.NameFlags.SequenceEqual(parsedPackage.NameFlags) &&
+              renamedNameIndex.Imports.SequenceEqual(parsedPackage.Imports) &&
+              renamedNameIndex.Exports.SequenceEqual(parsedPackage.Exports),
+            "Dunk3l U FName sanitization changed name flags or object references.");
+        byte[] restoredNameTable = renamedNameIndex.CreateWithReplacedNames(
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                [temporarySafeName] = originalObfuscatedName
+            });
+        var restoredNameIndex = UnrealPackageIndex.Parse(restoredNameTable);
+        Check(restoredNameIndex.Names.SequenceEqual(parsedPackage.Names),
+            "Dunk3l U FName restoration did not reproduce the original name table.");
+
         byte[] tableRoundTrip = parsedPackage.CreateLosslessRoundTrip();
         var tableVerified = UnrealPackageIndex.Parse(tableRoundTrip);
         Check(tableVerified.Names.SequenceEqual(parsedPackage.Names) &&
