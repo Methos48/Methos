@@ -6,6 +6,7 @@ on:
       - 'Engine.u'
       - 'interface.u'
       - 'interface.xdat'
+      - 'sysstring-e.dat'
       - 'tools/xdat/**'
       - 'tests/ProtectionPipelineSmoke/**'
       - '.github/workflows/protection-pipeline-smoke.yml'
