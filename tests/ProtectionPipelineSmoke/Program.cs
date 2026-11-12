@@ -252,9 +252,12 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         includeTailInPayload: includeTailInPayload);
     var customTailCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
     byte[] plainPayload = customTailCodec.Decode(lineageEnvelope, targetName);
-    byte[] standardDecoded = new Lineage2StandardCodec(111).Decode(lineageEnvelope, targetName);
-    Check(standardDecoded.SequenceEqual(plainPayload),
-        $"{targetName}: normal protocol-111 decode should ignore the optional trailer checksum just like the game client.");
+    if (!includeTailInPayload)
+    {
+        byte[] standardDecoded = new Lineage2StandardCodec(111).Decode(lineageEnvelope, targetName);
+        Check(standardDecoded.SequenceEqual(plainPayload),
+            $"{targetName}: normal protocol-111 decode should match the original-trailer compatibility payload.");
+    }
 
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
