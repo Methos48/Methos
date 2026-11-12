@@ -33,6 +33,10 @@ jobs:
               print("FIRST_256_BYTES:", b[:256].hex(" "))
               print("FIRST_4_LE_SIGNED:", int.from_bytes(b[:4], "little", signed=True))
               print("FIRST_4_LE_UNSIGNED:", int.from_bytes(b[:4], "little", signed=False))
+              print("SMARTCRYPT_CANDIDATE_PREFIX_FF_ED_FA_CE_01_00:", b.startswith(bytes.fromhex("FF ED FA CE 01 00")))
+              print("ACTIVE_ANTICHEATCRYPT_MAGIC:", b.startswith(b"ActiveAnticheatCrypt"))
+              print("LINEAGE2VER_MAGIC:", b.startswith(b"Lineage2Ver"))
+              print("UNREAL_PACKAGE_MAGIC_C1_83_2A_9E:", b.startswith(bytes.fromhex("C1 83 2A 9E")))
           PY
       - name: Preserve both originals for deeper analysis
         uses: actions/upload-artifact@v4
