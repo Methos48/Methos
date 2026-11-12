@@ -25,8 +25,7 @@ public sealed class ProtectionCodecRuntime
             new Lineage2StandardCodec(111),
             new Lineage2StandardCodec(413)
         };
-        if (smartCryptProfile is not null)
-            codecs.Add(new SmartCrypt1522Codec(smartCryptProfile));
+        codecs.Add(new SmartCrypt1522Codec(smartCryptProfile));
         if (activeAntiCheatProfile is not null)
             codecs.Add(new ActiveAntiCheatCodec(activeAntiCheatProfile));
         return new ProtectionCodecRuntime(codecs);
