@@ -101,6 +101,12 @@ using (RSA aacRsa = RSA.Create(2048))
     byte[] dLe = aacParameters.D!.Reverse().ToArray();
     byte[] eLe = aacParameters.Exponent!.Reverse().ToArray();
     var aacProfile = new ActiveAntiCheatRsaProfile(nLe, dLe, eLe);
+    var parsedAacProfile = ActiveAntiCheatRsaProfile.ParseLog(
+        $"N_LE={Convert.ToHexString(nLe)}\\nD_LE={Convert.ToHexString(dLe)}\\n", eLe, "synthetic-log");
+    Check(parsedAacProfile.Modulus == aacProfile.Modulus &&
+          parsedAacProfile.PrivateExponent == aacProfile.PrivateExponent &&
+          parsedAacProfile.Origin == "synthetic-log",
+        "ActiveAntiCheatCrypt captured N_LE/D_LE profile import failed.");
     var aacRuntime = ProtectionCodecRuntime.CreateDefault(aacProfile);
     var aacPlan = new ProtectionPlan(".u", new[]
     {
