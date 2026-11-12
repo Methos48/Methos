@@ -75,9 +75,20 @@ def main() -> int:
                 windows, shortcuts = decompile_to_folder(payload, parts)
                 rebuilt_payload, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(parts, original_data=payload)
                 if rebuilt_payload != payload:
-                    raise ValueError("El XDAT recompilado desde XML no coincide byte por byte.")
+                    limit = min(len(rebuilt_payload), len(payload))
+                    differences = [i for i in range(limit) if rebuilt_payload[i] != payload[i]][:16]
+                    detail = ", ".join(
+                        f"0x{i:X}:{payload[i]:02X}->{rebuilt_payload[i]:02X}" for i in differences
+                    )
+                    raise ValueError(
+                        f"El XDAT recompilado no coincide byte por byte: original={len(payload)}, "
+                        f"recompilado={len(rebuilt_payload)}, primeras diferencias=[{detail}]."
+                    )
                 if rebuilt_windows != windows or rebuilt_shortcuts != shortcuts:
-                    raise ValueError("Las cantidades de ventanas/accesos cambiaron durante la recompilación.")
+                    raise ValueError(
+                        f"Las cantidades cambiaron: original={windows}/{shortcuts}, "
+                        f"recompilado={rebuilt_windows}/{rebuilt_shortcuts}."
+                    )
                 parsed = (label, payload, windows, shortcuts)
                 break
             except Exception as exc:
