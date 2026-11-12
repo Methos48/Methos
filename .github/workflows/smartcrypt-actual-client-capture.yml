@@ -25,6 +25,9 @@ jobs:
           Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
           New-Item -ItemType Directory -Force probe | Out-Null
           Get-ChildItem client-system,client-engine -Recurse -File | ForEach-Object { Copy-Item $_.FullName (Join-Path probe $_.Name) -Force }
+          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll")) {
+            if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
+          }
           Copy-Item l2.exe probe/l2.exe -Force
           Copy-Item interface.u probe/SysString-e.dat -Force
           $vc = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
