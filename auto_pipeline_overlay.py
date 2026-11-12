@@ -28,7 +28,7 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
         source = source.replace(old_paths, new_paths, 1)
     elif "DATA_DIR = APP_DIR / 'Archivos XDAT'" not in source:
         raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
-    if "from auto_pipeline import decode_xdat, encode_xdat" not in source:
+    if "from auto_pipeline import decode_xdat, encode_xdat, publish_xdat_transactionally" not in source:
         source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
     if "import xml.etree.ElementTree as ET" not in source:
         source = source.replace("import tkinter", "import xml.etree.ElementTree as ET\nimport tkinter", 1)
@@ -130,21 +130,8 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
         raise SystemExit("No se localizó el punto seguro para sustituir el contenido Archivo XDAT")
     import re
     publish_pattern = r"(?m)^(\s*)temp\.write_bytes\(data\)\s*\n\1if temp\.read_bytes\(\)!=data:.*\n\1temp\.replace\(output\)\s*$"
-    publish_code = """\\1temp.write_bytes(data)
-\\1if temp.read_bytes()!=data: raise ValueError('El archivo temporal no coincide con el resultado compilado.')
-\\1# Solo ahora se respalda y limpia Archivo; el temporal queda fuera del borrado.
-\\1backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
-\\1backup_root.mkdir(parents=True,exist_ok=True)
-\\1if COMPLETE_DIR.exists():
-\\1    for old_file in COMPLETE_DIR.rglob("*"):
-\\1        if old_file.is_file() and old_file != temp:
-\\1            backup_name=f"{old_file.stem}_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{old_file.name}"
-\\1            shutil.copy2(old_file,backup_root/backup_name)
-\\1    for old_item in COMPLETE_DIR.iterdir():
-\\1        if old_item.is_dir(): shutil.rmtree(old_item)
-\\1        elif old_item != temp: old_item.unlink()
-\\1COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
-\\1temp.replace(output)"""
+    publish_code = """\\1backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
+\\1publish_xdat_transactionally(data,output,COMPLETE_DIR,backup_root)"""
     source, publish_count = re.subn(publish_pattern, lambda m: publish_code.replace("\\1", m.group(1)), source, count=1)
     if publish_count != 1:
         raise SystemExit("No se pudo localizar el bloque completo de escritura XDAT para publicarlo de forma segura.")

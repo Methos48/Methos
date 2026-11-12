@@ -98,3 +98,82 @@ def encode_xdat(plain:bytes,original_name:str,version:int,validate_xdat:Callable
         if verify.returncode!=0 or not check.is_file() or check.read_bytes()!=plain:
             raise AutoPipelineError("Falló la verificación de ida y vuelta; no se guardó el resultado.")
     return encrypted
+
+
+def publish_xdat_transactionally(data: bytes, output: Path, archive_dir: Path, backup_root: Path):
+    """Publish a verified XDAT atomically, preserving recoverable copies on failure."""
+    import datetime
+    import shutil
+    import uuid
+
+    output = Path(output)
+    archive_dir = Path(archive_dir)
+    backup_root = Path(backup_root)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    if output.parent.resolve() != archive_dir.resolve():
+        raise AutoPipelineError("El archivo XDAT de salida debe quedar directamente dentro de Archivo.")
+
+    transaction = uuid.uuid4().hex
+    staged = output.parent.parent / f".{output.name}.{transaction}.staged"
+    rollback = output.parent.parent / f".{output.parent.name}.{transaction}.rollback"
+    persistent_backup = backup_root / (datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_" + transaction)
+    archive_cleared = False
+    keep_rollback = False
+
+    try:
+        staged.write_bytes(data)
+        if staged.read_bytes() != data:
+            raise AutoPipelineError("El archivo temporal no coincide con el resultado compilado.")
+
+        old_files = [p for p in archive_dir.rglob("*") if p.is_file()]
+        if old_files:
+            persistent_backup.mkdir(parents=True, exist_ok=False)
+            rollback.mkdir(parents=True, exist_ok=False)
+            for old_file in old_files:
+                relative = old_file.relative_to(archive_dir)
+                backup = persistent_backup / relative
+                recovery = rollback / relative
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                recovery.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(old_file, backup)
+                shutil.copy2(old_file, recovery)
+                if backup.read_bytes() != old_file.read_bytes() or recovery.read_bytes() != old_file.read_bytes():
+                    raise AutoPipelineError(f"La copia de seguridad no coincide: {relative}")
+
+        for item in archive_dir.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+        archive_cleared = True
+        staged.replace(output)
+        if output.read_bytes() != data:
+            raise AutoPipelineError("El XDAT publicado no coincide con el resultado compilado.")
+        return output
+    except Exception as publish_error:
+        if archive_cleared:
+            try:
+                for item in archive_dir.iterdir():
+                    if item.is_dir():
+                        shutil.rmtree(item)
+                    else:
+                        item.unlink()
+                if rollback.is_dir():
+                    for recovery in rollback.rglob("*"):
+                        if recovery.is_file():
+                            restored = archive_dir / recovery.relative_to(rollback)
+                            restored.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(recovery, restored)
+                            if restored.read_bytes() != recovery.read_bytes():
+                                raise IOError(f"No se pudo verificar la restauración: {restored.name}")
+            except Exception as restore_error:
+                keep_rollback = True
+                raise AutoPipelineError(
+                    f"Falló la publicación y la restauración. La copia de recuperación permanece en: {rollback}"
+                ) from ExceptionGroup("Errores de publicación y restauración", [publish_error, restore_error])
+        raise
+    finally:
+        staged.unlink(missing_ok=True)
+        if rollback.exists() and not keep_rollback:
+            shutil.rmtree(rollback)
