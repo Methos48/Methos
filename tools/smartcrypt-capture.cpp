@@ -45,7 +45,7 @@ static void Trace(const char* fmt,...){
  LeaveCriticalSection(&lock);
 }
 static BOOL IsTarget(LPCWSTR s){if(!s)return FALSE;const wchar_t*p=wcsrchr(s,L'\\');p=p?p+1:s;return _wcsicmp(p,L"SysString-e.dat")==0;}
-static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE){EnterCriticalSection(&lock);if(IsTarget(n)){targetHandle=h;Trace("TARGET_CREATE_W opened\\n");}LeaveCriticalSection(&lock);}return h;}
+static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE){EnterCriticalSection(&lock);if(IsTarget(n)){targetHandle=h;Trace("TARGET_CREATE_W opened\\n");DebugLog("TARGET_CREATE_W handle=%p\\r\\n",h);}LeaveCriticalSection(&lock);}return h;}
 static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE&&n){const char*p=strrchr(n,'\\');p=p?p+1:n;if(_stricmp(p,"SysString-e.dat")==0){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_A path=%s handle=%p\\n",n,h);DebugLog("TARGET_CREATE_A path=%s handle=%p\\r\\n",n,h);LeaveCriticalSection(&lock);}}return h;}
 static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* explicitPos,const char* api){
  if(h!=targetHandle||!b||!n)return;
