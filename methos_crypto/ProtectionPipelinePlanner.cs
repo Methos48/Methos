@@ -61,13 +61,11 @@ public static class ProtectionPipelinePlanner
 
         if (data.Length >= 4 && BitConverter.ToUInt32(data[..4]) == UnrealPackageTag)
         {
-            var kind = extension == ".xdat" ? ProtectionLayerKind.XdatPayload : ProtectionLayerKind.UnrealPackage;
-            var layer = new ProtectionLayer(kind, kind.ToString(), "signature-only", false, false,
-                "Firma Unreal reconocida. La validación estructural específica todavía debe ejecutarse.");
+            var layer = new ProtectionLayer(ProtectionLayerKind.UnrealPackage, "unreal-package",
+                "signature-only", false, false,
+                "Firma Unreal reconocida. Esta firma identifica un paquete Unreal, no un XDAT.");
             return new(extension, new[] { layer }, false, false, "plain-format-candidate",
-                extension == ".xdat"
-                    ? "La firma parece Unreal; esto no demuestra que sea un XDAT válido."
-                    : "Firma de paquete Unreal reconocida; falta validar tablas, índices y offsets.");
+                "Firma de paquete Unreal reconocida; falta validar tablas, índices y offsets. No clasificar como XDAT aunque la extensión sea .xdat.");
         }
 
         var unknown = new ProtectionLayer(ProtectionLayerKind.Unknown, "unknown", "unsupported", false, false,
