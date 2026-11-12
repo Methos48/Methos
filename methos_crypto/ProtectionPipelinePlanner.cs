@@ -82,20 +82,23 @@ public static class ProtectionPipelinePlanner
         if (TryReadLineage2Version(data, out int version))
         {
             bool supported = version is 111 or 413;
-            if (version == 111 && !new Lineage2StandardCodec(111, verifyChecksumOnDecode: true).VerifyTailChecksum(data))
+            if (version == 111)
             {
+                bool stockChecksumValid = new Lineage2StandardCodec(111, verifyChecksumOnDecode: true).VerifyTailChecksum(data);
                 bool canEncodeCustom = lineage2CustomTailProfileAvailable && lineage2CustomTailEncoderVerified;
                 var customLayer = new ProtectionLayer(ProtectionLayerKind.Lineage2CustomTrailer,
                     "lineage2-111-custom-tail",
-                    canEncodeCustom ? "custom-trailer-preserved-and-roundtrip-verified" :
-                        lineage2CustomTailProfileAvailable ? "custom-trailer-profile-loaded-encode-unverified" : "custom-trailer-profile-required",
+                    canEncodeCustom ? "original-trailer-preserved-and-roundtrip-verified" :
+                        lineage2CustomTailProfileAvailable ? "original-trailer-profile-loaded-encode-unverified" : "original-trailer-profile-required",
                     true, canEncodeCustom,
-                    "Lineage2Ver111 XOR payload recognized, but its 20-byte trailer is not the stock CRC layout. The original trailer must be retained verbatim; checksum verification is optional in the game client.");
+                    stockChecksumValid
+                        ? "Lineage2Ver111 XOR recognized. Original 20-byte trailer is preserved verbatim to avoid changing client-specific metadata."
+                        : "Lineage2Ver111 XOR recognized with a non-stock CRC trailer. Original 20-byte trailer is preserved verbatim; the game client does not require checksum verification.");
                 return new(extension, new[] { customLayer }, true, canEncodeCustom,
                     canEncodeCustom ? "recognized-supported-encryption" : "recognized-decode-only",
                     canEncodeCustom
-                        ? "Custom Lineage2Ver111 trailer profile is loaded and the exact round-trip has been verified."
-                        : "Custom Lineage2Ver111 can be decoded. Compilation remains disabled until Methos preserves the original trailer and verifies the complete round-trip.");
+                        ? "Protocol 111 and its original trailer profile are loaded; the exact round-trip has been verified."
+                        : "Protocol 111 can be decoded. Compilation remains disabled until the original trailer is retained and the complete round-trip is verified.");
             }
 
             var layer = new ProtectionLayer(ProtectionLayerKind.Lineage2Standard,
