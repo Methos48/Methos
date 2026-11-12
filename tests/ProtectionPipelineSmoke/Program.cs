@@ -250,8 +250,8 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         try
         {
             var parsedPackageWithoutTail = UnrealPackageIndex.Parse(rawWithoutTail);
-            Check(parsedPackageWithoutTail.Summary.Version >= 68 && package.Summary.Version <= 194,
-                "Dunk3l interface.u produced an invalid Unreal package version.");
+            Check(parsedPackageWithoutTail.Summary.Version == 126 &&
+                "Dunk3l interface.u did not reproduce the known UE 126/0 package tables (5482 names, 10308 exports, 740 imports).");
             selectedRaw = rawWithoutTail;
             includeTail = false;
             parsed = true;
@@ -259,7 +259,7 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         catch (Exception ex) when (ex is InvalidDataException or NotSupportedException or ArgumentException)
         {
             var parsedPackageWithTail = UnrealPackageIndex.Parse(rawWithTail);
-            Check(parsedPackageWithTail.Summary.Version >= 68 && package.Summary.Version <= 194,
+            Check(parsedPackageWithTail.Summary.Version == 126 &&
                 "Dunk3l interface.u produced an invalid Unreal package version.");
             selectedRaw = rawWithTail;
             includeTail = true;
