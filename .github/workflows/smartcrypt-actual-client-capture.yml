@@ -15,6 +15,7 @@ on:
       - "engine.zip"
       - "l2.exe"
       - "Engine.u"
+      - "Engine.int"
       - "Window.dll"
       - "interface.u"
 jobs:
@@ -43,6 +44,8 @@ jobs:
           foreach ($name in @("Core.dll","Core.u","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll","Engine.u","Engine.int")) {
             if (Test-Path $name) { Copy-Item $name (Join-Path "probe/system" $name) -Force }
           }
+          if (!(Test-Path "probe/system/Engine.int")) { throw "Engine.int is required but was not copied from the repository. Keep the verified client support file in the repository; do not request repeated uploads." }
+          Write-Host "ENGINE_INT_READY size=$((Get-Item probe/system/Engine.int).Length) sha256=$((Get-FileHash probe/system/Engine.int -Algorithm SHA256).Hash)"
           if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
           Copy-Item Window.dll probe/system/Window.dll -Force
           Copy-Item l2.exe probe/system/l2.exe -Force
