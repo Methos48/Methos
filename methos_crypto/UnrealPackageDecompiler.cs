@@ -68,7 +68,7 @@ public static class UnrealPackageDecompiler
         return new UnrealPackageDecompileResult(
             package.Summary.Version,
             package.Summary.LicenseeVersion,
-            package.Objects.Count,
+            checked((int)package.Objects.Count),
             classes.Count,
             exported,
             errors.Count,
