@@ -117,8 +117,8 @@ using (RSA aacRsa = RSA.Create(2048))
           rsaMessage.AsSpan(0, 20).SequenceEqual("ActiveAnticheatCrypt"u8),
         "ActiveAntiCheatCrypt RSA block did not contain the expected magic and RC4 key.");
     var aacDetected = ProtectionPipelinePlanner.Inspect(aacEncrypted, "Interface.u",
-        activeAntiCheatPrivateKeyAvailable: true, activeAntiCheatPublicExponentAvailable: true);
-    Check(aacDetected.CanDecode && aacDetected.CanEncode &&
+        activeAntiCheatPrivateKeyAvailable: true, activeAntiCheatEncoderVerified: false);
+    Check(aacDetected.CanDecode && !aacDetected.CanEncode &&
           aacDetected.Layers[0].Kind == ProtectionLayerKind.ActiveAntiCheatCrypt,
         "ActiveAntiCheatCrypt detection did not expose the configured key capabilities.");
     byte[] aacDecoded = aacRuntime.Decode(aacDetected, aacEncrypted, "Interface.u");
