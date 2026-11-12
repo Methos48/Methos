@@ -39,7 +39,7 @@ static HANDLE targetHandles[4]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALI
 static LONG keyDumped[4]={0,0,0,0};
 static HANDLE outputHandles[4]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE};
 static LONGLONG maxEnds[4]={0,0,0,0};
-static volatile LONG openLogCount=0;
+static volatile LONG openLogCount=0; static volatile LONG npkReadLogCount=0;
 static CRITICAL_SECTION lock; static LONG initialized=0;
 static HMODULE engineModule=NULL; static HMODULE npkModule=NULL; static BOOL hookReady=FALSE; static __declspec(thread) LONG inNpkRead=0;
 static char traceBuffer[1<<20]; static LONG traceLength=0;
@@ -139,11 +139,14 @@ static void DumpNpkKeyState(HANDLE h){
  if(out!=INVALID_HANDLE_VALUE){char line[768]={};int n=sprintf_s(line,sizeof(line),"NPK_GLOBAL_KEY=%08lX\\r\\nSTATE_SEED=%02X%02X\\r\\nSEED_BLOCK=%s\\r\\nMARKER=FFEDFACE\\r\\nLINEAGE2_VERSION=%08lX\\r\\nKEY6=%s\\r\\nKEY16=%s\\r\\nFLAG=%02X\\r\\n",globalKey,s[0],s[1],seedHex,version,k6,k16,s[0x18]);DWORD wrote=0;WriteFile(out,line,(DWORD)n,&wrote,NULL);FlushFileBuffers(out);CloseHandle(out);}
 }
 static BOOL WINAPI HookNpkReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
+ LONG callNo=InterlockedIncrement(&npkReadLogCount);
+ if(callNo<=40)DebugLog("NPK_READ_ENTER call=%ld handle=%p requested=%lu caller=%p\\r\\n",callNo,h,req,_ReturnAddress());
  inNpkRead++;
  BOOL ok=realNpkReadFile(h,b,req,got,ov);
  inNpkRead--;
- LogNpkStateOnce();
  DWORD n=(ok&&got)?*got:0;
+ if(callNo<=40)DebugLog("NPK_READ_EXIT call=%ld handle=%p ok=%d got=%lu error=%lu\\r\\n",callNo,h,ok,n,ok?0:GetLastError());
+ LogNpkStateOnce();
  if(ok&&n){EnsureTargetHandle(h);LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"NpkReadFilePostTransform");DumpNpkKeyState(h);}
  return ok;
 }
