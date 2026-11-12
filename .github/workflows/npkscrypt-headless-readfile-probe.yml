@@ -33,6 +33,7 @@ jobs:
           }
           $core = Get-ChildItem client-system,client-engine -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ieq 'Core.dll' } | Select-Object -First 1
           if ($core) { Copy-Item $core.FullName probe/Core.dll }
+          Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName probe -Force }
           Get-FileHash probe/npkscrypt.dll,probe/ogg.dll,probe/SysString-e.dat -Algorithm SHA256 | Format-Table -AutoSize
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
           & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe (Resolve-Path .\tools\npkscrypt-headless-probe.cs).Path
