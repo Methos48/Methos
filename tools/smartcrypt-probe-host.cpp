@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+typedef BOOL (WINAPI *PFN_NpkReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 
 int main() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
@@ -44,6 +45,39 @@ int main() {
     }
     printf("HOST_READ_BYTES=%llu\n", total);
     CloseHandle(file);
+
+    HMODULE npk = GetModuleHandleA("npkscrypt.dll");
+    printf("HOST_NPK_MODULE=%p\n", npk);
+    if (npk) {
+        PFN_NpkReadFile npkRead = (PFN_NpkReadFile)((BYTE*)npk + 0x119C6C);
+        HANDLE file2 = CreateFileW(
+            L"SysString-e.dat",
+            GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL
+        );
+        if (file2 != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER zero = {};
+            SetFilePointerEx(file2, zero, NULL, FILE_BEGIN);
+            unsigned long long npkTotal = 0;
+            for (;;) {
+                DWORD received = 0;
+                if (!npkRead(file2, buffer, sizeof(buffer), &received, NULL)) {
+                    printf("HOST_NPK_READ_FAILED=%lu\n", GetLastError());
+                    break;
+                }
+                if (received == 0) break;
+                npkTotal += received;
+            }
+            printf("HOST_NPK_READ_BYTES=%llu\n", npkTotal);
+            CloseHandle(file2);
+        } else {
+            printf("HOST_NPK_TARGET_OPEN_FAILED=%lu\n", GetLastError());
+        }
+    }
     Sleep(1000);
     return total ? 0 : 12;
 }
