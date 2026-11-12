@@ -7,7 +7,7 @@ typedef void* (__fastcall *PRealloc)(void*,void*,void*,uint32_t,const wchar_t*);
 typedef void (__fastcall *PFree)(void*,void*,void*);
 static void* __fastcall HeapMalloc(void*,void*,uint32_t n,const wchar_t*){return HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,n?n:1);}
 static void* __fastcall HeapRealloc(void*,void*,void* p,uint32_t n,const wchar_t*){if(!p)return HeapMalloc(nullptr,nullptr,n,nullptr);return HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,p,n?n:1);}
-static void __fastcall HeapFree(void*,void*,void* p){if(p)HeapFree(GetProcessHeap(),0,p);}
+static void __fastcall AllocFree(void*,void*,void* p){if(p)HeapFree(GetProcessHeap(),0,p);}
 int main(){
  HMODULE ogg=LoadLibraryW(L"ogg.dll");
  printf("OGG=%p err=%lu\n",ogg,GetLastError());
@@ -21,7 +21,7 @@ int main(){
  static void* vtable[64]={};
  vtable[0]=(void*)HeapMalloc;
  vtable[1]=(void*)HeapRealloc;
- vtable[2]=(void*)HeapFree;
+ vtable[2]=(void*)AllocFree;
  static void* allocator[1];
  allocator[0]=vtable;
  *gMalloc=allocator;
