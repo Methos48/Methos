@@ -23,15 +23,16 @@ jobs:
           if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll -Force }
           Copy-Item interface.u probe/SysString-e.dat
           if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
-          Write-Host "=== DLL inventory ==="
-          Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
-          Write-Host "=== Core dependencies ==="
-          dumpbin /dependents probe\Core.dll
-          Write-Host "=== Engine dependencies ==="
-          dumpbin /dependents probe\engine.dll
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
+          $dumpbin = Get-ChildItem (Join-Path $vs "VC\Tools\MSVC") -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match "Hostx64\\x86" } | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "=== DLL inventory ==="
+          Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
+          Write-Host "=== Core dependencies ==="
+          & $dumpbin /dependents probe\Core.dll
+          Write-Host "=== Engine dependencies ==="
+          & $dumpbin /dependents probe\engine.dll
           $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
