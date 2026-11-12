@@ -98,6 +98,11 @@ public static class UnrealPackageDecompiler
                     if (File.Exists(referencePath))
                     {
                         string referenceSource = File.ReadAllText(referencePath);
+                        // Restore only methods whose bytecode UELib represented with
+                        // synthetic __NFUN_ calls or generated goto labels. Keep every
+                        // successfully decompiled function (and its edits) untouched.
+                        source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
+                            source, referenceSource, out _);
                         source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
                             source, referenceSource, out _);
                     }
