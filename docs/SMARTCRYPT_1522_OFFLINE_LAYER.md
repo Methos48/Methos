@@ -51,15 +51,15 @@ These values match the earlier UEExplorer inspection of the Dunk3l interface. Th
 
 ## Inner Lineage2Ver111 trailer caveat
 
-The Dunk3l samples have a 20-byte trailer that does not pass the stock protocol-111 CRC32 check used by the standard codec. The payload itself decodes coherently. The compatibility path therefore preserves the original trailer byte-for-byte and keeps the stock strict codec unchanged.
+The Dunk3l samples have a 20-byte trailer that does not pass the stock protocol-111 CRC32 check used by the strict verifier. The public `open-l2encdec` CLI exposes checksum verification as an optional `-v` operation and documents that the game client does not perform this check. Therefore a checksum mismatch alone does not invalidate the decoded payload.
 
-Do not label the Dunk3l inner trailer as standard-111 CRC-verified. The Windows smoke tests separately check:
+Methos uses a dedicated protocol-111 compatibility codec that preserves the original 20-byte trailer byte-for-byte. It never silently replaces a custom trailer with a stock one. The Windows smoke tests separately check:
 1. SmartCrypt decode and encode round-trip,
 2. protocol-111 XOR decode and re-encode while preserving the original trailer,
-3. Unreal package parsing for `interface.u`,
-4. XDAT parse/decompile/compile round-trip for `interface.xdat`.
+3. Unreal package parsing and the known 126/0 tables for `interface.u`,
+4. XDAT parse/decompile/compile XML round-trip for `interface.xdat`.
 
-The trailer checksum algorithm remains an explicit investigation item. Do not silently replace the trailer with a stock 111 trailer or enable a save path that has not passed the real-file round-trip and structure checks.
+Do not label the Dunk3l trailer as stock-CRC-verified. The supported save path requires exact original-file round-trip and successful U/XDAT structural validation; an in-game load test remains useful as final compatibility confirmation.
 
 ## Runtime capture notes
 
