@@ -1,0 +1,42 @@
+name: npkscrypt-headless-readfile-probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/npkscrypt-headless-readfile-probe.yml"
+      - "tools/npkscrypt-headless-probe.cs"
+
+jobs:
+  probe:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare isolated x86 files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force probe | Out-Null
+          Expand-Archive system.zip -DestinationPath probe/system -Force
+          Expand-Archive engine.zip -DestinationPath probe/engine -Force
+          $engine = Get-ChildItem probe/engine -Filter engine.dll -Recurse | Select-Object -First 1
+          if (-not $engine) { throw "engine.dll not found in engine.zip" }
+          Copy-Item $engine.FullName probe/system/engine.dll -Force
+          Copy-Item interface.u probe/system/SysString-e.dat -Force
+          $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+          & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe tools/npkscrypt-headless-probe.cs
+          if ($LASTEXITCODE -ne 0) { throw "C# compile failed" }
+      - name: Run without l2.exe
+        shell: pwsh
+        run: |
+          Push-Location probe/system
+          try {
+            ..\npkscrypt-probe.exe npk | Tee-Object ..\npk-only.log
+            ..\npkscrypt-probe.exe stack | Tee-Object ..\stack.log
+          } finally { Pop-Location }
+          Get-FileHash interface.u -Algorithm SHA256 | Format-List | Out-File probe/input-hash.txt
+          Get-ChildItem probe -Recurse -File | Select-Object FullName,Length | Format-Table -AutoSize | Out-File probe/files.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Methos-npkscrypt-ReadFile-Probe
+          path: |
+            probe/
