@@ -39,3 +39,12 @@ The old artifact (run `43190522580`) predates these commits and is not evidence 
 The published method uses a `splice` detour and requires the SmartDecrypt DLL before `npkscrypt.dll` in the `ogg.dll` import order. Our current code uses MinHook. Matching the DLL load order does not automatically prove identical trampoline/chaining semantics. The next validation must check actual module-relative callers and whether the capture callback sees the buffer before or after the NPK transform. Do not mark decryption complete until that test and file-format validation pass.
 
 No original `interface.u` or `interface.xdat` files have been modified.
+
+
+## Actual-client probe dependency correction
+
+The first actual-client workflow attempt did not capture anything. Inspection of its prepared-file inventory showed that it had copied only engine.dll, l2ui.dll, npkscrypt.dll, ogg.dll and SmartCapture.dll. The exact root-level Core.dll, ifc23.dll, vorbisfile.dll, vorbis.dll and the supplied DirectX dsetup.dll were missing, even though l2.exe imports Core.dll and depends on the client runtime.
+
+The workflow was corrected in commit 513f3a8ee8d2c6055cbe8ff0154702c2eddb3f5e to copy these exact dependencies into the isolated probe folder. The dsetup.dll copied here is the supplied DirectX runtime DLL; this does not imply that dsetup.u or SmartGuard.ini exists or is required.
+
+A new actual-client run is pending. The earlier no-capture attempt is classified as an invalid/incomplete runtime setup, not evidence that the capture technique failed.
