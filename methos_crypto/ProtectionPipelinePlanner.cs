@@ -29,12 +29,141 @@ public sealed record ProtectionPlan(
     string Status,
     string Explanation);
 
+public sealed record ProtectionPipelineInspection(
+    ProtectionPlan Plan,
+    SmartCryptKeyProfile? SmartCryptProfile,
+    Lineage2CustomTailProfile? Lineage2CustomTailProfile,
+    byte[] DecodedPayload,
+    bool IsPlaintextCandidate);
+
 /// <summary>
 /// Fail-closed planner for ordered protection stages. Detection is not decryption.
 /// </summary>
 public static class ProtectionPipelinePlanner
 {
     private const uint UnrealPackageTag = 0x9E2A83C1;
+
+    /// <summary>
+    /// Removes each recognized protection layer in order, derives and retains the
+    /// original per-file profiles, and verifies that every layer can be reversed.
+    /// The returned payload still requires U/XDAT structural validation by its parser.
+    /// </summary>
+    public static ProtectionPipelineInspection InspectFullPipeline(ReadOnlySpan<byte> original, string fileName)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+        string extension = Path.GetExtension(fileName).ToLowerInvariant();
+        byte[] current = original.ToArray();
+        var layers = new List<ProtectionLayer>();
+        SmartCryptKeyProfile? smartProfile = null;
+        Lineage2CustomTailProfile? tailProfile = null;
+        bool canDecode = true;
+        bool canEncode = true;
+        bool isPlaintextCandidate = false;
+
+        for (int stage = 0; stage < 4; stage++)
+        {
+            ProtectionPlan detected = Inspect(current, fileName);
+            if (detected.Layers.Count == 0) break;
+            ProtectionLayer candidate = detected.Layers[0];
+
+            if (candidate.Kind is ProtectionLayerKind.Unknown)
+            {
+                isPlaintextCandidate = layers.Count > 0;
+                break;
+            }
+            if (candidate.Kind is ProtectionLayerKind.UnrealPackage)
+            {
+                isPlaintextCandidate = true;
+                break;
+            }
+            if (!detected.CanDecode)
+            {
+                layers.Add(candidate);
+                canDecode = false;
+                canEncode = false;
+                break;
+            }
+
+            byte[] next;
+            ProtectionLayer verifiedLayer;
+            if (candidate.Kind == ProtectionLayerKind.SmartCrypt1522Candidate)
+            {
+                smartProfile = SmartCryptKeyProfile.FromEncryptedFile(current);
+                var codec = new SmartCrypt1522Codec(smartProfile);
+                next = codec.Decode(current, fileName);
+                bool roundTrip = codec.Encode(next, fileName).AsSpan().SequenceEqual(current);
+                ProtectionPlan verified = Inspect(current, fileName,
+                    smartCryptKeyAvailable: true, smartCryptEncoderVerified: roundTrip);
+                verifiedLayer = verified.Layers[0];
+                canEncode &= roundTrip;
+            }
+            else if (candidate.Kind == ProtectionLayerKind.Lineage2CustomTrailer)
+            {
+                tailProfile = Lineage2CustomTailProfile.FromEnvelope(current);
+                var codec = new Lineage2Ver111CustomTailCodec(tailProfile);
+                next = codec.Decode(current, fileName);
+                bool roundTrip = codec.Encode(next, fileName).AsSpan().SequenceEqual(current);
+                ProtectionPlan verified = Inspect(current, fileName,
+                    lineage2CustomTailProfileAvailable: true,
+                    lineage2CustomTailEncoderVerified: roundTrip);
+                verifiedLayer = verified.Layers[0];
+                canEncode &= roundTrip;
+            }
+            else if (candidate.Kind == ProtectionLayerKind.Lineage2Standard)
+            {
+                if (!TryReadLineage2Version(current, out int version))
+                {
+                    layers.Add(candidate with { DecodeAvailable = false, EncodeAvailable = false, Status = "header-invalid" });
+                    canDecode = false;
+                    canEncode = false;
+                    break;
+                }
+                var codec = new Lineage2StandardCodec(version);
+                next = codec.Decode(current, fileName);
+                bool roundTrip = codec.Encode(next, fileName).AsSpan().SequenceEqual(current);
+                verifiedLayer = candidate with
+                {
+                    DecodeAvailable = true,
+                    EncodeAvailable = roundTrip,
+                    Status = roundTrip ? "codec-roundtrip-verified" : "decode-only-original-tail-not-reproduced"
+                };
+                canEncode &= roundTrip;
+            }
+            else
+            {
+                layers.Add(candidate);
+                canDecode = false;
+                canEncode = false;
+                break;
+            }
+
+            if (next.AsSpan().SequenceEqual(current))
+            {
+                layers.Add(verifiedLayer with { DecodeAvailable = false, EncodeAvailable = false, Status = "no-progress" });
+                canDecode = false;
+                canEncode = false;
+                break;
+            }
+
+            layers.Add(verifiedLayer);
+            current = next;
+        }
+
+        if (layers.Count > 0 && canDecode)
+            isPlaintextCandidate = true;
+
+        string status = layers.Count == 0
+            ? isPlaintextCandidate ? "plain-format-candidate" : "unknown-or-unsupported"
+            : !canDecode ? "recognized-key-required"
+            : canEncode ? "recognized-supported-encryption"
+            : "recognized-decode-only";
+        string explanation = layers.Count == 0
+            ? isPlaintextCandidate ? "No encryption layer detected; the format parser must validate the payload."
+                : "No supported protection layer was identified."
+            : $"Detected {layers.Count} ordered protection layer(s): {string.Join(" -> ", layers.Select(x => x.Id))}. Structural U/XDAT validation is still required.";
+        var plan = new ProtectionPlan(extension, layers, canDecode, canEncode, status, explanation);
+        return new ProtectionPipelineInspection(plan, smartProfile, tailProfile, current, isPlaintextCandidate);
+    }
 
     public static ProtectionPlan Inspect(ReadOnlySpan<byte> data, string fileName,
         bool smartCryptKeyAvailable = false, bool smartCryptEncoderVerified = false,
