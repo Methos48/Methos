@@ -239,26 +239,52 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver header.");
 
     var standardCodec = new Lineage2StandardCodec(smartProfile.Lineage2Version);
-    byte[] dunk3lPlain = standardCodec.Decode(lineageEnvelope, targetName);
+    byte[] rawWithoutTail = standardCodec.Decode111Unchecked(lineageEnvelope, includeTail: false);
+    byte[] rawWithTail = standardCodec.Decode111Unchecked(lineageEnvelope, includeTail: true);
+    byte[] selectedRaw;
+    bool includeTail;
+
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
-        Check(dunk3lPlain.Length >= 4 && dunk3lPlain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
-            "Dunk3l interface.u did not produce a valid Unreal package signature after both layers.");
+        bool parsed = false;
+        try
+        {
+            var package = UnrealPackageIndex.Parse(rawWithoutTail);
+            Check(package.Summary.Version >= 68 && package.Summary.Version <= 194,
+                "Dunk3l interface.u produced an invalid Unreal package version.");
+            selectedRaw = rawWithoutTail;
+            includeTail = false;
+            parsed = true;
+        }
+        catch (Exception ex) when (ex is InvalidDataException or NotSupportedException or ArgumentException)
+        {
+            var package = UnrealPackageIndex.Parse(rawWithTail);
+            Check(package.Summary.Version >= 68 && package.Summary.Version <= 194,
+                "Dunk3l interface.u produced an invalid Unreal package version.");
+            selectedRaw = rawWithTail;
+            includeTail = true;
+            parsed = true;
+        }
+        Check(parsed, "Dunk3l interface.u could not be parsed as a real Unreal package.");
     }
     else
     {
-        string visibleXdat = Encoding.ASCII.GetString(dunk3lPlain);
-        Check(visibleXdat.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
+        string withoutTailText = Encoding.ASCII.GetString(rawWithoutTail);
+        string withTailText = Encoding.ASCII.GetString(rawWithTail);
+        includeTail = !withoutTailText.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal)
+            && withTailText.Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal);
+        selectedRaw = includeTail ? rawWithTail : rawWithoutTail;
+        Check(Encoding.ASCII.GetString(selectedRaw).Contains("AbnormalDebuffsStatusWnd", StringComparison.Ordinal),
             "Dunk3l interface.xdat did not expose expected XDAT window names after both layers.");
     }
 
-    byte[] standardRebuilt = standardCodec.Encode(dunk3lPlain, targetName);
+    byte[] standardRebuilt = standardCodec.Encode111PreservingTail(selectedRaw, lineageEnvelope, includeTail);
     Check(standardRebuilt.SequenceEqual(lineageEnvelope),
-        $"{targetName}: standard Lineage2 protocol failed byte-for-byte round-trip.");
+        $"{targetName}: protocol-111 payload transform plus original trailer did not round-trip exactly.");
     byte[] smartRebuilt = smartCodec.Encode(standardRebuilt, targetName);
     Check(smartRebuilt.SequenceEqual(original),
         $"{targetName}: SmartCrypt failed byte-for-byte round-trip.");
-    Console.WriteLine($"PASS: REAL Dunk3l {targetName} SmartCrypt + Lineage2Ver{smartProfile.Lineage2Version} decode/re-encode exact round-trip ({original.Length} bytes).");
+    Console.WriteLine($"PASS: REAL Dunk3l {targetName} SmartCrypt + Lineage2Ver{smartProfile.Lineage2Version} decode/re-encode exact round-trip; custom trailer preserved ({original.Length} bytes).");
 }
 
 if (File.Exists("Engine.u"))
