@@ -30,7 +30,7 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
     elif "DATA_DIR = APP_DIR / 'Archivos XDAT'" not in source:
         raise SystemExit("No se localizaron las rutas de trabajo XDAT esperadas")
     if "from auto_pipeline import decode_xdat, encode_xdat, publish_xdat_transactionally" not in source:
-        source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
+        source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat, publish_xdat_transactionally\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
     if "import xml.etree.ElementTree as ET" not in source:
         source = source.replace("import tkinter", "import xml.etree.ElementTree as ET\nimport tkinter", 1)
     if "import shutil" not in source:
