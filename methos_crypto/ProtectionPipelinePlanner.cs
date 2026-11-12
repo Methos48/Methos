@@ -223,8 +223,8 @@ public static class ProtectionPipelinePlanner
                         lineage2CustomTailProfileAvailable ? "original-trailer-profile-loaded-encode-unverified" : "original-trailer-profile-required",
                     true, canEncodeCustom,
                     stockChecksumValid
-                        ? "Lineage2Ver111 XOR recognized. Original 20-byte trailer is preserved verbatim to avoid changing client-specific metadata."
-                        : "Lineage2Ver111 XOR recognized with a non-stock CRC trailer. Original 20-byte trailer is preserved verbatim; the game client does not require checksum verification.");
+                        ? "Lineage2Ver111 XOR recognized. Original terminal bytes are retained according to the U/XDAT profile; Methos does not invent a replacement trailer."
+                        : "Lineage2Ver111 XOR recognized with a non-stock CRC layout. Original terminal bytes are retained; the game client does not require checksum verification.");
                 return new(extension, new[] { customLayer }, true, canEncodeCustom,
                     canEncodeCustom ? "recognized-supported-encryption" : "recognized-decode-only",
                     canEncodeCustom
