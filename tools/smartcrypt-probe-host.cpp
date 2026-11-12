@@ -45,6 +45,5 @@ int main() {
     printf("HOST_READ_BYTES=%llu\n", total);
     CloseHandle(file);
     Sleep(1000);
-    FreeLibrary(ogg);
     return total ? 0 : 12;
 }
