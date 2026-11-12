@@ -29,7 +29,7 @@ jobs:
           foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll")) {
             if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
           }
-          python -c "import zipfile,pathlib; z=zipfile.ZipFile('system.zip'); [(print('EXTRACTED_DSETUP',n), (pathlib.Path('probe')/pathlib.Path(n).name).write_bytes(z.read(n))) for n in z.namelist() if 'dsetup' in n.lower()]"
+          python -c "import zipfile,pathlib; [(print('ARCHIVE_DSETUP',a,n), (pathlib.Path('probe')/pathlib.Path(n).name).write_bytes(zipfile.ZipFile(a).read(n))) for a in ('system.zip','engine.zip') for n in zipfile.ZipFile(a).namelist() if 'dsetup' in n.lower()]"
           foreach ($p in @("$env:WINDIR\SysWOW64\dsetup.dll", "$env:WINDIR\System32\dsetup.dll")) {
             if (Test-Path $p) { Write-Host "WINDOWS_DSETUP=$p"; break }
           }
