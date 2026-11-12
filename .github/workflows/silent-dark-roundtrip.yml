@@ -1,5 +1,5 @@
 name: Silent Dark U and XDAT round-trip
-# Validation includes safe normalization of damaged decompiler identifiers in UCC staging.
+# Validation includes safe identifier normalization and recovered ChatWnd struct-order repair in UCC staging.
 
 on:
   push:
