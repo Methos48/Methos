@@ -104,7 +104,8 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  MH_CreateHookApi(L"kernel32.dll","CreateFileW",(LPVOID)HookCreateFileW,(LPVOID*)&realCreateFileW);
  MH_CreateHookApi(L"kernel32.dll","CreateFileA",(LPVOID)HookCreateFileA,(LPVOID*)&realCreateFileA);
  MH_CreateHookApi(L"kernel32.dll","ReadFile",(LPVOID)HookReadFile,(LPVOID*)&realReadFile);
- MH_CreateHookApi(L"ntdll.dll","NtReadFile",(LPVOID)HookNtReadFile,(LPVOID*)&realNtReadFile);\n MH_CreateHookApi(L"ntdll.dll","NtCreateFile",(LPVOID)HookNtCreateFile,(LPVOID*)&realNtCreateFile);
+ MH_CreateHookApi(L"ntdll.dll","NtReadFile",(LPVOID)HookNtReadFile,(LPVOID*)&realNtReadFile);
+ MH_CreateHookApi(L"ntdll.dll","NtCreateFile",(LPVOID)HookNtCreateFile,(LPVOID*)&realNtCreateFile);
  MH_CreateHookApi(L"ntdll.dll","NtOpenFile",(LPVOID)HookNtOpenFile,(LPVOID*)&realNtOpenFile);
  if(MH_EnableHook(MH_ALL_HOOKS)!=MH_OK)return FALSE;
  hookReady=TRUE; return TRUE;
