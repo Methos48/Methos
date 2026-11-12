@@ -1,6 +1,18 @@
 using System.Text;
 using MethosUEngine;
 
+if (args.Length > 0 && args[0] == "--ucc-decompile")
+{
+    if (args.Length != 3)
+        throw new ArgumentException("Usage: --ucc-decompile <package.u> <outputDirectory>");
+    UnrealPackageDecompileResult result = UnrealPackageDecompiler.DecompileToFolder(args[1], args[2]);
+    Console.WriteLine($"PASS: UELib exported {result.ExportedCount}/{result.ClassCount} classes from package {result.PackageVersion}/{result.LicenseeVersion}; objects={result.ObjectCount}; failed={result.FailedCount}.");
+    foreach (string error in result.Errors.Take(20)) Console.WriteLine("EXPORT_ERROR " + error);
+    if (result.FailedCount != 0 || result.ExportedCount != result.ClassCount)
+        throw new InvalidDataException("UnrealScript source export did not complete without errors.");
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-compile")
 {
     if (args.Length != 4)
