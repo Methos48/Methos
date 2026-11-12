@@ -13,6 +13,7 @@ typedef HANDLE (WINAPI *PFN_CreateFileA)(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTE
 typedef BOOL (WINAPI *PFN_ReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 typedef NTSTATUS (NTAPI *PFN_NtReadFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,PVOID,ULONG,PLARGE_INTEGER,PULONG);
 typedef NTSTATUS (NTAPI *PFN_NtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
+typedef NTSTATUS (NTAPI *PFN_NtOpenFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,ULONG,ULONG);
 typedef FARPROC (WINAPI *PFN_GetProcAddress)(HMODULE,LPCSTR);
 typedef HMODULE (WINAPI *PFN_LoadLibraryA)(LPCSTR);
 typedef BOOL (WINAPI *PFN_VirtualProtect)(LPVOID,SIZE_T,DWORD,PDWORD);
@@ -23,7 +24,7 @@ typedef DWORD (WINAPI *PFN_GetModuleFileNameA)(HMODULE,LPSTR,DWORD);
 typedef HLOCAL (WINAPI *PFN_LocalAlloc)(UINT,SIZE_T);
 typedef HLOCAL (WINAPI *PFN_LocalFree)(HLOCAL);
 typedef BOOL (WINAPI *PFN_InitCriticalSection)(LPCRITICAL_SECTION,DWORD);
-static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL; static PFN_NtReadFile realNtReadFile=NULL; static PFN_NtCreateFile realNtCreateFile=NULL;
+static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL; static PFN_NtReadFile realNtReadFile=NULL; static PFN_NtCreateFile realNtCreateFile=NULL; static PFN_NtOpenFile realNtOpenFile=NULL;
 static PFN_GetProcAddress realGetProcAddress=NULL; static PFN_LoadLibraryA realLoadLibraryA=NULL;
 static PFN_VirtualProtect realVirtualProtect=NULL; static PFN_CreateThread realCreateThread=NULL;
 static PFN_GetModuleFileNameW realGetModuleFileNameW=NULL;
@@ -49,7 +50,10 @@ static BOOL IsTarget(LPCWSTR s){if(!s)return FALSE;const wchar_t*p=wcsrchr(s,L'\
 static BOOL IsInterestingPathW(LPCWSTR n){return n&&(wcsstr(n,L"SysString")||wcsstr(n,L"sysstring")||wcsstr(n,L"interface")||wcsstr(n,L"Interface")||wcsstr(n,L".xdat")||wcsstr(n,L".XDAT"));}
 static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);if(IsInterestingPathW(n)){char tmp[1024]={};WideCharToMultiByte(CP_UTF8,0,n,-1,tmp,sizeof(tmp),NULL,NULL);DebugLog("CREATEFILEW path=%s result=%p\\r\\n",tmp,h);}if(h!=INVALID_HANDLE_VALUE&&IsTarget(n)){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_W opened\\n");DebugLog("TARGET_CREATE_W handle=%p\\r\\n",h);LeaveCriticalSection(&lock);}return h;}
 static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(n&&(strstr(n,"SysString")||strstr(n,"sysstring")||strstr(n,"interface")||strstr(n,"Interface")||strstr(n,".xdat")||strstr(n,".XDAT")))DebugLog("CREATEFILEA path=%s result=%p\\r\\n",n,h);if(h!=INVALID_HANDLE_VALUE&&n){const char*p=strrchr(n,'\\\\');p=p?p+1:n;if(_stricmp(p,"SysString-e.dat")==0){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_A path=%s handle=%p\\n",n,h);DebugLog("TARGET_CREATE_A path=%s handle=%p\\r\\n",n,h);LeaveCriticalSection(&lock);}}return h;}
-static NTSTATUS NTAPI HookNtCreateFile(PHANDLE out,ACCESS_MASK access,POBJECT_ATTRIBUTES oa,PIO_STATUS_BLOCK iosb,PLARGE_INTEGER alloc,ULONG attrs,ULONG share,ULONG disp,ULONG opts,PVOID ea,ULONG eaLen){LPCWSTR path=(oa&&oa->ObjectName)?oa->ObjectName->Buffer:NULL;NTSTATUS st=realNtCreateFile(out,access,oa,iosb,alloc,attrs,share,disp,opts,ea,eaLen);if(IsInterestingPathW(path)){char tmp[1024]={};WideCharToMultiByte(CP_UTF8,0,path,-1,tmp,sizeof(tmp),NULL,NULL);DebugLog("NTCREATEFILE status=%08lX path=%s handle=%p\\r\\n",(unsigned long)st,tmp,(st>=0&&out)?*out:NULL);}if(st>=0&&out&&IsTarget(path)){EnterCriticalSection(&lock);targetHandle=*out;DebugLog("TARGET_NTCREATEFILE handle=%p\\r\\n",*out);LeaveCriticalSection(&lock);}return st;}
+static void CopyObjectPath(POBJECT_ATTRIBUTES oa,LPWSTR out,DWORD cap){if(!out||cap==0){return;}out[0]=0;if(!oa||!oa->ObjectName||!oa->ObjectName->Buffer)return;DWORD chars=oa->ObjectName->Length/sizeof(WCHAR);if(chars>=cap)chars=cap-1;memcpy(out,oa->ObjectName->Buffer,chars*sizeof(WCHAR));out[chars]=0;}
+static void LogNativeOpen(const char* api,NTSTATUS st,POBJECT_ATTRIBUTES oa,HANDLE h){WCHAR wide[1024]={};CopyObjectPath(oa,wide,1024);if(IsInterestingPathW(wide)){char tmp[2048]={};WideCharToMultiByte(CP_UTF8,0,wide,-1,tmp,sizeof(tmp),NULL,NULL);DebugLog("%s status=%08lX path=%s handle=%p\\r\\n",api,(unsigned long)st,tmp,h);}}
+static NTSTATUS NTAPI HookNtCreateFile(PHANDLE out,ACCESS_MASK access,POBJECT_ATTRIBUTES oa,PIO_STATUS_BLOCK iosb,PLARGE_INTEGER alloc,ULONG attrs,ULONG share,ULONG disp,ULONG opts,PVOID ea,ULONG eaLen){NTSTATUS st=realNtCreateFile(out,access,oa,iosb,alloc,attrs,share,disp,opts,ea,eaLen);WCHAR path[1024]={};CopyObjectPath(oa,path,1024);HANDLE h=(st>=0&&out)?*out:NULL;LogNativeOpen("NTCREATEFILE",st,oa,h);if(st>=0&&out&&IsTarget(path)){EnterCriticalSection(&lock);targetHandle=*out;DebugLog("TARGET_NTCREATEFILE handle=%p\\r\\n",*out);LeaveCriticalSection(&lock);}return st;}
+static NTSTATUS NTAPI HookNtOpenFile(PHANDLE out,ACCESS_MASK access,POBJECT_ATTRIBUTES oa,PIO_STATUS_BLOCK iosb,ULONG share,ULONG opts){NTSTATUS st=realNtOpenFile(out,access,oa,iosb,share,opts);WCHAR path[1024]={};CopyObjectPath(oa,path,1024);HANDLE h=(st>=0&&out)?*out:NULL;LogNativeOpen("NTOPENFILE",st,oa,h);if(st>=0&&out&&IsTarget(path)){EnterCriticalSection(&lock);targetHandle=*out;DebugLog("TARGET_NTOPENFILE handle=%p\\r\\n",*out);LeaveCriticalSection(&lock);}return st;}
 static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* explicitPos,const char* api){
  if(h!=targetHandle||!b||!n)return;
  LARGE_INTEGER pos={};
@@ -101,6 +105,7 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  MH_CreateHookApi(L"kernel32.dll","CreateFileA",(LPVOID)HookCreateFileA,(LPVOID*)&realCreateFileA);
  MH_CreateHookApi(L"kernel32.dll","ReadFile",(LPVOID)HookReadFile,(LPVOID*)&realReadFile);
  MH_CreateHookApi(L"ntdll.dll","NtReadFile",(LPVOID)HookNtReadFile,(LPVOID*)&realNtReadFile);\n MH_CreateHookApi(L"ntdll.dll","NtCreateFile",(LPVOID)HookNtCreateFile,(LPVOID*)&realNtCreateFile);
+ MH_CreateHookApi(L"ntdll.dll","NtOpenFile",(LPVOID)HookNtOpenFile,(LPVOID*)&realNtOpenFile);
  if(MH_EnableHook(MH_ALL_HOOKS)!=MH_OK)return FALSE;
  hookReady=TRUE; return TRUE;
 }
