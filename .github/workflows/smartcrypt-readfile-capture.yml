@@ -51,23 +51,12 @@ jobs:
           python tools/patch_ogg_imports.py probe/ogg.dll probe/ogg.dll.patched
           Move-Item probe/ogg.dll.patched probe/ogg.dll -Force
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-          & $csc /nologo /platform:x86 /optimize+ /out:probe\smartcrypt-probe.exe tools\smartcrypt-capture-probe.cs
-          if ($LASTEXITCODE -ne 0) { throw "probe compile failed" }
-          $command = 'call "' + $vcvars + '" && cl /nologo /EHsc /O2 tools\core-filestream-probe.cpp /link /OUT:probe\core-filestream-probe.exe'
-          cmd.exe /c $command
-          if ($LASTEXITCODE -ne 0) { throw "Core FFileStream probe compile failed" }
           $command = 'call "' + $vcvars + '" && cl /nologo /EHsc /O2 tools\core-filestream-probe.cpp /link /OUT:probe\MethosHost.exe /BASE:0x10900000 /FIXED /DYNAMICBASE:NO'
           cmd.exe /c $command
-          if ($LASTEXITCODE -ne 0) { throw "Headless L2 host compile failed" }
+          if ($LASTEXITCODE -ne 0) { throw "Headless host compile failed" }
       - name: Run capture with SmartCapture loaded from ogg import order
         shell: pwsh
         run: |
-          Push-Location probe
-          try { .\smartcrypt-probe.exe | Tee-Object capture.log }
-          finally { Pop-Location }
-          Push-Location probe
-          try { .\core-filestream-probe.exe | Tee-Object filestream.log; Get-FileHash .\filestream-read.bin -Algorithm SHA256 | Format-List }
-          finally { Pop-Location }
           Push-Location probe
           try { .\MethosHost.exe | Tee-Object l2host.log; Get-FileHash .\filestream-read.bin -Algorithm SHA256 | Format-List }
           finally { Pop-Location }
