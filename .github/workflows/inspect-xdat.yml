@@ -60,6 +60,43 @@ jobs:
               except zipfile.BadZipFile:
                   print("NOT_A_ZIP")
           PY
+      - name: Extract and validate the XDAT reference kit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          archive = Path("Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip")
+          root = Path("xdat-reference")
+          with zipfile.ZipFile(archive) as z:
+              z.extractall(root)
+          tool = root / "XDAT Interlude Tool - Silent Dark"
+          xmls = list((tool / "xdat por partes").rglob("*.xml"))
+          print("XDAT_REFERENCE_XML_FILES:", len(xmls))
+          print("XDAT_REFERENCE_CORE:", (tool / "xdat_core.py").stat().st_size)
+          print("XDAT_REFERENCE_PACKAGE:", (tool / "xdat completo" / "interface.xdat").stat().st_size)
+          print("=== TEST_ROUNDTRIP.PY ===")
+          print((tool / "tests" / "test_roundtrip.py").read_text(encoding="utf-8"))
+          print("=== XDAT_CORE.PY HEADER ===")
+          print("\\n".join((tool / "xdat_core.py").read_text(encoding="utf-8").splitlines()[:100]))
+          PY
+      - name: Run reference XDAT round-trip tests
+        shell: bash
+        run: |
+          cd "xdat-reference/XDAT Interlude Tool - Silent Dark"
+          python tests/test_roundtrip.py
+      - name: Preserve decoded XDAT reference sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: methos-xdat-decoded-reference
+          path: |
+            xdat-reference/XDAT Interlude Tool - Silent Dark/xdat_core.py
+            xdat-reference/XDAT Interlude Tool - Silent Dark/tests/test_roundtrip.py
+            xdat-reference/XDAT Interlude Tool - Silent Dark/xdat completo/interface.xdat
+            xdat-reference/XDAT Interlude Tool - Silent Dark/xdat por partes/**/*.xml
+            xdat-reference/XDAT Interlude Tool - Silent Dark/xdat por partes/__xdat_meta.json
+          if-no-files-found: warn
       - name: Preserve both originals for deeper analysis
         uses: actions/upload-artifact@v4
         with:
