@@ -129,7 +129,7 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
     elif "backup_root=Path.home() / \"AppData\"" not in source:
         raise SystemExit("No se localizó el punto seguro para sustituir el contenido Archivo XDAT")
     import re
-    publish_pattern = r"(?m)^(\\s*)temp\\.write_bytes\\(data\\)\\s*\\n\\1if temp\\.read_bytes\\(\\)!=data:.*\\n\\1temp\\.replace\\(output\\)\\s*$"
+    publish_pattern = r"(?m)^(\s*)temp\.write_bytes\(data\)\s*\n\1if temp\.read_bytes\(\)!=data:.*\n\1temp\.replace\(output\)\s*$"
     publish_code = """\\1temp.write_bytes(data)
 \\1if temp.read_bytes()!=data: raise ValueError('El archivo temporal no coincide con el resultado compilado.')
 \\1# Solo ahora se respalda y limpia Archivo; el temporal queda fuera del borrado.
@@ -145,7 +145,7 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
 \\1        elif old_item != temp: old_item.unlink()
 \\1COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
 \\1temp.replace(output)"""
-    source, publish_count = re.subn(publish_pattern, lambda m: publish_code.replace("\\\\1", m.group(1)), source, count=1)
+    source, publish_count = re.subn(publish_pattern, lambda m: publish_code.replace("\\1", m.group(1)), source, count=1)
     if publish_count != 1:
         raise SystemExit("No se pudo localizar el bloque completo de escritura XDAT para publicarlo de forma segura.")
     source = source.replace(
