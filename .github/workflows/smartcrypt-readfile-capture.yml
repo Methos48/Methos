@@ -1,0 +1,45 @@
+name: smartcrypt-readfile-capture
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/smartcrypt-readfile-capture.yml"
+      - "tools/smartcrypt-capture.cpp"
+      - "tools/smartcrypt-capture-probe.cs"
+jobs:
+  capture:
+    runs-on: windows-2022
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare x86 client DLLs
+        shell: pwsh
+        run: |
+          Expand-Archive system.zip client-system -Force
+          Expand-Archive engine.zip client-engine -Force
+          New-Item -ItemType Directory -Force probe | Out-Null
+          Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll | ForEach-Object { Copy-Item $_.FullName probe -Force }
+          Copy-Item interface.u probe/SysString-e.dat
+          if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
+          $vs = & "$env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (!$vs) { throw "Visual Studio C++ build tools missing" }
+          $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
+          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE tools\smartcrypt-capture.cpp /link /OUT:probe\SmartCapture.dll'
+          cmd.exe /c $command
+          if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
+          $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+          & $csc /nologo /platform:x86 /optimize+ /out:probe\smartcrypt-probe.exe tools\smartcrypt-capture-probe.cs
+          if ($LASTEXITCODE -ne 0) { throw "probe compile failed" }
+      - name: Run capture without l2.exe
+        shell: pwsh
+        run: |
+          Push-Location probe
+          try { .\smartcrypt-probe.exe | Tee-Object capture.log }
+          finally { Pop-Location }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Methos-SmartCrypt-Capture
+          path: probe/
+          if-no-files-found: warn
+          retention-days: 7
