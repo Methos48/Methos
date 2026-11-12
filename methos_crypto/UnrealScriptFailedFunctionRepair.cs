@@ -26,6 +26,8 @@ public static class UnrealScriptFailedFunctionRepair
             {
                 if (function.Body.Contains("Failed to format", StringComparison.OrdinalIgnoreCase) ||
                     function.Body.Contains("Failed to decompile", StringComparison.OrdinalIgnoreCase) ||
+                    Regex.IsMatch(function.Body, @"\b__NFUN_\d+__\b|\bgoto\s+J0x[0-9A-Fa-f]+\b|^\s*J0x[0-9A-Fa-f]+\s*:",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline) ||
                     Regex.IsMatch(function.Body, @"\b(?!self\b)[A-Za-z_]\w*\.super\s*\(",
                         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                     return true;
