@@ -25,6 +25,59 @@ if (args.Length > 0 && args[0] == "--ucc-compile")
     return;
 }
 
+if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
+{
+    if (args.Length != 5)
+        throw new ArgumentException("Usage: --dunk3l-u-rebuild <uccRuntimeRoot> <encryptedInterface.u> <outputProtected.u> <sourceOutputDirectory>");
+
+    string runtimeRoot = args[1];
+    string inputPath = Path.GetFullPath(args[2]);
+    string outputPath = Path.GetFullPath(args[3]);
+    string sourceDirectory = Path.GetFullPath(args[4]);
+    byte[] original = File.ReadAllBytes(inputPath);
+
+    SmartCryptKeyProfile smartProfile = SmartCryptKeyProfile.FromEncryptedFile(original);
+    var smartCodec = new SmartCrypt1522Codec(smartProfile);
+    byte[] lineageEnvelope = smartCodec.Decode(original, Path.GetFileName(inputPath));
+    var tailProfile = Lineage2CustomTailProfile.FromEnvelope(
+        lineageEnvelope, includeTailInPayload: true, origin: inputPath);
+    var lineageCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
+    byte[] originalPackage = lineageCodec.Decode(lineageEnvelope, Path.GetFileName(inputPath));
+    var originalIndex = UnrealPackageIndex.Parse(originalPackage);
+
+    string temporaryPackage = Path.Combine(Path.GetTempPath(), "Methos-Dunk3l-" + Guid.NewGuid().ToString("N") + ".u");
+    try
+    {
+        File.WriteAllBytes(temporaryPackage, originalPackage);
+        UnrealPackageDecompileResult decompiled = UnrealPackageDecompiler.DecompileToFolder(
+            temporaryPackage, sourceDirectory);
+        if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
+            throw new InvalidDataException($"Dunk3l U decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
+
+        UccCompileResult compiled = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
+        var compiledIndex = UnrealPackageIndex.Parse(compiled.PackageBytes);
+
+        byte[] rebuiltLineage = lineageCodec.Encode(compiled.PackageBytes, Path.GetFileName(inputPath));
+        byte[] rebuiltProtected = smartCodec.Encode(rebuiltLineage, Path.GetFileName(inputPath));
+        byte[] verifiedLineage = smartCodec.Decode(rebuiltProtected, Path.GetFileName(inputPath));
+        if (!verifiedLineage.AsSpan().SequenceEqual(rebuiltLineage))
+            throw new InvalidDataException("SmartCrypt verification failed for the newly compiled Dunk3l U package.");
+        byte[] verifiedPackage = lineageCodec.Decode(verifiedLineage, Path.GetFileName(inputPath));
+        if (!verifiedPackage.AsSpan().SequenceEqual(compiled.PackageBytes))
+            throw new InvalidDataException("Lineage2Ver111 verification failed for the newly compiled Dunk3l U package.");
+        _ = UnrealPackageIndex.Parse(verifiedPackage);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        File.WriteAllBytes(outputPath, rebuiltProtected);
+        Console.WriteLine($"PASS: DUNK3L U full decompile/compile/re-encrypt cycle; classes={decompiled.ExportedCount}; original={originalIndex.Summary.Version}/{originalIndex.Summary.LicenseeVersion} {originalIndex.Summary.NameCount}/{originalIndex.Summary.ImportCount}/{originalIndex.Summary.ExportCount}; compiled={compiledIndex.Summary.Version}/{compiledIndex.Summary.LicenseeVersion} {compiled.NameCount}/{compiled.ImportCount}/{compiled.ExportCount}; protectedBytes={rebuiltProtected.Length}; output={outputPath}.");
+    }
+    finally
+    {
+        try { if (File.Exists(temporaryPackage)) File.Delete(temporaryPackage); } catch { }
+    }
+    return;
+}
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);
