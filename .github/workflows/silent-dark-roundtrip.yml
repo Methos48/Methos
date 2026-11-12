@@ -137,9 +137,15 @@ jobs:
           var cli = Environment.GetCommandLineArgs().Skip(1).ToArray();
           if (cli.Length != 4) throw new ArgumentException("Expected mode, runtime, sources/package, output");
           if (cli[0] == "compile") {
-              var result = UccCompiler.CompileInterface(cli[1], cli[2]);
-              File.WriteAllBytes(cli[3], result.PackageBytes);
-              Console.WriteLine($"UCC_COMPILE_OK bytes={result.PackageBytes.Length} profile={result.ProfileDescription} names={result.NameCount} imports={result.ImportCount} exports={result.ExportCount}");
+              try {
+                  var result = UccCompiler.CompileInterface(cli[1], cli[2]);
+                  File.WriteAllBytes(cli[3], result.PackageBytes);
+                  File.WriteAllText(cli[3] + ".log", result.CompilerOutput);
+                  Console.WriteLine($"UCC_COMPILE_OK bytes={result.PackageBytes.Length} profile={result.ProfileDescription} names={result.NameCount} imports={result.ImportCount} exports={result.ExportCount}");
+              } catch (Exception ex) {
+                  File.WriteAllText(cli[3] + ".log", ex.ToString());
+                  throw;
+              }
           } else if (cli[0] == "decompile") {
               Directory.CreateDirectory(cli[3]);
               using var package = UnrealLoader.LoadPackage(cli[2], FileAccess.Read);
@@ -190,6 +196,7 @@ jobs:
           name: silent-dark-roundtrip-evidence
           path: |
             ${{ runner.temp }}/SilentDark-Compiled-Interface.u
+            ${{ runner.temp }}/SilentDark-Compiled-Interface.u.log
             ${{ runner.temp }}/SilentDark-Decompiled/*.uc
             ${{ runner.temp }}/SilentDark-Diagnostics/**
           if-no-files-found: warn
