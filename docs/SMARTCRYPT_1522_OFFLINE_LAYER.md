@@ -49,17 +49,23 @@ After the SmartCrypt layer and the inner `0xAC` Lineage2 XOR are removed, the U 
 
 These values match the earlier UEExplorer inspection of the Dunk3l interface. This confirms recovery of the actual package tables, not just a guessed signature.
 
-## Inner Lineage2Ver111 trailer caveat
+## Inner Lineage2Ver111 terminal bytes
 
-The Dunk3l samples have a 20-byte trailer that does not pass the stock protocol-111 CRC32 check used by the strict verifier. The public `open-l2encdec` CLI exposes checksum verification as an optional `-v` operation and documents that the game client does not perform this check. Therefore a checksum mismatch alone does not invalidate the decoded payload.
+The stock Lineage2Ver111 codec supports an optional 20-byte trailer/checksum, but the Dunk3l payload must be interpreted by its actual file parser rather than assuming the final 20 bytes are always disposable metadata.
 
-Methos uses a dedicated protocol-111 compatibility codec that preserves the original 20-byte trailer byte-for-byte. It never silently replaces a custom trailer with a stock one. The Windows smoke tests separately check:
+For `interface.u`, stripping the final 20 bytes causes the Unreal package parser to run out of data at the final compact index. Therefore those terminal bytes must remain part of the decoded U payload. Methos uses `includeTailInPayload=true` for this U variant.
+
+For `interface.xdat`, the validator tries both interpretations (terminal 20 bytes included or separated) and accepts only the form that successfully parses, recompiles from XML, and round-trips exactly. The chosen interpretation is saved in the per-file Methos profile.
+
+The public `open-l2encdec` CLI exposes checksum verification as an optional `-v` operation and documents that the game client does not perform this check. Methos must never invent a replacement trailer: it preserves the original terminal bytes or treats them as package payload according to the validated format.
+
+The Windows smoke tests separately check:
 1. SmartCrypt decode and encode round-trip,
-2. protocol-111 XOR decode and re-encode while preserving the original trailer,
+2. protocol-111 XOR decode and re-encode with the selected terminal-byte policy,
 3. Unreal package parsing and the known 126/0 tables for `interface.u`,
 4. XDAT parse/decompile/compile XML round-trip for `interface.xdat`.
 
-Do not label the Dunk3l trailer as stock-CRC-verified. The supported save path requires exact original-file round-trip and successful U/XDAT structural validation; an in-game load test remains useful as final compatibility confirmation.
+Do not label the Dunk3l terminal bytes as stock-CRC-verified. The supported save path requires exact original-file round-trip and successful U/XDAT structural validation; an in-game load test remains useful as final compatibility confirmation.
 
 ## Runtime capture notes
 
