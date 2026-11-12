@@ -109,6 +109,17 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
         return output;
     }
 
+    public bool VerifyTailChecksum(ReadOnlySpan<byte> input)
+    {
+        if (input.Length < HeaderSize + TailSize) return false;
+        byte[] data = input.ToArray();
+        try { ValidateHeaderOnly(data); }
+        catch (InvalidDataException) { return false; }
+        uint stored = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(data.Length - TailSize + 12, 4));
+        uint actual = Crc32(data.AsSpan(0, data.Length - TailSize));
+        return stored == actual;
+    }
+
     private void ValidateHeaderOnly(byte[] data)
     {
         if (data.Length < HeaderSize)
