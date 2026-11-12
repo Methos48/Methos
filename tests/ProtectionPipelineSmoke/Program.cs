@@ -95,6 +95,35 @@ foreach (int protocol in new[] { 111, 413 })
 }
 Console.WriteLine("PASS: integrated Lineage II 111 XOR and 413 RSA/zlib encode/decode round-trips.");
 
+if (File.Exists("sysstring-e.dat"))
+{
+    byte[] realSysString = File.ReadAllBytes("sysstring-e.dat");
+    var realSysPlan = ProtectionPipelinePlanner.Inspect(realSysString, "sysstring-e.dat");
+    Check(realSysPlan.Status == "recognized-supported-encryption" &&
+          realSysPlan.Layers.Any(x => x.Id == "lineage2-413"),
+        "Real SysString-e.dat must be detected as Lineage2Ver413.");
+
+    var realSysCodec = new Lineage2StandardCodec(413);
+    byte[] decodedSysString = realSysCodec.Decode(realSysString, "sysstring-e.dat");
+    Check(decodedSysString.Length == 29584 &&
+          decodedSysString.AsSpan().IndexOf("Equipment"u8) >= 0 &&
+          decodedSysString.AsSpan().IndexOf("Lineage II User Agreement"u8) >= 0,
+        "Real SysString-e.dat did not decode to the expected English system-text resource.");
+    string decodedSysHash = Convert.ToHexString(SHA256.HashData(decodedSysString)).ToLowerInvariant();
+    Check(decodedSysHash == "a2c15980a6278c04640fd9163da9f8916d2f0e9349538cc9a6f7d4b74a4065b4",
+        "Real SysString-e.dat decoded content hash differs from the independently validated reference.");
+
+    byte[] rebuiltSysString = realSysCodec.Encode(decodedSysString, "sysstring-e.dat");
+    byte[] verifiedSysString = realSysCodec.Decode(rebuiltSysString, "sysstring-e.dat");
+    Check(decodedSysString.SequenceEqual(verifiedSysString),
+        "Real SysString-e.dat protocol 413 decode/re-encode round-trip failed.");
+    Console.WriteLine($"PASS: REAL SysString-e.dat Lineage2Ver413 RSA/zlib decode and re-encode round-trip; encrypted={realSysString.Length}, decoded={decodedSysString.Length}, SHA256={decodedSysHash}.");
+}
+else
+{
+    Console.WriteLine("SKIP: sysstring-e.dat real protocol 413 fixture is not present.");
+}
+
 {
     byte[] seedBlock = Enumerable.Range(0, 24).Select(i => (byte)(0x31 + i * 7)).ToArray();
 seedBlock[0] = 1;
