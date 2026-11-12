@@ -31,6 +31,8 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
         source=source.replace(line,line+"from auto_pipeline import decode_xdat, encode_xdat\nfrom package_origin_metadata import save_origin_record, load_and_validate_origin, require_recorded_protocol\n",1)
     if "import xml.etree.ElementTree as ET" not in source:
         source = source.replace("import tkinter", "import xml.etree.ElementTree as ET\nimport tkinter", 1)
+    if "import shutil" not in source:
+        source = source.replace("import tkinter", "import shutil\nimport tkinter", 1)
     source = source.replace(
         "            self.set_status(f'Compilando {len(xmls)} archivos XML…')",
         """            xml_errors=[]
@@ -72,6 +74,9 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
 """
     new="""            data=source.read_bytes()
             plain_data,detection=decode_xdat(source,data,parse_xdat)
+            if PARTS_DIR.exists():
+                shutil.rmtree(PARTS_DIR)
+            PARTS_DIR.mkdir(parents=True,exist_ok=True)
             windows,shortcuts=decompile_to_folder(plain_data,PARTS_DIR)\n            manifest=save_origin_record(PARTS_DIR,source,data,detection,file_kind="XDAT")\n            print(f"Perfil de origen guardado: {manifest}")
 """
     if old in source: source=source.replace(old,new,1)
@@ -115,7 +120,24 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
                         raise ValueError("Falta el manifiesto de origen. No se codificará el XDAT con un protocolo supuesto.")
                     data=encode_xdat(plain_compiled,source.name,original_detection.version,parse_xdat)"""
     source = source[:compile_start] + compile_replacement + source[compile_end:]
-    source=source.replace("            parsed=parse_xdat(data)\n","            parsed=parse_xdat(plain_compiled)\n",1)
+    parse_marker = "            parsed=parse_xdat(data)\n"
+    parse_replacement = """            parsed=parse_xdat(plain_compiled)
+            backup_root=Path.home() / "AppData" / "Local" / "Methos" / "Backups" / "XDAT"
+            backup_root.mkdir(parents=True,exist_ok=True)
+            if COMPLETE_DIR.exists():
+                for old_file in COMPLETE_DIR.rglob("*"):
+                    if old_file.is_file():
+                        backup_name=f"{old_file.stem}_{__import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{old_file.name}"
+                        shutil.copy2(old_file,backup_root/backup_name)
+                for old_item in COMPLETE_DIR.iterdir():
+                    if old_item.is_dir(): shutil.rmtree(old_item)
+                    else: old_item.unlink()
+            COMPLETE_DIR.mkdir(parents=True,exist_ok=True)
+"""
+    if parse_marker in source:
+        source=source.replace(parse_marker,parse_replacement,1)
+    elif "backup_root=Path.home() / \"AppData\"" not in source:
+        raise SystemExit("No se localizó el punto seguro para sustituir el contenido Archivo XDAT")
     source = source.replace(
         "messagebox.showerror('Error al descompilar',f'{prefix}{e}\\n\\n{traceback.format_exc()}')",
         "messagebox.showerror('Error al descompilar',f'{e}\\n\\n{traceback.format_exc()}')"
@@ -139,5 +161,5 @@ PARTS_DIR = DATA_DIR / 'Decopilado'
     elif new not in bat: raise SystemExit("No se pudo añadir el motor a PyInstaller")
     bat_path.write_text(bat,encoding="utf-8",newline="\n")
     print("Despacho automático integrado y motor incluido en el paquete Windows.")
-    print("Carpetas XDAT: Archivos XDAT/Comprimido y Archivos XDAT/Descomprimido.")
+    print("Carpetas XDAT: Compilados/XDAT/Archivo y Compilados/XDAT/Decopilado.")
 if __name__=="__main__": main()
