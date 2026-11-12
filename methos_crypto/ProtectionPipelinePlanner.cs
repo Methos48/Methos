@@ -44,18 +44,21 @@ public static class ProtectionPipelinePlanner
 
         if (data.Length >= 0x400 && SmartCrypt1522Codec.HasHeader(data))
         {
-            bool canDecode = smartCryptKeyAvailable;
+            bool keyDerivableFromHeader;
+            try { _ = SmartCryptKeyProfile.FromEncryptedFile(data); keyDerivableFromHeader = true; }
+            catch (InvalidDataException) { keyDerivableFromHeader = false; }
+            bool canDecode = smartCryptKeyAvailable || keyDerivableFromHeader;
             bool canEncode = canDecode && smartCryptEncoderVerified;
             var layer = new ProtectionLayer(ProtectionLayerKind.SmartCrypt1522Candidate,
                 "smartcrypt-1.5.2.2",
                 canEncode ? "codec-ready" : canDecode ? "decode-key-available-encode-unverified" : "recognized-key-required",
                 canDecode, canEncode,
-                "FF ED FA CE marker recognized. The transform is implemented; decoding requires the matching per-handle key6/key16 state captured from the protected client. Re-encoding remains disabled until a real-file round trip is verified.");
+                "FF ED FA CE marker recognized. The transform is implemented. For this variant the per-file key6/key16 state can be reconstructed from the embedded 24-byte seed block when its external-key bit is clear; otherwise the matching global key is required. Re-encoding remains disabled until a real-file round trip is verified.");
             return new(extension, new[] { layer }, canDecode, canEncode,
                 canEncode ? "recognized-supported-encryption" : canDecode ? "recognized-decode-only" : "recognized-key-required",
                 canDecode
                     ? "SmartCrypt 1.5.2.2 recognized and a matching key profile is available. The file remains protected until the decoded intermediate is validated."
-                    : "SmartCrypt 1.5.2.2 recognized, but its matching key profile is unavailable. The file is preserved; no key is guessed.");
+                    : "SmartCrypt 1.5.2.2 recognized, but this file's header does not provide enough key material and no matching external profile is available. The file is preserved; no key is guessed.");
         }
 
         if (ActiveAntiCheatCodec.HasHeader(data))
