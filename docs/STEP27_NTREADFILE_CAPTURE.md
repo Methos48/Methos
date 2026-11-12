@@ -28,7 +28,7 @@ All three output files were byte-identical:
 
 SHA-256 for all: `89fffcb34b0161033f6d2d1b9c650625cd6144fa575ccf3b170b4c0d5f31902d`.
 
-The capture hook is now proven to observe the actual Core file read. The absence of transformed bytes is not a capture blind spot.
+The capture hook is proven to observe the actual Core file read at the underlying Win32/native API boundary. Important limitation: the hook records the buffer before control returns to its caller. If `npkscrypt.dll` wraps `ReadFile` and transforms the buffer after the underlying API returns, this capture will still be raw even when the caller subsequently decrypts it. Therefore byte-identical API captures do not prove that the complete caller-side stream path is inactive. The next run logs the return address of each read caller; then capture must be placed at the post-read wrapper boundary or the destination buffer after `FFileStream` completes.
 
 ## Key activation state
 
@@ -54,7 +54,8 @@ Do not guess keys or register a codec. Trace the protection initialization and i
 - [x] Confirm Core opens the supplied file.
 - [x] Capture native and Win32 read buffers.
 - [x] Prove the current headless stream is byte-identical to the source.
-- [x] Confirm the protection key pointer and activation flag remain zero.
+- [x] Snapshot the protection key pointer and activation flag before the test read.
+- [ ] Determine whether caller-side wrapper code transforms the buffer after the API hook returns.
 - [ ] Recover the matching key provider/initialization.
 - [ ] Decode and structurally validate `interface.u`.
 - [ ] Decode and structurally validate `interface.xdat`.
