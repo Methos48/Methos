@@ -71,7 +71,7 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $env:RUNNER_TEMP "SilentDark-Compiled-Interface.u"
-          dotnet run --project u-editor/tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:UCC_KIT $env:SILENT_U_SOURCES $out
+          dotnet run --project u-editor/tools/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:UCC_KIT $env:SILENT_U_SOURCES $out
           if ($LASTEXITCODE -ne 0) { throw "Silent Dark UCC compile failed" }
           if (!(Test-Path $out) -or (Get-Item $out).Length -lt 65536) { throw "Compiled Silent Dark Interface.u missing or invalid" }
           "SILENT_U_OUTPUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
@@ -81,7 +81,7 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $env:RUNNER_TEMP "SilentDark-Decompiled"
-          dotnet run --project u-editor/tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $env:SILENT_U_OUTPUT $out
+          dotnet run --project u-editor/tools/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $env:SILENT_U_OUTPUT $out
           if ($LASTEXITCODE -ne 0) { throw "Compiled Silent Dark package could not be decompiled" }
           $classes = @(Get-ChildItem $out -Filter "*.uc" -File).Count
           if ($classes -lt 100) { throw "Compiled Silent Dark package has too few decompiled classes: $classes" }
