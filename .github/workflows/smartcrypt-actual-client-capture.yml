@@ -63,8 +63,44 @@ jobs:
           try {
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
             Write-Host "L2_PID=$($p.Id)"
-            Start-Sleep -Seconds 20
-            $p.Refresh()
+            Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class L2DialogHelper {
+  private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+  [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc cb, IntPtr lp);
+  [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+  [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hWnd);
+  [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetClassName(IntPtr hWnd, StringBuilder text, int max);
+  [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int max);
+  [DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+  public static string Dismiss(int targetPid) {
+    var titles = new List<string>();
+    EnumWindows((h, lp) => {
+      uint pid; GetWindowThreadProcessId(h, out pid);
+      if (pid == (uint)targetPid && IsWindowVisible(h)) {
+        var cls = new StringBuilder(128); GetClassName(h, cls, cls.Capacity);
+        if (cls.ToString() == "#32770") {
+          var title = new StringBuilder(512); GetWindowText(h, title, title.Capacity);
+          SendMessage(h, 0x0111, new IntPtr(1), IntPtr.Zero);
+          titles.Add(title.ToString());
+        }
+      }
+      return true;
+    }, IntPtr.Zero);
+    return String.Join(" | ", titles);
+  }
+}
+'@
+            for ($i = 0; $i -lt 20; $i++) {
+              $dismissed = [L2DialogHelper]::Dismiss($p.Id)
+              if ($dismissed) { Write-Host "DISMISSED_DIALOG=$dismissed" }
+              Start-Sleep -Seconds 1
+              $p.Refresh()
+              if ($p.HasExited) { break }
+            }
             $p.Refresh()
             if (!$p.HasExited) {
               Write-Host "L2_TIMEOUT=1 (terminating after capture window)"
