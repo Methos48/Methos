@@ -89,7 +89,10 @@ foreach (int protocol in new[] { 111, 413 })
     }, true, true, "test", "Synthetic Lineage II standard codec round-trip.");
     byte[] standardEncrypted = standard.Encode(standardPlan, standardPlain, "vector.dat");
     var detected = ProtectionPipelinePlanner.Inspect(standardEncrypted, "vector.dat");
-    Check(detected.CanDecode && detected.CanEncode, $"Protocol {protocol} header was not recognized as supported.");
+    Check(detected.CanDecode &&
+          (protocol == 413 ? detected.CanEncode :
+              !detected.CanEncode && detected.Layers[0].Kind == ProtectionLayerKind.Lineage2CustomTrailer),
+        $"Protocol {protocol} header was not recognized with the correct trailer-preservation policy.");
     byte[] standardDecoded = standard.Decode(standardPlan, standardEncrypted, "vector.dat");
     Check(standardPlain.SequenceEqual(standardDecoded), $"Protocol {protocol} round-trip failed.");
 }
