@@ -28,6 +28,8 @@ jobs:
           foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll")) {
             if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
           }
+          if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
+          Copy-Item Window.dll probe/Window.dll -Force
           Copy-Item l2.exe probe/l2.exe -Force
           Copy-Item interface.u probe/SysString-e.dat -Force
           $vc = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
