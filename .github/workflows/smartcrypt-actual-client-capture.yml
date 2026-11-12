@@ -45,6 +45,7 @@ jobs:
           Copy-Item interface.u probe/system/SysString-e.dat -Force
           if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force } else { New-Item -ItemType Directory -Force probe/Crest | Out-Null }
           if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force } else { New-Item -ItemType Directory -Force probe/SysTextures | Out-Null }
+          python tools/make_probe_systextures.py probe/SysTextures
           $vc = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vc) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vc "VC\Auxiliary\Build\vcvars32.bat"
