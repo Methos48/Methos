@@ -65,6 +65,57 @@ public sealed class Lineage2StandardCodec : IProtectionCodec
         { throw new InvalidDataException("Protocol 413 was detected, but neither the modern nor legacy RSA key produced a valid zlib stream.", new AggregateException(modernError!, ex)); }
     }
 
+    /// <summary>
+    /// Diagnostic/compatibility path for custom Lineage2Ver111 trailers.
+    /// It validates the header and applies the 0xAC stream, but deliberately does not
+    /// assert the standard CRC layout. includeTail=true also XORs the final 20 bytes.
+    /// </summary>
+    public byte[] Decode111Unchecked(ReadOnlyMemory<byte> input, bool includeTail = false)
+    {
+        if (_protocol != 111)
+            throw new NotSupportedException("Unchecked payload decoding is available only for protocol 111.");
+        byte[] bytes = input.ToArray();
+        ValidateHeaderOnly(bytes);
+        int length = bytes.Length - HeaderSize - (includeTail ? 0 : TailSize);
+        if (length < 0) throw new InvalidDataException("Lineage2Ver111 file is too short.");
+        byte[] plain = bytes.AsSpan(HeaderSize, length).ToArray();
+        for (int i = 0; i < plain.Length; i++) plain[i] ^= 0xAC;
+        return plain;
+    }
+
+    /// <summary>
+    /// Rebuilds a custom protocol-111 envelope while preserving its original trailer.
+    /// This does not claim to update a custom checksum; callers must validate the
+    /// trailer semantics before allowing modified output to be saved.
+    /// </summary>
+    public byte[] Encode111PreservingTail(ReadOnlyMemory<byte> payload,
+        ReadOnlyMemory<byte> originalEnvelope, bool includeTail = false)
+    {
+        if (_protocol != 111)
+            throw new NotSupportedException("Trailer-preserving encoding is available only for protocol 111.");
+        byte[] original = originalEnvelope.ToArray();
+        ValidateHeaderOnly(original);
+        int tailLength = includeTail ? 0 : TailSize;
+        byte[] output = new byte[HeaderSize + payload.Length + tailLength];
+        original.AsSpan(0, HeaderSize).CopyTo(output);
+        byte[] encrypted = payload.ToArray();
+        for (int i = 0; i < encrypted.Length; i++) encrypted[i] ^= 0xAC;
+        encrypted.CopyTo(output, HeaderSize);
+        if (!includeTail)
+            original.AsSpan(original.Length - TailSize, TailSize).CopyTo(output.AsSpan(output.Length - TailSize));
+        return output;
+    }
+
+    private void ValidateHeaderOnly(byte[] data)
+    {
+        if (data.Length < HeaderSize)
+            throw new InvalidDataException("File is too short to contain a Lineage II header.");
+        string expected = $"Lineage2Ver{_protocol:D3}";
+        for (int i = 0; i < expected.Length; i++)
+            if (data[i * 2] != (byte)expected[i] || data[i * 2 + 1] != 0)
+                throw new InvalidDataException($"Expected UTF-16LE Lineage2Ver{_protocol:D3} header.");
+    }
+
     public byte[] Encode(ReadOnlyMemory<byte> input, string originalFileName, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
