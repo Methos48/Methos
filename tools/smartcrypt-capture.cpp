@@ -34,6 +34,11 @@ static HANDLE targetHandle=INVALID_HANDLE_VALUE,outputHandle=INVALID_HANDLE_VALU
 static CRITICAL_SECTION lock; static LONG initialized=0; static LONGLONG maxEnd=0;
 static HMODULE engineModule=NULL; static BOOL hookReady=FALSE;
 static char traceBuffer[1<<20]; static LONG traceLength=0;
+static void DebugLog(const char* fmt,...){
+ char line[768]={}; va_list ap; va_start(ap,fmt); _vsnprintf_s(line,sizeof(line),_TRUNCATE,fmt,ap); va_end(ap);
+ HANDLE h=CreateFileA("smartcapture-debug.log",FILE_APPEND_DATA,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+ if(h!=INVALID_HANDLE_VALUE){DWORD n=0;WriteFile(h,line,(DWORD)strlen(line),&n,NULL);CloseHandle(h);}
+}
 static void Trace(const char* fmt,...){
  if(!initialized)return; EnterCriticalSection(&lock);
  LONG at=traceLength; if(at<(LONG)sizeof(traceBuffer)-2){va_list ap;va_start(ap,fmt);int n=_vsnprintf_s(traceBuffer+at,sizeof(traceBuffer)-at,_TRUNCATE,fmt,ap);va_end(ap);if(n>0)InterlockedExchange(&traceLength,at+n);}
@@ -41,7 +46,7 @@ static void Trace(const char* fmt,...){
 }
 static BOOL IsTarget(LPCWSTR s){if(!s)return FALSE;const wchar_t*p=wcsrchr(s,L'\\');p=p?p+1:s;return _wcsicmp(p,L"SysString-e.dat")==0;}
 static HANDLE WINAPI HookCreateFileW(LPCWSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileW(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE){EnterCriticalSection(&lock);if(IsTarget(n)){targetHandle=h;Trace("TARGET_CREATE_W opened\\n");}LeaveCriticalSection(&lock);}return h;}
-static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE&&n){const char*p=strrchr(n,'\\');p=p?p+1:n;if(_stricmp(p,"SysString-e.dat")==0){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_A path=%s handle=%p\\n",n,h);LeaveCriticalSection(&lock);}}return h;}
+static HANDLE WINAPI HookCreateFileA(LPCSTR n,DWORD a,DWORD s,LPSECURITY_ATTRIBUTES sa,DWORD c,DWORD f,HANDLE t){HANDLE h=realCreateFileA(n,a,s,sa,c,f,t);if(h!=INVALID_HANDLE_VALUE&&n){const char*p=strrchr(n,'\\');p=p?p+1:n;if(_stricmp(p,"SysString-e.dat")==0){EnterCriticalSection(&lock);targetHandle=h;Trace("TARGET_CREATE_A path=%s handle=%p\\n",n,h);DebugLog("TARGET_CREATE_A path=%s handle=%p\\r\\n",n,h);LeaveCriticalSection(&lock);}}return h;}
 static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* explicitPos,const char* api){
  if(h!=targetHandle||!b||!n)return;
  LARGE_INTEGER pos={};
@@ -54,7 +59,7 @@ static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* exp
 }
 static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
  BOOL ok=realReadFile(h,b,req,got,ov);DWORD n=(ok&&got)?*got:0;
- if(ok&&n){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
+ if(ok&&n){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());if(h==targetHandle)DebugLog("TARGET_READFILE bytes=%lu caller=%p\\r\\n",n,_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
  return ok;
 }
 static NTSTATUS NTAPI HookNtReadFile(HANDLE h,HANDLE ev,PIO_APC_ROUTINE apc,PVOID apcCtx,PIO_STATUS_BLOCK iosb,PVOID b,ULONG req,PLARGE_INTEGER offset,PULONG key){
@@ -100,4 +105,4 @@ extern "C" __declspec(dllexport) void WINAPI SmartCapture_Flush(void){if(!hookRe
 extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Status(void){return hookReady;}
 extern "C" __declspec(dllexport) void WINAPI SmartCapture_DumpTrace(void){if(!initialized)return;HANDLE h=realCreateFileW(L"npkscrypt-api-trace.txt",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);if(h!=INVALID_HANDLE_VALUE){DWORD n=(DWORD)traceLength,w=0;WriteFile(h,traceBuffer,n,&w,NULL);CloseHandle(h);}}
 extern "C" __declspec(dllexport) int __stdcall load(void){Trace("SmartCapture load callback called\\n");return 0;}
-BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){if(r==DLL_PROCESS_ATTACH){DisableThreadLibraryCalls(h);engineModule=LoadLibraryA("engine.dll");if(!engineModule)return FALSE;if(!SmartCapture_Initialize())return FALSE;}return TRUE;}
+BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){if(r==DLL_PROCESS_ATTACH){DisableThreadLibraryCalls(h);DebugLog("DLL_PROCESS_ATTACH\\r\\n");engineModule=LoadLibraryA("engine.dll");DebugLog("ENGINE_LOAD=%p\\r\\n",engineModule);if(!engineModule)return FALSE;BOOL ok=SmartCapture_Initialize();DebugLog("SMARTCAPTURE_INITIALIZE=%d\\r\\n",ok);if(!ok)return FALSE;}else if(r==DLL_PROCESS_DETACH){DebugLog("DLL_PROCESS_DETACH\\r\\n");SmartCapture_Flush();SmartCapture_DumpTrace();}return TRUE;}
