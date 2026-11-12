@@ -19,6 +19,7 @@ jobs:
           Expand-Archive engine.zip client-engine -Force
           New-Item -ItemType Directory -Force probe | Out-Null
           Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll | ForEach-Object { Copy-Item $_.FullName probe -Force }
+          if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll -Force }
           Copy-Item interface.u probe/SysString-e.dat
           if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
