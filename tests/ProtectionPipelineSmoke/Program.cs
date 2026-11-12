@@ -213,7 +213,7 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
     byte[] dunk3lPlain = standardCodec.Decode(lineageEnvelope, targetName);
     if (targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase))
     {
-        Check(plain.Length >= 4 && dunk3lPlain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
+        Check(dunk3lPlain.Length >= 4 && dunk3lPlain.AsSpan(0, 4).SequenceEqual(new byte[] { 0xC1, 0x83, 0x2A, 0x9E }),
             "Dunk3l interface.u did not produce a valid Unreal package signature after both layers.");
     }
     else
