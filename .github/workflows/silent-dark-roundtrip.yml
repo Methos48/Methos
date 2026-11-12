@@ -89,12 +89,13 @@ jobs:
           if ($observerClass) {
             $observerClass | Get-Content | Set-Content -LiteralPath (Join-Path $diagnostics "EventMatchObserverWnd.uc")
           }
-          $skillTypeHits = Select-String -Path (Join-Path $src "*.uc") -Pattern "\\bSkillMsgInfo\\b" -List
+          $allSkillSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
+          $skillTypeHits = Select-String -Path $allSkillSources.FullName -Pattern '\bSkillMsgInfo\b' -List
           foreach ($hit in $skillTypeHits) {
             Add-Content -LiteralPath (Join-Path $diagnostics "SkillMsgInfo-references.txt") -Value ("FILE=" + $hit.Path)
-            Select-String -Path $hit.Path -Pattern "\\bSkillMsgInfo\\b" -Context 4,4 |
+            Select-String -Path $hit.Path -Pattern '\bSkillMsgInfo\b' -Context 4,4 |
               ForEach-Object { Add-Content -LiteralPath (Join-Path $diagnostics "SkillMsgInfo-references.txt") -Value $_.ToString() }
-            Copy-Item -LiteralPath $hit.Path -Destination (Join-Path $diagnostics ("SkillType-" + $hit.Path.Split('\\')[-1])) -Force
+            Copy-Item -LiteralPath $hit.Path -Destination (Join-Path $diagnostics ("SkillType-" + (Split-Path $hit.Path -Leaf))) -Force
           }
           $allSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
           "SOURCE_COUNT=$($allSources.Count)" | Set-Content (Join-Path $diagnostics "source-inventory.txt")
