@@ -11,6 +11,8 @@
 typedef HANDLE (WINAPI *PFN_CreateFileW)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef HANDLE (WINAPI *PFN_CreateFileA)(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef BOOL (WINAPI *PFN_ReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+typedef BOOL (WINAPI *PFN_NpkReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+typedef void* (__thiscall *PFN_NpkGetState)(HANDLE);
 typedef NTSTATUS (NTAPI *PFN_NtReadFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,PVOID,ULONG,PLARGE_INTEGER,PULONG);
 typedef NTSTATUS (NTAPI *PFN_NtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
 typedef NTSTATUS (NTAPI *PFN_NtOpenFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,ULONG,ULONG);
@@ -24,7 +26,7 @@ typedef DWORD (WINAPI *PFN_GetModuleFileNameA)(HMODULE,LPSTR,DWORD);
 typedef HLOCAL (WINAPI *PFN_LocalAlloc)(UINT,SIZE_T);
 typedef HLOCAL (WINAPI *PFN_LocalFree)(HLOCAL);
 typedef BOOL (WINAPI *PFN_InitCriticalSection)(LPCRITICAL_SECTION,DWORD);
-static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL; static PFN_NtReadFile realNtReadFile=NULL; static PFN_NtCreateFile realNtCreateFile=NULL; static PFN_NtOpenFile realNtOpenFile=NULL;
+static PFN_CreateFileW realCreateFileW=NULL; static PFN_CreateFileA realCreateFileA=NULL; static PFN_ReadFile realReadFile=NULL; static PFN_NpkReadFile realNpkReadFile=NULL; static PFN_NpkGetState realNpkGetState=NULL; static PFN_NtReadFile realNtReadFile=NULL; static PFN_NtCreateFile realNtCreateFile=NULL; static PFN_NtOpenFile realNtOpenFile=NULL;
 static PFN_GetProcAddress realGetProcAddress=NULL; static PFN_LoadLibraryA realLoadLibraryA=NULL;
 static PFN_VirtualProtect realVirtualProtect=NULL; static PFN_CreateThread realCreateThread=NULL;
 static PFN_GetModuleFileNameW realGetModuleFileNameW=NULL;
@@ -38,7 +40,7 @@ static HANDLE outputHandles[4]={INVALID_HANDLE_VALUE,INVALID_HANDLE_VALUE,INVALI
 static LONGLONG maxEnds[4]={0,0,0,0};
 static volatile LONG openLogCount=0;
 static CRITICAL_SECTION lock; static LONG initialized=0;
-static HMODULE engineModule=NULL; static BOOL hookReady=FALSE;
+static HMODULE engineModule=NULL; static HMODULE npkModule=NULL; static BOOL hookReady=FALSE; static __declspec(thread) LONG inNpkRead=0;
 static char traceBuffer[1<<20]; static LONG traceLength=0;
 static HANDLE debugHandle=INVALID_HANDLE_VALUE;
 static void DebugLog(const char* fmt,...){
@@ -100,8 +102,40 @@ static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* exp
 }
 static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
  BOOL ok=realReadFile(h,b,req,got,ov);LogNpkStateOnce();DWORD n=(ok&&got)?*got:0;
- if(ok&&n){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
+ if(ok&&n&&inNpkRead==0){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
  return ok;
+}
+static void DumpNpkKeyState(HANDLE h){
+ if(!realNpkGetState)return;
+ void* state=realNpkGetState(h);
+ if(!state){DebugLog("NPK_KEY_STATE handle=%p state=NULL\\r\\n",h);return;}
+ BYTE* s=(BYTE*)state;char k6[32]={},k16[64]={};
+ for(int i=0;i<6;i++)sprintf_s(k6+i*2,3,"%02X",s[2+i]);
+ for(int i=0;i<16;i++)sprintf_s(k16+i*2,3,"%02X",s[8+i]);
+ DebugLog("NPK_KEY_STATE handle=%p state=%p seed=%02X%02X key6=%s key16=%s flag=%02X\\r\\n",h,state,s[0],s[1],k6,k16,s[0x18]);
+ HANDLE out=CreateFileA("smartcrypt-key-profile.txt",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+ if(out!=INVALID_HANDLE_VALUE){char line[512]={};int n=sprintf_s(line,sizeof(line),"NPK_GLOBAL_KEY=%08lX\\r\\nSTATE_SEED=%02X%02X\\r\\nKEY6=%s\\r\\nKEY16=%s\\r\\nFLAG=%02X\\r\\n",npkModule?*(DWORD*)((BYTE*)npkModule+0x51430):0,s[0],s[1],k6,k16,s[0x18]);DWORD wrote=0;WriteFile(out,line,(DWORD)n,&wrote,NULL);FlushFileBuffers(out);CloseHandle(out);}
+}
+static BOOL WINAPI HookNpkReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
+ inNpkRead++;
+ BOOL ok=realNpkReadFile(h,b,req,got,ov);
+ inNpkRead--;
+ LogNpkStateOnce();
+ DWORD n=(ok&&got)?*got:0;
+ if(ok&&n){LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"NpkReadFilePostTransform");DumpNpkKeyState(h);}
+ return ok;
+}
+static BOOL InstallNpkReadHook(void){
+ npkModule=GetModuleHandleA("npkscrypt.dll");
+ if(!npkModule){DebugLog("NPK_DIRECT_HOOK module=NULL\\r\\n");return FALSE;}
+ BYTE* readAddress=(BYTE*)npkModule+0x119C6C;
+ BYTE* stateAddress=(BYTE*)npkModule+0x11983C;
+ const BYTE readSig[]={0x55,0x8B,0xEC,0x83,0xEC,0x08,0x53,0x8B,0x5D,0x08,0x56,0x8B,0x75,0x10,0x57};
+ if(memcmp(readAddress,readSig,sizeof(readSig))!=0){DebugLog("NPK_DIRECT_HOOK signature mismatch module=%p address=%p bytes=%02X %02X %02X %02X\\r\\n",npkModule,readAddress,readAddress[0],readAddress[1],readAddress[2],readAddress[3]);return FALSE;}
+ realNpkGetState=(PFN_NpkGetState)stateAddress;
+ MH_STATUS st=MH_CreateHook(readAddress,(LPVOID)HookNpkReadFile,(LPVOID*)&realNpkReadFile);
+ DebugLog("NPK_DIRECT_HOOK module=%p read=%p state=%p status=%d\\r\\n",npkModule,readAddress,stateAddress,(int)st);
+ return st==MH_OK||st==MH_ERROR_ALREADY_CREATED;
 }
 static NTSTATUS NTAPI HookNtReadFile(HANDLE h,HANDLE ev,PIO_APC_ROUTINE apc,PVOID apcCtx,PIO_STATUS_BLOCK iosb,PVOID b,ULONG req,PLARGE_INTEGER offset,PULONG key){
  NTSTATUS status=realNtReadFile(h,ev,apc,apcCtx,iosb,b,req,offset,key);
@@ -141,6 +175,7 @@ extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Initialize(void){
  MH_CreateHookApi(L"ntdll.dll","NtReadFile",(LPVOID)HookNtReadFile,(LPVOID*)&realNtReadFile);
  MH_CreateHookApi(L"ntdll.dll","NtCreateFile",(LPVOID)HookNtCreateFile,(LPVOID*)&realNtCreateFile);
  MH_CreateHookApi(L"ntdll.dll","NtOpenFile",(LPVOID)HookNtOpenFile,(LPVOID*)&realNtOpenFile);
+ InstallNpkReadHook();
  if(MH_EnableHook(MH_ALL_HOOKS)!=MH_OK)return FALSE;
  hookReady=TRUE; return TRUE;
 }
