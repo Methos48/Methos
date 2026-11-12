@@ -59,7 +59,7 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
         List<UnrealNameReplacement> nameMap = File.Exists(nameMapPath)
             ? System.Text.Json.JsonSerializer.Deserialize<List<UnrealNameReplacement>>(File.ReadAllText(nameMapPath)) ?? new()
             : new();
-        var replacements = nameMap.ToDictionary(item => item.SafeName, item => item.OriginalName, StringComparer.Ordinal);
+        var replacements = nameMap.ToDictionary(item => item.SafeName, item => item.OriginalName, StringComparer.OrdinalIgnoreCase);
         byte[] compiledPackage = replacements.Count == 0
             ? compiled.PackageBytes
             : UnrealPackageIndex.Parse(compiled.PackageBytes).CreateWithReplacedNames(replacements);
@@ -346,7 +346,7 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
         {
             File.WriteAllBytes(diagnosticPackage, plainPayload);
             var uelibResult = UnrealPackageDecompiler.DecompileToFolder(diagnosticPackage, diagnosticOutput);
-            Console.WriteLine($"DUNK3L_UELIB version={uelibResult.PackageVersion}/{uelibResult.LicenseeVersion} objects={uelibResult.ObjectCount} classes={uelibResult.ClassCount} exported={uelibResult.ExportedCount} failed={uelibResult.FailedCount}");
+            Console.WriteLine($"DUNK3L_UELIB version={uelibResult.PackageVersion}/{uelibResult.LicenseeVersion} objects={uelibResult.ObjectCount} classes={uelibResult.ClassCount} exported={uelibResult.ExportedCount} failed={uelibResult.FailedCount} sanitizedNames={uelibResult.SanitizedNameCount}");
         }
         catch (Exception ex)
         {
