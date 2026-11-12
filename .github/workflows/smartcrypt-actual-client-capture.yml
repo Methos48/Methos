@@ -18,6 +18,7 @@ on:
       - "Engine.int"
       - "Window.dll"
       - "interface.u"
+      - "interface.xdat"
 jobs:
   actual-client:
     runs-on: windows-2022
@@ -50,6 +51,9 @@ jobs:
           Copy-Item Window.dll probe/system/Window.dll -Force
           Copy-Item l2.exe probe/system/l2.exe -Force
           Copy-Item interface.u probe/system/SysString-e.dat -Force
+          Copy-Item interface.u probe/system/Interface.u -Force
+          Copy-Item interface.xdat probe/system/Interface.xdat -Force
+          Write-Host "DUNK3L_INTERFACE_READY U=$((Get-Item probe/system/Interface.u).Length) XDAT=$((Get-Item probe/system/Interface.xdat).Length)"
           if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force } else { New-Item -ItemType Directory -Force probe/Crest | Out-Null }
           if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force } else { New-Item -ItemType Directory -Force probe/SysTextures | Out-Null }
           python tools/make_probe_systextures.py probe/SysTextures
