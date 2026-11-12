@@ -54,9 +54,12 @@ jobs:
           $cmd = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\system\SmartCapture.dll'
           cmd.exe /c $cmd
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture build failed" }
-          $hostCmd = 'call "' + $vcvars + '" && cl /nologo /O2 /EHsc tools\smartcrypt-probe-host.cpp /link /SUBSYSTEM:CONSOLE /BASE:0x10900000 /FIXED /OUT:probe\system\SmartCryptProbe.exe'
-          cmd.exe /c $hostCmd
-          if ($LASTEXITCODE -ne 0) { throw "SmartCryptProbe build failed" }
+          $streamCmd = 'call "' + $vcvars + '" && cl /nologo /O2 /EHsc tools\core-filestream-probe.cpp /link /SUBSYSTEM:CONSOLE /BASE:0x10900000 /FIXED /OUT:probe\system\SmartCryptProbe.exe'
+          cmd.exe /c $streamCmd
+          if ($LASTEXITCODE -ne 0) { throw "Core FFileStream probe build failed" }
+          $rawCmd = 'call "' + $vcvars + '" && cl /nologo /O2 /EHsc tools\smartcrypt-probe-host.cpp /link /SUBSYSTEM:CONSOLE /BASE:0x10900000 /FIXED /OUT:probe\system\SmartCryptRawProbe.exe'
+          cmd.exe /c $rawCmd
+          if ($LASTEXITCODE -ne 0) { throw "SmartCrypt raw probe build failed" }
           python -m pip install lief
           python tools/patch_ogg_imports.py probe/system/ogg.dll probe/system/ogg.patched.dll
           Move-Item probe/system/ogg.patched.dll probe/system/ogg.dll -Force
@@ -67,10 +70,16 @@ jobs:
         run: |
           Push-Location probe/system
           try {
-            $hostProcess = Start-Process -FilePath ".\SmartCryptProbe.exe" -WorkingDirectory (Get-Location).Path -PassThru -Wait -NoNewWindow
-            Write-Host "SMARTCRYPT_HOST_EXIT_CODE=$($hostProcess.ExitCode)"
-            if (Test-Path smartcrypt-capture.bin) { Write-Host "HOST_CAPTURE_CREATED=1" }
-            if (!(Test-Path smartcrypt-capture.bin)) {
+            Remove-Item smartcrypt-capture.bin -ErrorAction SilentlyContinue
+            $streamProcess = Start-Process -FilePath ".\SmartCryptProbe.exe" -WorkingDirectory (Get-Location).Path -PassThru -Wait -NoNewWindow
+            Write-Host "STREAM_PROBE_EXIT_CODE=$($streamProcess.ExitCode)"
+            if (Test-Path smartcrypt-capture.bin) { Move-Item smartcrypt-capture.bin smartcrypt-capture-filestream.bin -Force }
+            if (Test-Path filestream-read.bin) { Get-FileHash filestream-read.bin -Algorithm SHA256 | Format-List }
+            Remove-Item smartcrypt-capture.bin -ErrorAction SilentlyContinue
+            $rawProcess = Start-Process -FilePath ".\SmartCryptRawProbe.exe" -WorkingDirectory (Get-Location).Path -PassThru -Wait -NoNewWindow
+            Write-Host "RAW_PROBE_EXIT_CODE=$($rawProcess.ExitCode)"
+            if (Test-Path smartcrypt-capture.bin) { Move-Item smartcrypt-capture.bin smartcrypt-capture-raw.bin -Force }
+            if (!(Test-Path smartcrypt-capture-filestream.bin) -and !(Test-Path smartcrypt-capture-raw.bin)) {
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
             Write-Host "L2_PID=$($p.Id)"
             $dialogCode = 'using System;using System.Collections.Generic;using System.Runtime.InteropServices;using System.Text;public static class L2DialogHelper{private delegate bool EnumWindowsProc(IntPtr hWnd,IntPtr lParam);[DllImport("user32.dll")]private static extern bool EnumWindows(EnumWindowsProc cb,IntPtr lp);[DllImport("user32.dll")]private static extern bool EnumChildWindows(IntPtr hWnd,EnumWindowsProc cb,IntPtr lp);[DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr hWnd,out uint pid);[DllImport("user32.dll")]private static extern bool IsWindowVisible(IntPtr hWnd);[DllImport("user32.dll",CharSet=CharSet.Unicode)]private static extern int GetClassName(IntPtr hWnd,StringBuilder text,int max);[DllImport("user32.dll",CharSet=CharSet.Unicode)]private static extern int GetWindowText(IntPtr hWnd,StringBuilder text,int max);[DllImport("user32.dll")]private static extern int GetDlgCtrlID(IntPtr hWnd);[DllImport("user32.dll")]private static extern bool PostMessage(IntPtr hWnd,uint msg,IntPtr wParam,IntPtr lParam);public static string Dismiss(int targetPid){var titles=new List<string>();EnumWindows((h,lp)=>{uint pid;GetWindowThreadProcessId(h,out pid);if(pid==(uint)targetPid&&IsWindowVisible(h)){var cls=new StringBuilder(128);GetClassName(h,cls,cls.Capacity);if(cls.ToString()=="#32770"){var title=new StringBuilder(512);GetWindowText(h,title,title.Capacity);bool clicked=false;var controls=new List<string>();EnumChildWindows(h,(ch,clp)=>{var cc=new StringBuilder(128);GetClassName(ch,cc,cc.Capacity);var tx=new StringBuilder(512);GetWindowText(ch,tx,tx.Capacity);int cid=GetDlgCtrlID(ch);controls.Add(cc.ToString()+":"+cid+":"+tx.ToString());if(cc.ToString()=="Button"&&!clicked){PostMessage(ch,0x00F5,IntPtr.Zero,IntPtr.Zero);clicked=true;}return true;},IntPtr.Zero);if(!clicked)PostMessage(h,0x0010,IntPtr.Zero,IntPtr.Zero);titles.Add(title.ToString()+" ["+String.Join(",",controls)+"]");}}return true;},IntPtr.Zero);return String.Join(" | ",titles);}}'
@@ -91,11 +100,13 @@ jobs:
             }
             }
             Start-Sleep -Seconds 2
-            if (Test-Path smartcrypt-capture.bin) {
-              Get-FileHash smartcrypt-capture.bin -Algorithm SHA256 | Format-List
-              Write-Host "CAPTURE_LENGTH=$((Get-Item smartcrypt-capture.bin).Length)"
-              Format-Hex -Path smartcrypt-capture.bin | Select-Object -First 4
-            } else { Write-Host "CAPTURE_MISSING=1" }
+            foreach ($captureName in @("smartcrypt-capture-filestream.bin","smartcrypt-capture-raw.bin","smartcrypt-capture.bin")) {
+              if (Test-Path $captureName) {
+                Get-FileHash $captureName -Algorithm SHA256 | Format-List
+                Write-Host "CAPTURE_FILE=$captureName LENGTH=$((Get-Item $captureName).Length)"
+                Format-Hex -Path $captureName | Select-Object -First 4
+              }
+            }
             if (Test-Path smartcapture-debug.log) { Get-Content smartcapture-debug.log }
             if (Test-Path npkscrypt-api-trace.txt) { Get-Content npkscrypt-api-trace.txt }
             Get-ChildItem -File | Select-Object Name,Length
