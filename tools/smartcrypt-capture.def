@@ -1,0 +1,4 @@
+LIBRARY SmartCapture
+EXPORTS
+    SmartCapture_Initialize=_SmartCapture_Initialize@0
+    SmartCapture_Flush=_SmartCapture_Flush@0
