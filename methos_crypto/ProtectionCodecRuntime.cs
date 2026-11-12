@@ -18,12 +18,15 @@ public sealed class ProtectionCodecRuntime
 {
     private readonly IReadOnlyDictionary<string, IProtectionCodec> _codecs;
 
-    public static ProtectionCodecRuntime CreateDefault(ActiveAntiCheatRsaProfile? activeAntiCheatProfile = null, SmartCryptKeyProfile? smartCryptProfile = null)
+    public static ProtectionCodecRuntime CreateDefault(ActiveAntiCheatRsaProfile? activeAntiCheatProfile = null,
+        SmartCryptKeyProfile? smartCryptProfile = null,
+        Lineage2CustomTailProfile? lineage2CustomTailProfile = null)
     {
         var codecs = new List<IProtectionCodec>
         {
             new Lineage2StandardCodec(111),
-            new Lineage2StandardCodec(413)
+            new Lineage2StandardCodec(413),
+            new Lineage2Ver111CustomTailCodec(lineage2CustomTailProfile)
         };
         codecs.Add(new SmartCrypt1522Codec(smartCryptProfile));
         if (activeAntiCheatProfile is not null)
