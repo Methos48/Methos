@@ -81,7 +81,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dunk3l-u-decompiled-source-diagnostic
-          path: ${{ runner.temp }}/Dunk3l-Decompiled-Classes/*.uc
+          path: |
+            ${{ runner.temp }}/Dunk3l-Decompiled-Classes/*.uc
+            ${{ runner.temp }}/Dunk3l-Decompiled-Classes/methos_name_map.json
           if-no-files-found: warn
           retention-days: 7
       - name: Preserve the compiled U package for inspection
@@ -94,4 +96,5 @@ jobs:
             ${{ env.DECOMPILED_COMPILED }}/*.uc
             ${{ env.DUNK3L_OUTPUT }}
             ${{ env.DUNK3L_SOURCES }}/*.uc
+            ${{ env.DUNK3L_SOURCES }}/methos_name_map.json
           if-no-files-found: error
