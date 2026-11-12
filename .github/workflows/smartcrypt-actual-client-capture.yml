@@ -85,8 +85,10 @@ jobs:
             if (Test-Path smartcrypt-capture.bin) { Move-Item smartcrypt-capture.bin smartcrypt-capture-filestream.bin -Force }
             if (Test-Path filestream-read.bin) { Get-FileHash filestream-read.bin -Algorithm SHA256 | Format-List }
             Remove-Item smartcrypt-capture.bin -ErrorAction SilentlyContinue
-            $rawProcess = Start-Process -FilePath ".\SmartCryptRawProbe.exe" -WorkingDirectory (Get-Location).Path -PassThru -Wait -NoNewWindow
+            $rawProcess = Start-Process -FilePath ".\SmartCryptRawProbe.exe" -WorkingDirectory (Get-Location).Path -PassThru -Wait -NoNewWindow -RedirectStandardOutput "raw-probe-output.txt" -RedirectStandardError "raw-probe-error.txt"
             Write-Host "RAW_PROBE_EXIT_CODE=$($rawProcess.ExitCode)"
+            if (Test-Path "raw-probe-output.txt") { Get-Content "raw-probe-output.txt" }
+            if (Test-Path "raw-probe-error.txt") { Get-Content "raw-probe-error.txt" }
             if (Test-Path smartcrypt-capture.bin) { Move-Item smartcrypt-capture.bin smartcrypt-capture-raw.bin -Force }
             Remove-Item smartcrypt-capture.bin -ErrorAction SilentlyContinue
             $p = Start-Process -FilePath ".\l2.exe" -WorkingDirectory (Get-Location).Path -PassThru
