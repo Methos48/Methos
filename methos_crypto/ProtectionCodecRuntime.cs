@@ -18,8 +18,17 @@ public sealed class ProtectionCodecRuntime
 {
     private readonly IReadOnlyDictionary<string, IProtectionCodec> _codecs;
 
-    public static ProtectionCodecRuntime CreateDefault() =>
-        new(new IProtectionCodec[] { new Lineage2StandardCodec(111), new Lineage2StandardCodec(413) });
+    public static ProtectionCodecRuntime CreateDefault(ActiveAntiCheatRsaProfile? activeAntiCheatProfile = null)
+    {
+        var codecs = new List<IProtectionCodec>
+        {
+            new Lineage2StandardCodec(111),
+            new Lineage2StandardCodec(413)
+        };
+        if (activeAntiCheatProfile is not null)
+            codecs.Add(new ActiveAntiCheatCodec(activeAntiCheatProfile));
+        return new ProtectionCodecRuntime(codecs);
+    }
 
     public ProtectionCodecRuntime(IEnumerable<IProtectionCodec> codecs)
     {
