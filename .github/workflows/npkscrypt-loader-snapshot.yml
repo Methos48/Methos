@@ -1,0 +1,91 @@
+name: Isolated npkscrypt loader snapshot
+on:
+  push:
+    paths:
+      - 'system.zip'
+      - '.github/workflows/npkscrypt-loader-snapshot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: windows-2022
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract DLL and compile isolated x86 observer
+        shell: pwsh
+        run: |
+          Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
+          $dll = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'npkscrypt.dll' } | Select-Object -First 1
+          if (!$dll) { throw 'npkscrypt.dll not found in system.zip' }
+          New-Item -ItemType Directory -Force observer | Out-Null
+          Copy-Item $dll.FullName observer\npkscrypt.dll
+          @'
+          using System;
+          using System.IO;
+          using System.Runtime.InteropServices;
+          using System.Text;
+          class Observer {
+            [DllImport("kernel32", CharSet=CharSet.Unicode, SetLastError=true)]
+            static extern IntPtr LoadLibraryW(string path);
+            [DllImport("kernel32", CharSet=CharSet.Ansi, SetLastError=true)]
+            static extern IntPtr GetProcAddress(IntPtr module, string name);
+            [DllImport("kernel32")] static extern IntPtr GetCurrentProcess();
+            [DllImport("kernel32", SetLastError=true)]
+            static extern bool ReadProcessMemory(IntPtr process, IntPtr address, byte[] buffer, UIntPtr size, out UIntPtr read);
+            static int Main(string[] args) {
+              string path=Path.GetFullPath(args[0]);
+              string log=Path.Combine(Path.GetDirectoryName(path),"observer.txt");
+              try {
+                File.AppendAllText(log,"BEGIN x86 isolated loader observer\r\n");
+                byte[] pe=File.ReadAllBytes(path);
+                int peoff=BitConverter.ToInt32(pe,0x3c);
+                int sizeImage=BitConverter.ToInt32(pe,peoff+24+56);
+                File.AppendAllText(log,"FILE_SIZE="+pe.Length+" SIZE_OF_IMAGE=0x"+sizeImage.ToString("X")+"\r\n");
+                IntPtr module=LoadLibraryW(path);
+                File.AppendAllText(log,"LOAD_LIBRARY="+(module==IntPtr.Zero?"FAILED error="+Marshal.GetLastWin32Error():"OK base=0x"+module.ToInt64().ToString("X"))+"\r\n");
+                if(module==IntPtr.Zero) return 2;
+                foreach(string name in new[]{"Akumu_ICQ_10050005","Email_me_at_akumu_dot_ru"}) {
+                  IntPtr p=GetProcAddress(module,name);
+                  File.AppendAllText(log,"EXPORT "+name+"="+(p==IntPtr.Zero?"NULL":"0x"+p.ToInt64().ToString("X"))+" RVA="+(p==IntPtr.Zero?"-":"0x"+(p.ToInt64()-module.ToInt64()).ToString("X"))+"\r\n");
+                }
+                byte[] image=new byte[sizeImage];
+                int pages=0, copied=0;
+                for(int offset=0;offset<sizeImage;offset+=0x1000) {
+                  int count=Math.Min(0x1000,sizeImage-offset);
+                  byte[] page=new byte[count]; UIntPtr got;
+                  if(ReadProcessMemory(GetCurrentProcess(),IntPtr.Add(module,offset),page,(UIntPtr)count,out got)) {
+                    int n=(int)got.ToUInt64(); Buffer.BlockCopy(page,0,image,offset,n); copied+=n; pages++;
+                  }
+                }
+                File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(path),"npkscrypt.loaded-image.bin"),image);
+                File.AppendAllText(log,"SNAPSHOT pages_read="+pages+" bytes_read="+copied+" output=npkscrypt.loaded-image.bin\r\nEND\r\n");
+                return 0;
+              } catch(Exception ex) { File.AppendAllText(log,"ERROR "+ex+"\r\n"); return 3; }
+            }
+          }
+          '@ | Set-Content observer\Observer.cs -Encoding ASCII
+          $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+          & $csc /nologo /platform:x86 /target:exe /out:observer\Observer.exe observer\Observer.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to compile x86 observer' }
+      - name: Load DLL in disposable process and snapshot mapped image
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath observer\Observer.exe -ArgumentList (Resolve-Path observer\npkscrypt.dll).Path -PassThru
+          if (!$p.WaitForExit(20000)) { Stop-Process -Id $p.Id -Force; throw 'Observer timed out while loading npkscrypt.dll' }
+          Write-Output "Observer exit code: $($p.ExitCode)"
+          if (Test-Path observer\observer.txt) { Get-Content observer\observer.txt }
+          if (!(Test-Path observer\observer.txt)) { throw 'No observer log was produced; DLL may have terminated the process before logging.' }
+          if (Test-Path observer\npkscrypt.loaded-image.bin) {
+            Get-FileHash observer\npkscrypt.loaded-image.bin -Algorithm SHA256
+          } else {
+            Write-Warning 'No mapped image snapshot was produced; inspect observer log.'
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Methos-npkscrypt-Isolated-Load-Snapshot
+          path: observer/
+          if-no-files-found: warn
+          retention-days: 7
