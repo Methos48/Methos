@@ -7,6 +7,8 @@ on:
       - "tools/smartcrypt-capture.cpp"
       - "tools/smartcrypt-capture-probe.cs"
       - "third_party/minhook/**"
+      - "ifc23.dll"
+      - "vorbisfile.dll"
 jobs:
   capture:
     runs-on: windows-2022
@@ -20,44 +22,12 @@ jobs:
           Expand-Archive engine.zip client-engine -Force
           New-Item -ItemType Directory -Force probe | Out-Null
           Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll | ForEach-Object { Copy-Item $_.FullName probe -Force }
-          if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll -Force }
+          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll")) {
+            if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
+          }
           Copy-Item interface.u probe/SysString-e.dat
-          if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          Write-Host "=== Dependency candidates inside repository ZIPs ==="
-          Get-ChildItem -File -Filter *.zip | ForEach-Object {
-            $z = [System.IO.Compression.ZipFile]::OpenRead($_.FullName)
-            try {
-              $z.Entries | Where-Object { $_.FullName -match '(^|/)(vorbisfile|ifc23)\.dll
-          if (!$vs) { throw "Visual Studio C++ build tools missing" }
-          $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
-          $dumpbin = Get-ChildItem (Join-Path $vs "VC\Tools\MSVC") -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match "Hostx64\\x86" } | Select-Object -First 1 -ExpandProperty FullName
-          Write-Host "=== DLL inventory ==="
-          Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
-          Write-Host "=== Core dependencies ==="
-          & $dumpbin /dependents probe\Core.dll
-          Write-Host "=== Engine dependencies ==="
-          & $dumpbin /dependents probe\engine.dll
-          $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
-          cmd.exe /c $command
-          if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
-          $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-          & $csc /nologo /platform:x86 /optimize+ /out:probe\smartcrypt-probe.exe tools\smartcrypt-capture-probe.cs
-          if ($LASTEXITCODE -ne 0) { throw "probe compile failed" }
-      - name: Run capture without l2.exe
-        shell: pwsh
-        run: |
-          Push-Location probe
-          try { .\smartcrypt-probe.exe | Tee-Object capture.log }
-          finally { Pop-Location }
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Methos-SmartCrypt-Capture
-          path: probe/
-          if-no-files-found: warn
-          retention-days: 7 } | ForEach-Object { Write-Host "$($_.Name) in $($_.FullName) from $($_.Archive.Name)" }
-            } finally { $z.Dispose() }
+          foreach ($name in @("engine.dll","Core.dll","ifc23.dll","vorbisfile.dll","ogg.dll")) {
+            if (!(Test-Path (Join-Path probe $name))) { throw "$name missing from probe folder" }
           }
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
@@ -65,10 +35,10 @@ jobs:
           $dumpbin = Get-ChildItem (Join-Path $vs "VC\Tools\MSVC") -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match "Hostx64\\x86" } | Select-Object -First 1 -ExpandProperty FullName
           Write-Host "=== DLL inventory ==="
           Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
-          Write-Host "=== Core dependencies ==="
-          & $dumpbin /dependents probe\Core.dll
-          Write-Host "=== Engine dependencies ==="
-          & $dumpbin /dependents probe\engine.dll
+          foreach ($name in @("Core.dll","engine.dll","ifc23.dll","vorbisfile.dll")) {
+            Write-Host "=== Dependencies: $name ==="
+            & $dumpbin /dependents (Join-Path probe $name)
+          }
           $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
