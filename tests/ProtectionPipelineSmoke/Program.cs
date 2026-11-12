@@ -30,7 +30,8 @@ static void Check(bool value, string message)
     if (!value) throw new Exception(message);
 }
 
-byte[] smartSample = Convert.FromHexString("FFEDFACE0100").Concat(new byte[32]).ToArray();
+byte[] smartSample = new byte[0x400];
+Convert.FromHexString("FFEDFACE0100").CopyTo(smartSample, 0);
 var smart = ProtectionPipelinePlanner.Inspect(smartSample, "interface.xdat");
 Check(smart.Status == "recognized-key-required" && !smart.CanDecode && !smart.CanEncode,
     "SmartCrypt sample must require its matching per-handle key profile.");
