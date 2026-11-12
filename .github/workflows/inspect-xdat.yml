@@ -43,3 +43,5 @@ jobs:
             interface.xdat
           if-no-files-found: error
           retention-days: 2
+
+# Manual verification trigger: rerun immutable-original signature and hash inspection.
