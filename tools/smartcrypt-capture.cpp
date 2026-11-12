@@ -54,12 +54,12 @@ static void CaptureReadBuffer(HANDLE h,LPVOID b,DWORD n,const LARGE_INTEGER* exp
 }
 static BOOL WINAPI HookReadFile(HANDLE h,LPVOID b,DWORD req,LPDWORD got,LPOVERLAPPED ov){
  BOOL ok=realReadFile(h,b,req,got,ov);DWORD n=(ok&&got)?*got:0;
- if(ok&&n){LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
+ if(ok&&n){Trace("READFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(ov){pos.LowPart=ov->Offset;pos.HighPart=ov->OffsetHigh;pp=&pos;}CaptureReadBuffer(h,b,n,pp,"ReadFile");}
  return ok;
 }
 static NTSTATUS NTAPI HookNtReadFile(HANDLE h,HANDLE ev,PIO_APC_ROUTINE apc,PVOID apcCtx,PIO_STATUS_BLOCK iosb,PVOID b,ULONG req,PLARGE_INTEGER offset,PULONG key){
  NTSTATUS status=realNtReadFile(h,ev,apc,apcCtx,iosb,b,req,offset,key);
- if(status>=0&&iosb&&iosb->Information){LARGE_INTEGER pos,*pp=NULL;if(offset){pos=*offset;pp=&pos;}CaptureReadBuffer(h,b,(DWORD)iosb->Information,pp,"NtReadFile");}
+ if(status>=0&&iosb&&iosb->Information){Trace("NTREADFILE_CALLER=%p\\n",_ReturnAddress());LARGE_INTEGER pos,*pp=NULL;if(offset){pos=*offset;pp=&pos;}CaptureReadBuffer(h,b,(DWORD)iosb->Information,pp,"NtReadFile");}
  return status;
 }
 static FARPROC WINAPI HookGetProcAddress(HMODULE m,LPCSTR n){FARPROC p=realGetProcAddress(m,n);if(n&&(uintptr_t)n>0xFFFF)Trace("GetProcAddress caller=%p module=%p name=%s result=%p\n",_ReturnAddress(),m,n,p);return p;}
