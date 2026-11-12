@@ -280,14 +280,14 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
     Check(inspection.DecodedPayload.SequenceEqual(plainPayload),
         $"{targetName}: automatic inspection returned a different plaintext payload.");
 
-    var runtime = ProtectionCodecRuntime.CreateDefault(
+    var dunk3lRuntime = ProtectionCodecRuntime.CreateDefault(
         smartCryptProfile: inspection.SmartCryptProfile,
         lineage2CustomTailProfile: inspection.Lineage2CustomTailProfile);
 
-    byte[] runtimeDecoded = runtime.Decode(inspection.Plan, original, targetName);
+    byte[] runtimeDecoded = dunk3lRuntime.Decode(inspection.Plan, original, targetName);
     Check(runtimeDecoded.SequenceEqual(plainPayload),
         $"{targetName}: complete layered runtime decode did not reproduce the validated payload.");
-    byte[] runtimeRebuilt = runtime.Encode(inspection.Plan, plainPayload, targetName);
+    byte[] runtimeRebuilt = dunk3lRuntime.Encode(inspection.Plan, plainPayload, targetName);
     Check(runtimeRebuilt.SequenceEqual(original),
         $"{targetName}: complete layered runtime encode did not reproduce the original file byte for byte.");
 
