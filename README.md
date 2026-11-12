@@ -1,17 +1,50 @@
 # Methos XDAT
 
-Herramienta Windows para investigar, descifrar, editar y compilar archivos de interfaz de Lineage II, con soporte separado para paquetes Unreal (.u) y datos XDAT (.xdat).
+Aplicación para Windows destinada a detectar, descifrar, descompilar, editar y volver a compilar archivos de interfaz de Lineage II: Unreal `.u` y XDAT `.xdat`.
 
 ## Estado del trabajo
 
-- **Archivos objetivo:** `interface.u` y `interface.xdat` de la interfaz de Dunk3l. Ambos siguen conservados sin modificar; su envoltura exterior `FF ED FA CE 01 00` todavía no está descifrada.
-- **SmartCrypt 1.5.2.2:** el capturador automático ya carga con el cliente y obtiene lecturas completas. Las capturas actuales de `interface.u` siguen siendo idénticas al original, así que todavía no son una salida descifrada. Falta activar/alcanzar la transformación real de NPK y recuperar su inversa para recompilar.
-- **Capa Lineage II estándar:** codecs 111 (XOR) y 413 (RSA + zlib) integrados. Ambos pasan pruebas de ida/vuelta sintéticas. Además, el `Engine.u` real del cliente se descifró con 111, validó su CRC32 y reveló un paquete Unreal 123/30.
-- **Motor U integrado y validado:** lector/constructor Unreal, exportador UELib y compilador UCC de Interlude. CI compiló las 169 fuentes `.uc` en un `Interface.u` de 3.312.303 bytes y descompiló tanto el original como el recompilado: 169/169 clases, cero errores. El `Engine.u` real se descifró con 111, se reconstruyó y volvió a cifrar; conservó 7058 nombres, 91 imports y 10647 exports.
-- **Motor XDAT integrado y validado:** codec Interlude ct0 que convierte el paquete en XML por ventanas y accesos directos y lo recompila. El ejemplo contiene 176 XML (168 ventanas y 8 accesos directos); CI pasa tres pruebas, incluida la recompilación idéntica byte por byte y el ciclo descompilar→compilar idéntico.
-- **Ejemplos de referencia:** el `Interface.u` de Methos-U-Editor y el `interface.xdat`/XML del kit XDAT se usan como fixtures separados. No se confunden con los archivos Dunk3l.
-- **Seguridad:** los originales no se sobrescriben. Las capas desconocidas bloquean la decodificación en vez de adivinar claves o algoritmos.
+### Archivos Dunk3l originales
 
-## Próximo hito
+Los originales `interface.u` y `interface.xdat` se conservan intactos. Se identificaron y probaron las dos capas presentes en ambos archivos:
 
-Cerrar el descifrado exterior SmartCrypt para `interface.u` y `interface.xdat`, probar la detección y el ciclo de ambos formatos sobre los archivos Dunk3l y completar la integración de los motores U/XDAT en una sola aplicación Windows.
+1. SmartCrypt 1.5.2.2 con semilla embebida.
+2. Envoltura Lineage2Ver111 con el tratamiento personalizado de los datos finales.
+
+**Prueba real aprobada:** ambos archivos se descifran y vuelven a cifrar byte por byte, reproduciendo exactamente los originales.
+
+### Motor Unreal (.u)
+
+- El archivo Dunk3l es un paquete Unreal **126/0**.
+- Tablas verificadas: **5.482 nombres, 740 imports y 10.308 exports**.
+- La reconstrucción sin modificaciones conserva las tablas originales.
+- UELib pudo descompilar **167 de 167 clases**, sin errores de exportación.
+- El motor UCC de Interlude ya compila y vuelve a descompilar el paquete de referencia de 169 clases.
+- Está en curso la prueba de compilar las 167 clases reales de Dunk3l y reconstruir su `.u` protegido.
+
+### Motor XDAT (.xdat)
+
+- El archivo Dunk3l se descompila en **169 ventanas y 8 accesos directos**.
+- Se corrigió la conservación de listas internas, cadenas ANSI/Latin-1 y metadatos originales.
+- **Prueba real aprobada:** descompilar a XML, recompilar y obtener el mismo contenido binario, byte por byte.
+- La reconstrucción conserva la capa Lineage2Ver111 y vuelve a aplicar SmartCrypt con los mismos datos originales.
+
+### Otros formatos y muestras reales
+
+- Lineage2Ver111: XOR.
+- Lineage2Ver413: RSA por bloques y zlib.
+- SmartCrypt 1.5.2.2: variante con semilla embebida comprobada en los dos archivos Dunk3l.
+- ActiveAntiCheatCrypt: motor RSA-2048/PKCS#1 v1.5 + RC4 integrado; requiere el perfil de clave privada correspondiente.
+- `SysString-e.dat` aportado como muestra real: descifrado y recompilado con protocolo 413; 14.896 bytes cifrados y 29.584 bytes recuperados.
+
+## Reglas de seguridad del programa
+
+- El archivo original fuera de Methos nunca se modifica.
+- La copia de trabajo se guarda separada de los archivos descompilados.
+- Los perfiles de cifrado y los metadatos originales se conservan al importar modificaciones.
+- Si falta una clave o no se puede verificar una capa, Methos se detiene y no genera un archivo que parezca válido sin serlo.
+- Antes de guardar un archivo compilado, se vuelve a descifrar y se compara con el contenido compilado para comprobar la reconstrucción.
+
+## Próximo objetivo
+
+Completar la compilación real de las 167 clases Dunk3l con UCC, validar el archivo protegido resultante y terminar la aplicación Windows con el flujo común para `.u` y `.xdat`.
