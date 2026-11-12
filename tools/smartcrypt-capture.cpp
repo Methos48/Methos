@@ -67,6 +67,7 @@ static void SetTargetHandle(LPCWSTR path,HANDLE h,const char*api){
  if(k==TARGET_NONE||h==NULL||h==INVALID_HANDLE_VALUE)return;
  EnterCriticalSection(&lock);
  targetHandles[k]=h;
+ InterlockedExchange(&keyDumped[k],0);
  char tmp[1024]={};WideCharToMultiByte(CP_UTF8,0,path,-1,tmp,sizeof(tmp),NULL,NULL);
  DebugLog("TARGET_OPEN kind=%d api=%s path=%s handle=%p\\r\\n",(int)k,api,tmp,h);
  LeaveCriticalSection(&lock);
