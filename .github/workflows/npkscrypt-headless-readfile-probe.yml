@@ -1,44 +1,52 @@
 name: npkscrypt-headless-readfile-probe
-
 on:
   workflow_dispatch:
   push:
     paths:
       - ".github/workflows/npkscrypt-headless-readfile-probe.yml"
       - "tools/npkscrypt-headless-probe.cs"
-
 jobs:
   probe:
     runs-on: windows-2022
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare isolated x86 files
+      - name: Prepare exact DLLs and target file
         shell: pwsh
         run: |
+          Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
           New-Item -ItemType Directory -Force probe | Out-Null
-          Expand-Archive system.zip -DestinationPath probe/system -Force
-          Expand-Archive engine.zip -DestinationPath probe/engine -Force
-          $engine = Get-ChildItem probe/engine -Filter engine.dll -Recurse | Select-Object -First 1
-          if (-not $engine) { throw "engine.dll not found in engine.zip" }
-          Copy-Item $engine.FullName probe/system/engine.dll -Force
-          Copy-Item interface.u probe/system/SysString-e.dat -Force
+          $npk = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'npkscrypt.dll' } | Select-Object -First 1
+          $ogg = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'ogg.dll' } | Select-Object -First 1
+          if (!$npk) { throw 'npkscrypt.dll missing from system.zip' }
+          if (!$ogg) { throw 'ogg.dll missing from system.zip' }
+          Copy-Item $npk.FullName probe/npkscrypt.dll
+          Copy-Item $ogg.FullName probe/ogg.dll
+          Copy-Item interface.u probe/SysString-e.dat
+          if (Test-Path engine.zip) {
+            Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
+            $engine = Get-ChildItem client-engine -Recurse -File | Where-Object { $_.Name -ieq 'engine.dll' } | Select-Object -First 1
+            if ($engine) { Copy-Item $engine.FullName probe/engine.dll }
+          }
+          $core = Get-ChildItem client-system,client-engine -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ieq 'Core.dll' } | Select-Object -First 1
+          if ($core) { Copy-Item $core.FullName probe/Core.dll }
+          Get-FileHash probe/npkscrypt.dll,probe/ogg.dll,probe/SysString-e.dat -Algorithm SHA256 | Format-Table -AutoSize
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-          & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe (Resolve-Path .\\tools\\npkscrypt-headless-probe.cs).Path
-          if ($LASTEXITCODE -ne 0) { throw "C# compile failed" }
-      - name: Run without l2.exe
+          & $csc /nologo /platform:x86 /optimize+ /out:probe/npkscrypt-probe.exe (Resolve-Path .\tools\npkscrypt-headless-probe.cs).Path
+          if ($LASTEXITCODE -ne 0) { throw 'C# compile failed' }
+      - name: Read file in isolated x86 process (no l2.exe)
         shell: pwsh
         run: |
-          Push-Location probe/system
+          Push-Location probe
           try {
-            ..\npkscrypt-probe.exe npk | Tee-Object ..\npk-only.log
-            ..\npkscrypt-probe.exe stack | Tee-Object ..\stack.log
+            .\npkscrypt-probe.exe npk | Tee-Object npk.log
+            .\npkscrypt-probe.exe ogg | Tee-Object ogg.log
+            if (Test-Path engine.dll) { .\npkscrypt-probe.exe engine | Tee-Object engine.log }
           } finally { Pop-Location }
-          Get-FileHash interface.u -Algorithm SHA256 | Format-List | Out-File probe/input-hash.txt
-          Get-ChildItem probe -Recurse -File | Select-Object FullName,Length | Format-Table -AutoSize | Out-File probe/files.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Methos-npkscrypt-ReadFile-Probe
-          path: |
-            probe/
-
-# Re-run after adding the C# probe source.
+          path: probe/
+          if-no-files-found: warn
+          retention-days: 7
