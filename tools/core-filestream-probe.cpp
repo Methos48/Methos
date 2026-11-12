@@ -35,9 +35,17 @@ int main(){
  WIN32_FILE_ATTRIBUTE_DATA info={};
  if(!GetFileAttributesExW(L"SysString-e.dat",GetFileExInfoStandard,&info))return 6;
  uint64_t size=((uint64_t)info.nFileSizeHigh<<32)|info.nFileSizeLow;
- printf("TARGET_SIZE=%llu\n",(unsigned long long)size);
+ printf("TARGET_SIZE=%llu\\n",(unsigned long long)size);
+ void* buffer=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(SIZE_T)size);
+ if(!buffer)return 7;
  typedef int (__thiscall *CreateStreamFn)(void*,const wchar_t*,int,int,void*,int,int);
- int result=((CreateStreamFn)createProc)(stream,L"SysString-e.dat",1,(int)size,nullptr,0,0);
- printf("FSTREAM_CREATE_RESULT=%d\n",result);
- return result>=0?0:7;
+ int result=((CreateStreamFn)createProc)(stream,L"SysString-e.dat",1,(int)size,buffer,0,0);
+ printf("FSTREAM_CREATE_RESULT=%d\\n",result);
+ HANDLE out=CreateFileW(L"filestream-read.bin",GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+ DWORD wrote=0;
+ if(out!=INVALID_HANDLE_VALUE){WriteFile(out,buffer,(DWORD)size,&wrote,nullptr);CloseHandle(out);}
+ printf("FSTREAM_BUFFER_WRITTEN=%lu\\n",wrote);
+ if(wrote>=16){unsigned char* b=(unsigned char*)buffer;printf("FSTREAM_HEADER=");for(int i=0;i<16;i++)printf("%02X%s",b[i],i==15?"\\n":"-");}
+ HeapFree(GetProcessHeap(),0,buffer);
+ return wrote?0:8;
 }
