@@ -52,6 +52,23 @@ jobs:
                   machine=pe.FILE_HEADER.Machine
                   mode=CS_MODE_64 if machine==0x8664 else CS_MODE_32
                   emit(f"PE machine=0x{machine:04X} imagebase=0x{pe.OPTIONAL_HEADER.ImageBase:X} entry=0x{pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} sections={len(pe.sections)}")
+                  def mapped(rva):
+                      for sec in pe.sections:
+                          span=max(sec.Misc_VirtualSize,sec.SizeOfRawData)
+                          if sec.VirtualAddress <= rva < sec.VirtualAddress+span:
+                              delta=rva-sec.VirtualAddress
+                              if delta < sec.SizeOfRawData:
+                                  return sec.PointerToRawData+delta
+                              return None
+                      return rva if rva < pe.OPTIONAL_HEADER.SizeOfHeaders else None
+                  ep_rva=pe.OPTIONAL_HEADER.AddressOfEntryPoint
+                  ep_off=mapped(ep_rva)
+                  emit(f"ENTRYPOINT_MAP rva=0x{ep_rva:X} raw_offset={('0x%X'%ep_off) if ep_off is not None else 'UNMAPPED'}")
+                  if ep_off is not None:
+                      emit("ENTRYPOINT_BYTES "+data[ep_off:ep_off+128].hex(" "))
+                      md_ep=Cs(CS_ARCH_X86,mode)
+                      for ins in list(md_ep.disasm(data[ep_off:ep_off+512],pe.OPTIONAL_HEADER.ImageBase+ep_rva))[:100]:
+                          emit(f"ENTRY {ins.address:08X}: {ins.mnemonic} {ins.op_str}")
                   for sec in pe.sections:
                       raw=sec.get_data()
                       if not raw: continue
@@ -68,7 +85,8 @@ jobs:
                   try:
                       for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                           fn=exp.name.decode(errors="replace") if exp.name else f"ordinal_{exp.ordinal}"
-                          emit(f"EXPORT {fn} ordinal={exp.ordinal} RVA=0x{exp.address:X}")
+                          exp_off=mapped(exp.address)
+                          emit(f"EXPORT {fn} ordinal={exp.ordinal} RVA=0x{exp.address:X} RAW={('0x%X'%exp_off) if exp_off is not None else 'UNMAPPED'}")
                           if any(k in fn.lower() for k in ("akumu","crypt","decrypt","encrypt","file","load")):
                               try:
                                   off=pe.get_offset_from_rva(exp.address)
