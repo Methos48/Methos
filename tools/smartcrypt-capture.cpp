@@ -100,4 +100,4 @@ extern "C" __declspec(dllexport) void WINAPI SmartCapture_Flush(void){if(!hookRe
 extern "C" __declspec(dllexport) BOOL WINAPI SmartCapture_Status(void){return hookReady;}
 extern "C" __declspec(dllexport) void WINAPI SmartCapture_DumpTrace(void){if(!initialized)return;HANDLE h=realCreateFileW(L"npkscrypt-api-trace.txt",GENERIC_WRITE,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);if(h!=INVALID_HANDLE_VALUE){DWORD n=(DWORD)traceLength,w=0;WriteFile(h,traceBuffer,n,&w,NULL);CloseHandle(h);}}
 extern "C" __declspec(dllexport) int __stdcall load(void){Trace("SmartCapture load callback called\\n");return 0;}
-BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){if(r==DLL_PROCESS_ATTACH){DisableThreadLibraryCalls(h);engineModule=LoadLibraryA("engine.dll");if(!SmartCapture_TraceInitialize())return FALSE;}return TRUE;}
+BOOL WINAPI DllMain(HINSTANCE h,DWORD r,LPVOID p){if(r==DLL_PROCESS_ATTACH){DisableThreadLibraryCalls(h);engineModule=LoadLibraryA("engine.dll");if(!engineModule)return FALSE;if(!SmartCapture_Initialize())return FALSE;}return TRUE;}
