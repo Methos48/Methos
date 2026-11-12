@@ -1,0 +1,99 @@
+name: Silent Dark U and XDAT round-trip
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "silent dark/**"
+      - ".github/workflows/silent-dark-roundtrip.yml"
+      - "methos_crypto/**"
+      - "tools/xdat/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  silent-dark-roundtrip:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Methos48/Methos-U-Editor
+          path: u-editor
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test XDAT parse, decompile and recompile
+        shell: pwsh
+        run: |
+          @'
+          import sys, tempfile, hashlib
+          from pathlib import Path
+          sys.path.insert(0, str(Path.cwd() / "tools" / "xdat"))
+          from xdat_core import parse_xdat, decompile_to_folder, compile_from_folder
+          source = Path("silent dark/interface.xdat")
+          original = source.read_bytes()
+          parsed = parse_xdat(original)
+          with tempfile.TemporaryDirectory() as tmp:
+              folder = Path(tmp) / "parts"
+              windows, shortcuts = decompile_to_folder(original, folder)
+              rebuilt, out_windows, out_shortcuts = compile_from_folder(folder, original)
+          if rebuilt != original:
+              raise SystemExit("XDAT round-trip mismatch")
+          print(f"XDAT_OK bytes={len(original)} windows={windows} shortcuts={shortcuts} sha256={hashlib.sha256(rebuilt).hexdigest()}")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw "Silent Dark XDAT round-trip failed" }
+
+      - name: Extract Silent Dark UnrealScript sources and UCC runtime
+        shell: pwsh
+        run: |
+          Expand-Archive -LiteralPath "silent dark/Carpeta interface.u.zip" -DestinationPath "$env:RUNNER_TEMP\silent-u" -Force
+          Expand-Archive -LiteralPath "u-editor\Compilador  U.zip" -DestinationPath "$env:RUNNER_TEMP\ucc-kit" -Force
+          $src = Join-Path $env:RUNNER_TEMP "silent-u\Carpeta interface.u"
+          $kit = Join-Path $env:RUNNER_TEMP "ucc-kit\Compilador  U"
+          if (!(Test-Path "$src")) { throw "Silent Dark .uc source folder missing" }
+          if (!(Test-Path "$kit\Interlude\System\ucc.exe")) { throw "UCC runtime missing" }
+          $count = @(Get-ChildItem $src -Filter "*.uc" -File).Count
+          if ($count -lt 100) { throw "Unexpectedly few Silent Dark .uc sources: $count" }
+          "SILENT_U_SOURCES=$src" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "UCC_KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "SILENT_DARK_UC_SOURCE_COUNT=$count"
+
+      - name: Compile Silent Dark Interface.u with Methos UCC integration
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "SilentDark-Compiled-Interface.u"
+          dotnet run --project u-editor/tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:UCC_KIT $env:SILENT_U_SOURCES $out
+          if ($LASTEXITCODE -ne 0) { throw "Silent Dark UCC compile failed" }
+          if (!(Test-Path $out) -or (Get-Item $out).Length -lt 65536) { throw "Compiled Silent Dark Interface.u missing or invalid" }
+          "SILENT_U_OUTPUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-FileHash $out -Algorithm SHA256 | Format-List
+
+      - name: Decompile compiled Silent Dark package and validate class count
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "SilentDark-Decompiled"
+          dotnet run --project u-editor/tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $env:SILENT_U_OUTPUT $out
+          if ($LASTEXITCODE -ne 0) { throw "Compiled Silent Dark package could not be decompiled" }
+          $classes = @(Get-ChildItem $out -Filter "*.uc" -File).Count
+          if ($classes -lt 100) { throw "Compiled Silent Dark package has too few decompiled classes: $classes" }
+          Write-Host "SILENT_DARK_U_ROUNDTRIP_OK classes=$classes"
+
+      - name: Upload round-trip evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: silent-dark-roundtrip-evidence
+          path: |
+            ${{ runner.temp }}/SilentDark-Compiled-Interface.u
+            ${{ runner.temp }}/SilentDark-Decompiled/*.uc
+          if-no-files-found: warn
+          retention-days: 14
