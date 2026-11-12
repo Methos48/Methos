@@ -5,7 +5,9 @@ on:
     paths:
       - ".github/workflows/smartcrypt-readfile-capture.yml"
       - "tools/smartcrypt-capture.cpp"
+      - "tools/smartcrypt-capture.def"
       - "tools/smartcrypt-capture-probe.cs"
+      - "tools/patch_ogg_imports.py"
       - "third_party/minhook/**"
       - "ifc23.dll"
       - "vorbisfile.dll"
@@ -44,10 +46,13 @@ jobs:
           $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE /Ithird_party\minhook\include /Ithird_party\minhook\src /Ithird_party\minhook\src\hde tools\smartcrypt-capture.cpp third_party\minhook\src\buffer.c third_party\minhook\src\hook.c third_party\minhook\src\trampoline.c third_party\minhook\src\hde\hde32.c /link /DEF:tools\smartcrypt-capture.def /OUT:probe\SmartCapture.dll'
           cmd.exe /c $command
           if ($LASTEXITCODE -ne 0) { throw "SmartCapture.dll compile failed" }
+          python -m pip install lief
+          python tools/patch_ogg_imports.py probe/ogg.dll probe/ogg.dll.patched
+          Move-Item probe/ogg.dll.patched probe/ogg.dll -Force
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
           & $csc /nologo /platform:x86 /optimize+ /out:probe\smartcrypt-probe.exe tools\smartcrypt-capture-probe.cs
           if ($LASTEXITCODE -ne 0) { throw "probe compile failed" }
-      - name: Run capture without l2.exe
+      - name: Run capture with SmartCapture loaded from ogg import order
         shell: pwsh
         run: |
           Push-Location probe
