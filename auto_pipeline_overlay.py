@@ -18,9 +18,9 @@ COMPLETE_DIR = DATA_DIR / 'xdat completo'
 PARTS_DIR = DATA_DIR / 'xdat por partes'
 """
     new_paths = """APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
-DATA_DIR = APP_DIR / 'Archivos XDAT'
-COMPLETE_DIR = DATA_DIR / 'Comprimido'
-PARTS_DIR = DATA_DIR / 'Descomprimido'
+DATA_DIR = APP_DIR.parent / 'Compilados' / 'XDAT'
+COMPLETE_DIR = DATA_DIR / 'Archivo'
+PARTS_DIR = DATA_DIR / 'Decopilado'
 """
     if old_paths in source:
         source = source.replace(old_paths, new_paths, 1)
@@ -123,11 +123,11 @@ PARTS_DIR = DATA_DIR / 'Descomprimido'
     installer = project / "installer" / "MethosXDAT.iss"
     if installer.is_file():
         iss = installer.read_text(encoding="utf-8")
-        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat completo"', 'DestDir: "{app}\\Archivos XDAT\\Comprimido"')
-        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat por partes"', 'DestDir: "{app}\\Archivos XDAT\\Descomprimido"')
-        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat completo"', 'Name: "{app}\\Archivos XDAT\\Comprimido"')
-        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\windows"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\windows"')
-        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\shortcuts"', 'Name: "{app}\\Archivos XDAT\\Descomprimido\\shortcuts"')
+        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat completo"', 'DestDir: "{app}\\Compilados\\XDAT\\Archivo"')
+        iss = iss.replace('DestDir: "{userdocs}\\Methos XDAT\\xdat por partes"', 'DestDir: "{app}\\Compilados\\XDAT\\Decopilado"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat completo"', 'Name: "{app}\\Compilados\\XDAT\\Archivo"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\windows"', 'Name: "{app}\\Compilados\\XDAT\\Decopilado\\windows"')
+        iss = iss.replace('Name: "{userdocs}\\Methos XDAT\\xdat por partes\\shortcuts"', 'Name: "{app}\\Compilados\\XDAT\\Decopilado\\shortcuts"')
         installer.write_text(iss, encoding="utf-8", newline="\n")
     else:
         raise SystemExit("No se encontró installer/MethosXDAT.iss")
