@@ -68,12 +68,22 @@ jobs:
         run: |
           $output = Join-Path $env:RUNNER_TEMP "Dunk3l-Rebuilt-Interface.u"
           $sources = Join-Path $env:RUNNER_TEMP "Dunk3l-Decompiled-Classes"
+          "DUNK3L_OUTPUT=$output" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "DUNK3L_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --dunk3l-u-rebuild $env:KIT "$PWD/interface.u" $output $sources
           if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile, compile, and re-encrypt the real Dunk3l Interface.u" }
           if (!(Test-Path $output) -or (Get-Item $output).Length -lt 65536) { throw "Rebuilt Dunk3l Interface.u is missing or too small" }
           Get-FileHash $output -Algorithm SHA256 | Format-List
           "DUNK3L_OUTPUT=$output" | Out-File -FilePath $env:GITHUB_ENV -Append
           "DUNK3L_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Preserve Dunk3l decompiled sources even if UCC compilation fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dunk3l-u-decompiled-source-diagnostic
+          path: ${{ runner.temp }}/Dunk3l-Decompiled-Classes/*.uc
+          if-no-files-found: warn
+          retention-days: 7
       - name: Preserve the compiled U package for inspection
         uses: actions/upload-artifact@v4
         with:
