@@ -32,10 +32,21 @@ int main(){
   printf("NPK_GLOBAL_51430=%08lX 51438=%08lX 51464=%08lX 51468=%08lX 5146C=%08lX 51470=%08lX 514F4=%08lX 514F8=%08lX 514E8=%08lX 514EC=%08lX\\n",
     *(DWORD*)(base+0x51430),*(DWORD*)(base+0x51438),*(DWORD*)(base+0x51464),*(DWORD*)(base+0x51468),*(DWORD*)(base+0x5146c),*(DWORD*)(base+0x51470),*(DWORD*)(base+0x514f4),*(DWORD*)(base+0x514f8),*(DWORD*)(base+0x514e8),*(DWORD*)(base+0x514ec));
   printf("NPK_WRAPPERS_OPEN=%p SEEK=%p CLOSE=%p READ=%p\\n",base+0x19A7C,base+0x19B5C,base+0x19C3C,base+0x19C6C);
-  MEMORY_BASIC_INFORMATION mbi={};
-  SIZE_T q=VirtualQuery((void*)0x02910000,&mbi,sizeof(mbi));
-  printf("NPK_TRAMPOLINE_REGION_QUERY=%u BASE=%p SIZE=%p PROTECT=%08lX\\n",(unsigned)q,mbi.BaseAddress,(void*)mbi.RegionSize,mbi.Protect);
-  if(q){BYTE tramp[0x300]={};SIZE_T got=0;if(ReadProcessMemory(GetCurrentProcess(),(void*)0x02910000,tramp,sizeof(tramp),&got)){HANDLE th=CreateFileW(L"npkscrypt-trampolines.bin",GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);DWORD tw=0;if(th!=INVALID_HANDLE_VALUE){WriteFile(th,tramp,(DWORD)got,&tw,nullptr);CloseHandle(th);}printf("NPK_TRAMPOLINE_DUMP=%lu\\n",(unsigned long)tw);}}
+  const DWORD trampOffsets[4]={0x51434,0x5143c,0x51458,0x5146c};
+  const char* trampNames[4]={"OPEN","CLOSE","SEEK","READ"};
+  for(int ti=0;ti<4;ti++){
+    DWORD address=*(DWORD*)(base+trampOffsets[ti]);
+    MEMORY_BASIC_INFORMATION mbi={};
+    SIZE_T q=VirtualQuery((void*)address,&mbi,sizeof(mbi));
+    BYTE tramp[64]={};SIZE_T got=0;
+    BOOL ok=ReadProcessMemory(GetCurrentProcess(),(void*)address,tramp,sizeof(tramp),&got);
+    printf("NPK_TRAMP_%s=%08lX QUERY=%u PROTECT=%08lX READ=%d SIZE=%llu BYTES=",trampNames[ti],address,(unsigned)q,mbi.Protect,ok,(unsigned long long)got);
+    for(DWORD bi=0;bi<(DWORD)got&&bi<32;bi++)printf("%02X",tramp[bi]);
+    printf("\\n");
+    char filename[64]={};sprintf_s(filename,"npkscrypt-tramp-%s.bin",trampNames[ti]);
+    HANDLE th=CreateFileA(filename,GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+    DWORD tw=0;if(th!=INVALID_HANDLE_VALUE){WriteFile(th,tramp,(DWORD)got,&tw,nullptr);CloseHandle(th);}
+  }
   HANDLE dump=CreateFileW(L"npkscrypt-memory.bin",GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
   if(dump!=INVALID_HANDLE_VALUE){DWORD w=0;WriteFile(dump,base,imageSize,&w,nullptr);CloseHandle(dump);printf("NPK_IMAGE_DUMP=%lu\\n",w);}
  }
