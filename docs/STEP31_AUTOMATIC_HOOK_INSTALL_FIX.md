@@ -48,3 +48,12 @@ The first actual-client workflow attempt did not capture anything. Inspection of
 The workflow was corrected in commit 513f3a8ee8d2c6055cbe8ff0154702c2eddb3f5e to copy these exact dependencies into the isolated probe folder. The dsetup.dll copied here is the supplied DirectX runtime DLL; this does not imply that dsetup.u or SmartGuard.ini exists or is required.
 
 A new actual-client run is pending. The earlier no-capture attempt is classified as an invalid/incomplete runtime setup, not evidence that the capture technique failed.
+
+
+## Exact-client launch blocker: missing Window.dll
+
+The actual l2.exe PE import table contains Window.dll, Core.dll and Engine.dll. The prepared runtime now includes Core.dll, Engine.dll, ifc23.dll, vorbisfile.dll, vorbis.dll and the supplied DirectX dsetup.dll, but the artifact inventory confirms Window.dll is still absent from the uploaded system.zip and the repository root.
+
+Window.dll is a Lineage II client module, not a Windows system DLL. Public Lineage II client inventories also list it in the system folder. Without the exact Window.dll matching this l2.exe, Windows cannot complete the executable's import loading, so SmartCapture.dll never reaches DllMain; the absence of smartcapture-debug.log and capture output is therefore expected.
+
+The workflow now stops with an explicit missing-Window.dll error rather than launching an incomplete client. The exact Window.dll from the same client system folder is required to continue the real-client capture. Do not substitute a random Window.dll from another chronicle/build.
