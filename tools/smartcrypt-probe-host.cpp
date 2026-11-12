@@ -1,8 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
-typedef HANDLE (WINAPI *PFN_NpkCreateFileW)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
-typedef BOOL (WINAPI *PFN_NpkReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
+typedef void* (__cdecl *PFN_NpkCreateReader)(LPCWSTR,DWORD,void*);
 
 int main() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
@@ -50,41 +49,20 @@ int main() {
     HMODULE npk = GetModuleHandleA("npkscrypt.dll");
     printf("HOST_NPK_MODULE=%p\n", npk);
     if (npk) {
-        PFN_NpkCreateFileW npkCreate = (PFN_NpkCreateFileW)((BYTE*)npk + 0x119A7C);
-        PFN_NpkReadFile npkRead = (PFN_NpkReadFile)((BYTE*)npk + 0x119C6C);
-        HANDLE file2 = npkCreate(
-            L"SysString-e.dat",
-            GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_WRITE,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL
-        );
-        if (file2 != INVALID_HANDLE_VALUE) {
-            LARGE_INTEGER zero = {};
-            SetFilePointerEx(file2, zero, NULL, FILE_BEGIN);
-            unsigned long long npkTotal = 0;
-            DWORD firstRead = 0;
-            if (npkRead(file2, buffer, 0x400, &firstRead, NULL)) {
-                npkTotal += firstRead;
-                printf("HOST_NPK_FIRST_READ_REQUEST=1024 BYTES=%lu\n", firstRead);
-            } else {
-                printf("HOST_NPK_FIRST_READ_FAILED=%lu\n", GetLastError());
+        void* originalCreateReader = *(void**)((BYTE*)npk + 0x51434);
+        PFN_NpkCreateReader npkCreateReader = (PFN_NpkCreateReader)((BYTE*)npk + 0x119A7C);
+        printf("HOST_NPK_CREATE_READER=%p ORIGINAL=%p\\n", npkCreateReader, originalCreateReader);
+        if (originalCreateReader) {
+            void* archive = npkCreateReader(L"SysString-e.dat", 0, NULL);
+            printf("HOST_NPK_ARCHIVE=%p\\n", archive);
+            if (archive) {
+                void** vtable = *(void***)archive;
+                printf("HOST_NPK_ARCHIVE_VTABLE=%p\\n", vtable);
+                for (int slot = 0; slot < 8; ++slot)
+                    printf("HOST_NPK_ARCHIVE_VT[%d]=%p\\n", slot, vtable[slot]);
             }
-            for (;;) {
-                DWORD received = 0;
-                if (!npkRead(file2, buffer, sizeof(buffer), &received, NULL)) {
-                    printf("HOST_NPK_READ_FAILED=%lu\n", GetLastError());
-                    break;
-                }
-                if (received == 0) break;
-                npkTotal += received;
-            }
-            printf("HOST_NPK_READ_BYTES=%llu\n", npkTotal);
-            CloseHandle(file2);
         } else {
-            printf("HOST_NPK_TARGET_OPEN_FAILED=%lu\n", GetLastError());
+            printf("HOST_NPK_CREATE_READER_UNAVAILABLE\\n");
         }
     }
     Sleep(1000);
