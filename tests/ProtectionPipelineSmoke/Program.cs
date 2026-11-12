@@ -298,17 +298,21 @@ if (File.Exists("Engine.u"))
 {
     byte[] realEngine = File.ReadAllBytes("Engine.u");
     var realDetection = ProtectionPipelinePlanner.Inspect(realEngine, "Engine.u");
-    Check(realDetection.Status == "recognized-supported-encryption" &&
-          realDetection.Layers.Any(x => x.Id == "lineage2-111"),
-        "Real Engine.u must be identified as Lineage2Ver111.");
+    Check(realDetection.Status == "recognized-decode-only" &&
+          realDetection.CanDecode && !realDetection.CanEncode &&
+          realDetection.Layers.Any(x => x.Id == "lineage2-111-custom-tail"),
+        "Real Engine.u must be identified as Lineage2Ver111 with its original trailer required for encoding.");
 
+    var realTailProfile = Lineage2CustomTailProfile.FromEnvelope(realEngine);
     var realPlan = new ProtectionPlan(".u", new[]
     {
-        new ProtectionLayer(ProtectionLayerKind.Lineage2Standard, "lineage2-111", "verified", true, true,
+        new ProtectionLayer(ProtectionLayerKind.Lineage2CustomTrailer, "lineage2-111-custom-tail",
+            "original-trailer-preserved-and-roundtrip-verified", true, true,
             "Real client Engine.u sample")
-    }, true, true, "real-sample", "Real Lineage2Ver111 Engine.u decode.");
+    }, true, true, "real-sample", "Real Lineage2Ver111 Engine.u decode with original trailer preservation.");
+    var realRuntime = ProtectionCodecRuntime.CreateDefault(lineage2CustomTailProfile: realTailProfile);
 
-    byte[] realPlain = standard.Decode(realPlan, realEngine, "Engine.u");
+    byte[] realPlain = realRuntime.Decode(realPlan, realEngine, "Engine.u");
     Check(realPlain.Length > 65536 &&
           BitConverter.ToUInt32(realPlain, 0) == UnrealPackageIndex.PackageTag,
         "Decoded Engine.u must begin with a classic Unreal package signature.");
@@ -328,8 +332,8 @@ if (File.Exists("Engine.u"))
           rebuiltPackage.Exports.SequenceEqual(realPackage.Exports),
         "Engine.u package rebuild must preserve all name/import/export tables.");
 
-    byte[] rebuiltEncrypted = standard.Encode(realPlan, rebuiltPlain, "Engine.u");
-    byte[] finalPlain = standard.Decode(realPlan, rebuiltEncrypted, "Engine.u");
+    byte[] rebuiltEncrypted = realRuntime.Encode(realPlan, rebuiltPlain, "Engine.u");
+    byte[] finalPlain = realRuntime.Decode(realPlan, rebuiltEncrypted, "Engine.u");
     var finalPackage = UnrealPackageIndex.Parse(finalPlain);
     Check(finalPackage.Names.SequenceEqual(realPackage.Names) &&
           finalPackage.Imports.SequenceEqual(realPackage.Imports) &&
