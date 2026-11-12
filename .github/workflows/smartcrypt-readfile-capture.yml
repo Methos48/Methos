@@ -9,6 +9,7 @@ on:
       - "third_party/minhook/**"
       - "ifc23.dll"
       - "vorbisfile.dll"
+      - "vorbis.dll"
 jobs:
   capture:
     runs-on: windows-2022
@@ -22,11 +23,11 @@ jobs:
           Expand-Archive engine.zip client-engine -Force
           New-Item -ItemType Directory -Force probe | Out-Null
           Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll | ForEach-Object { Copy-Item $_.FullName probe -Force }
-          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll")) {
+          foreach ($name in @("Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll")) {
             if (Test-Path $name) { Copy-Item $name (Join-Path probe $name) -Force }
           }
           Copy-Item interface.u probe/SysString-e.dat
-          foreach ($name in @("engine.dll","Core.dll","ifc23.dll","vorbisfile.dll","ogg.dll")) {
+          foreach ($name in @("engine.dll","Core.dll","ifc23.dll","vorbisfile.dll","vorbis.dll","ogg.dll")) {
             if (!(Test-Path (Join-Path probe $name))) { throw "$name missing from probe folder" }
           }
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
@@ -35,7 +36,7 @@ jobs:
           $dumpbin = Get-ChildItem (Join-Path $vs "VC\Tools\MSVC") -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match "Hostx64\\x86" } | Select-Object -First 1 -ExpandProperty FullName
           Write-Host "=== DLL inventory ==="
           Get-ChildItem probe -Filter *.dll | Select-Object -ExpandProperty Name
-          foreach ($name in @("Core.dll","engine.dll","ifc23.dll","vorbisfile.dll")) {
+          foreach ($name in @("Core.dll","engine.dll","ifc23.dll","vorbisfile.dll","vorbis.dll")) {
             Write-Host "=== Dependencies: $name ==="
             & $dumpbin /dependents (Join-Path probe $name)
           }
