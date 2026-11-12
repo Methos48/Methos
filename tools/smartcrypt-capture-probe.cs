@@ -14,14 +14,16 @@ internal static class Probe {
   Console.WriteLine("OGG_LOAD="+(ogg!=IntPtr.Zero)+" ERROR="+(ogg==IntPtr.Zero?Marshal.GetLastWin32Error():0));
   IntPtr shim=GetModuleHandleW("SmartCapture.dll");
   IntPtr engine=GetModuleHandleW("engine.dll");
+  IntPtr npk=GetModuleHandleW("npkscrypt.dll");
   IntPtr core=GetModuleHandleW("Core.dll");
-  Console.WriteLine("SHIM_IMPORTED="+(shim!=IntPtr.Zero)+" ENGINE_LOADED_BY_SHIM="+(engine!=IntPtr.Zero)+" CORE_LOADED="+(core!=IntPtr.Zero));
+  Console.WriteLine("SHIM_IMPORTED="+(shim!=IntPtr.Zero)+" ENGINE_LOADED_BY_SHIM="+(engine!=IntPtr.Zero)+" CORE_LOADED="+(core!=IntPtr.Zero)+" NPK_LOADED="+(npk!=IntPtr.Zero));
   if(ogg==IntPtr.Zero||shim==IntPtr.Zero)return 2;
   var status=(StatusFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Status"),typeof(StatusFn));
   var flush=(FlushFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_Flush"),typeof(FlushFn));
+  var dump=(FlushFn)Marshal.GetDelegateForFunctionPointer(GetProcAddress(shim,"SmartCapture_DumpTrace"),typeof(FlushFn));
   Console.WriteLine("HOOK_READY="+status());
   byte[] bytes=File.ReadAllBytes(Path.Combine(Environment.CurrentDirectory,"SysString-e.dat"));
-  flush();
+  flush(); dump();
   Console.WriteLine("NORMAL_READ="+bytes.Length+" CAPTURE_EXISTS="+File.Exists("smartcrypt-capture.bin"));
   if(File.Exists("smartcrypt-capture.bin")) {
    byte[] cap=File.ReadAllBytes("smartcrypt-capture.bin");
