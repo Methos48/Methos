@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
-#include "third_party/minhook/include/MinHook.h"
+#include "MinHook.h"
 typedef HANDLE (WINAPI *PFN_CreateFileW)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 typedef BOOL (WINAPI *PFN_ReadFile)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 static PFN_CreateFileW realCreateFileW=NULL;
