@@ -21,7 +21,7 @@ jobs:
           Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll | ForEach-Object { Copy-Item $_.FullName probe -Force }
           Copy-Item interface.u probe/SysString-e.dat
           if (!(Test-Path probe/engine.dll)) { throw "engine.dll missing" }
-          $vs = & "$env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           if (!$vs) { throw "Visual Studio C++ build tools missing" }
           $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars32.bat"
           $command = 'call "' + $vcvars + '" && cl /nologo /LD /O2 /EHsc /DUNICODE /D_UNICODE tools\smartcrypt-capture.cpp /link /OUT:probe\SmartCapture.dll'
