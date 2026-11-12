@@ -5,8 +5,8 @@ using MethosUEngine;
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
     if (args.Length != 3)
-        throw new ArgumentException("Usage: --ucc-decompile <package.u> <outputDirectory>");
-    UnrealPackageDecompileResult result = UnrealPackageDecompiler.DecompileToFolder(args[1], args[2]);
+        throw new ArgumentException("Usage: --ucc-decompile <package.u> <outputDirectory> [referenceSourceDirectory]");
+    UnrealPackageDecompileResult result = UnrealPackageDecompiler.DecompileToFolder(args[1], args[2], args.Length == 4 ? args[3] : null);
     Console.WriteLine($"PASS: UELib exported {result.ExportedCount}/{result.ClassCount} classes from package {result.PackageVersion}/{result.LicenseeVersion}; objects={result.ObjectCount}; failed={result.FailedCount}.");
     foreach (string error in result.Errors.Take(20)) Console.WriteLine("EXPORT_ERROR " + error);
     if (result.FailedCount != 0 || result.ExportedCount != result.ClassCount)
@@ -49,8 +49,10 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
     try
     {
         File.WriteAllBytes(temporaryPackage, originalPackage);
+        string referenceSourceDirectory = Path.Combine(
+            runtimeRoot, "Interlude", "Interface", "Classes");
         UnrealPackageDecompileResult decompiled = UnrealPackageDecompiler.DecompileToFolder(
-            temporaryPackage, sourceDirectory);
+            temporaryPackage, sourceDirectory, referenceSourceDirectory);
         if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
             throw new InvalidDataException($"Dunk3l U decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
 
