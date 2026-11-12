@@ -17,9 +17,11 @@ int main(){
  HMODULE core=GetModuleHandleW(L"Core.dll");
  HMODULE shim=GetModuleHandleW(L"SmartCapture.dll");
  HMODULE npk=GetModuleHandleW(L"npkscrypt.dll");
- typedef BOOL (__stdcall *CaptureInitFn)(void);
- CaptureInitFn captureInit=shim?(CaptureInitFn)GetProcAddress(shim,"SmartCapture_Initialize"):nullptr;
- printf("CAPTURE_HOOK_INIT=%d\\n",captureInit?captureInit():0);
+ typedef BOOL (__stdcall *CaptureStatusFn)(void);
+ CaptureStatusFn captureStatus=shim?(CaptureStatusFn)GetProcAddress(shim,"SmartCapture_Status"):nullptr;
+ BOOL captureReady=captureStatus?captureStatus():FALSE;
+ printf("CAPTURE_HOOK_AUTO_INIT=%d\\n",captureReady);
+ if(!captureReady)return 10;
  printf("NPK_LOADED=%p\\n",npk);
  if(npk){
   BYTE* base=(BYTE*)npk;
