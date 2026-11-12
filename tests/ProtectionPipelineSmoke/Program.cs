@@ -30,6 +30,12 @@ static void Check(bool value, string message)
     if (!value) throw new Exception(message);
 }
 
+byte[] fiveByteCompact = { 0x75, 0xFF, 0xFF, 0xFF, 0xFF, 0x1F };
+int fiveBytePosition = 0;
+Check(UnrealPackageIndex.DecodeCompactIndex(fiveByteCompact, ref fiveBytePosition) == -11 &&
+      fiveBytePosition == fiveByteCompact.Length,
+    "UE compact indices with a full fifth byte must preserve 32-bit overflow semantics.");
+
 byte[] smartSample = new byte[0x400];
 Convert.FromHexString("FFEDFACE0100").CopyTo(smartSample, 0);
 var smart = ProtectionPipelinePlanner.Inspect(smartSample, "interface.xdat");
@@ -241,7 +247,9 @@ foreach (string targetName in new[] { "interface.u", "interface.xdat" })
     Check(lineageEnvelope.AsSpan(0, 28).SequenceEqual(Encoding.Unicode.GetBytes("Lineage2Ver111")),
         $"{targetName}: SmartCrypt did not reconstruct the Lineage2Ver111 header.");
 
-    var tailProfile = Lineage2CustomTailProfile.FromEnvelope(lineageEnvelope, includeTailInPayload: false);
+    bool includeTailInPayload = targetName.EndsWith(".u", StringComparison.OrdinalIgnoreCase);
+    var tailProfile = Lineage2CustomTailProfile.FromEnvelope(lineageEnvelope,
+        includeTailInPayload: includeTailInPayload);
     var customTailCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
     byte[] plainPayload = customTailCodec.Decode(lineageEnvelope, targetName);
     byte[] standardDecoded = new Lineage2StandardCodec(111).Decode(lineageEnvelope, targetName);
