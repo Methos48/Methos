@@ -1,0 +1,28 @@
+name: Static reverse engineering of npkscrypt
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "system.zip"
+      - "tools/analyze_npkscrypt.py"
+      - ".github/workflows/analyze-npkscrypt.yml"
+permissions:
+  contents: read
+jobs:
+  analyze:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PE and x86 disassembly libraries
+        run: python -m pip install pefile capstone
+      - name: Analyze exact protection DLL and its executable code
+        run: python tools/analyze_npkscrypt.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Methos-npkscrypt-static-disassembly
+          path: npkscrypt-analysis/
+          retention-days: 14
