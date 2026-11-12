@@ -28,5 +28,16 @@ int main(){
  typedef void* (__cdecl *InitFn)(int);
  void* stream=((InitFn)initProc)(18);
  printf("FSTREAM_INIT_RESULT=%p\n",stream);
- return stream?0:4;
+ if(!stream)return 4;
+ FARPROC createProc=GetProcAddress(core,"?CreateStream@FFileStream@@QAEHPBGHHPAXW4EFileStreamType@@1@Z");
+ printf("FSTREAM_CREATE=%p\n",createProc);
+ if(!createProc)return 5;
+ WIN32_FILE_ATTRIBUTE_DATA info={};
+ if(!GetFileAttributesExW(L"SysString-e.dat",GetFileExInfoStandard,&info))return 6;
+ uint64_t size=((uint64_t)info.nFileSizeHigh<<32)|info.nFileSizeLow;
+ printf("TARGET_SIZE=%llu\n",(unsigned long long)size);
+ typedef int (__thiscall *CreateStreamFn)(void*,const wchar_t*,int,int,void*,int,int);
+ int result=((CreateStreamFn)createProc)(stream,L"SysString-e.dat",1,(int)size,nullptr,0,0);
+ printf("FSTREAM_CREATE_RESULT=%d\n",result);
+ return result>=0?0:7;
 }
