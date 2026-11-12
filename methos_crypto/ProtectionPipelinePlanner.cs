@@ -99,7 +99,9 @@ public static class ProtectionPipelinePlanner
             }
             else if (candidate.Kind == ProtectionLayerKind.Lineage2CustomTrailer)
             {
-                tailProfile = Lineage2CustomTailProfile.FromEnvelope(current);
+                bool includeTerminalBytesInPayload = extension.Equals(".u", StringComparison.OrdinalIgnoreCase);
+                tailProfile = Lineage2CustomTailProfile.FromEnvelope(current,
+                    includeTailInPayload: includeTerminalBytesInPayload);
                 var codec = new Lineage2Ver111CustomTailCodec(tailProfile);
                 next = codec.Decode(current, fileName);
                 bool roundTrip = codec.Encode(next, fileName).AsSpan().SequenceEqual(current);
