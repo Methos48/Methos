@@ -12,6 +12,9 @@ int main(){
  HMODULE ogg=LoadLibraryW(L"ogg.dll");
  printf("OGG=%p err=%lu\n",ogg,GetLastError());
  HMODULE core=GetModuleHandleW(L"Core.dll");
+ HMODULE shim=GetModuleHandleW(L"SmartCapture.dll");
+ typedef void (__stdcall *FlushFn)(void);
+ FlushFn flush=shim?(FlushFn)GetProcAddress(shim,"SmartCapture_Flush"):nullptr;
  printf("CORE=%p\n",core);
  if(!core)return 2;
  void** gMalloc=(void**)GetProcAddress(core,"?GMalloc@@3PAVFMalloc@@A");
@@ -47,5 +50,9 @@ int main(){
  printf("FSTREAM_BUFFER_WRITTEN=%lu\\n",wrote);
  if(wrote>=16){unsigned char* b=(unsigned char*)buffer;printf("FSTREAM_HEADER=");for(int i=0;i<16;i++)printf("%02X%s",b[i],i==15?"\\n":"-");}
  HeapFree(GetProcessHeap(),0,buffer);
+ if(flush)flush();
+ WIN32_FILE_ATTRIBUTE_DATA capInfo={};
+ if(GetFileAttributesExW(L"smartcrypt-capture.bin",GetFileExInfoStandard,&capInfo))
+  printf("CAPTURE_SIZE=%lu\\n",capInfo.nFileSizeLow);
  return wrote?0:8;
 }
