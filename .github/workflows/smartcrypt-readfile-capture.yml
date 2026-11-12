@@ -8,6 +8,7 @@ on:
       - "tools/smartcrypt-capture.def"
       - "tools/smartcrypt-capture-probe.cs"
       - "tools/patch_ogg_imports.py"
+      - "tools/core-filestream-probe.cpp"
       - "third_party/minhook/**"
       - "ifc23.dll"
       - "vorbisfile.dll"
@@ -52,11 +53,17 @@ jobs:
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
           & $csc /nologo /platform:x86 /optimize+ /out:probe\smartcrypt-probe.exe tools\smartcrypt-capture-probe.cs
           if ($LASTEXITCODE -ne 0) { throw "probe compile failed" }
+          $command = 'call "' + $vcvars + '" && cl /nologo /EHsc /O2 tools\core-filestream-probe.cpp /link /OUT:probe\core-filestream-probe.exe'
+          cmd.exe /c $command
+          if ($LASTEXITCODE -ne 0) { throw "Core FFileStream probe compile failed" }
       - name: Run capture with SmartCapture loaded from ogg import order
         shell: pwsh
         run: |
           Push-Location probe
           try { .\smartcrypt-probe.exe | Tee-Object capture.log }
+          finally { Pop-Location }
+          Push-Location probe
+          try { .\core-filestream-probe.exe | Tee-Object filestream.log }
           finally { Pop-Location }
       - uses: actions/upload-artifact@v4
         if: always()
