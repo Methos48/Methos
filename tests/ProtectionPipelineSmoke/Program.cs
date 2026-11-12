@@ -33,8 +33,8 @@ static void Check(bool value, string message)
 byte[] smartSample = new byte[0x400];
 Convert.FromHexString("FFEDFACE0100").CopyTo(smartSample, 0);
 var smart = ProtectionPipelinePlanner.Inspect(smartSample, "interface.xdat");
-Check(smart.Status == "recognized-key-required" && !smart.CanDecode && !smart.CanEncode,
-    "SmartCrypt sample must require its matching per-handle key profile.");
+Check(smart.Status == "recognized-decode-only" && smart.CanDecode && !smart.CanEncode,
+    "SmartCrypt sample with an embedded seed block must be recognized as decode-capable but not yet encode-verified.");
 
 byte[] l2 = Encoding.Unicode.GetBytes("Lineage2Ver413");
 var lineage = ProtectionPipelinePlanner.Inspect(l2, "systemmsg-e.dat");
@@ -55,8 +55,8 @@ Check(wrongExtension.Layers[0].Kind == ProtectionLayerKind.UnrealPackage &&
     "An Unreal package signature must never be mislabeled as XDAT based only on extension.");
 var xdatSmart = ProtectionPipelinePlanner.Inspect(smartSample, "Interface.xdat");
 Check(xdatSmart.Layers[0].Kind == ProtectionLayerKind.SmartCrypt1522Candidate &&
-      !xdatSmart.CanDecode && !xdatSmart.CanEncode,
-    "Encrypted XDAT must remain a SmartCrypt candidate until decoded and structurally validated.");
+      xdatSmart.CanDecode && !xdatSmart.CanEncode,
+    "Encrypted XDAT with an embedded seed block must be recognized as decode-capable but not encode-verified.");
 
 Console.WriteLine("PASS: SmartCrypt candidate, Lineage II header, unknown fail-closed, and Unreal signature checks.");
 
@@ -75,7 +75,7 @@ var noSmartCodec = new ProtectionCodecRuntime(Array.Empty<IProtectionCodec>());
 bool blocked = false;
 try { noSmartCodec.Decode(smart, smartSample, "interface.xdat"); }
 catch (NotSupportedException) { blocked = true; }
-Check(blocked, "Runtime must refuse the real SmartCrypt candidate until a verified codec is registered.");
+Check(blocked, "Runtime must refuse SmartCrypt when no codec is registered.");
 
 Console.WriteLine("PASS: synthetic two-layer encode/decode round-trip and missing SmartCrypt codec rejection.");
 
