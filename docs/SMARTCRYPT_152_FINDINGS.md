@@ -2,6 +2,22 @@
 
 Date: 2026-11-12
 
+
+## External key-provider finding (2026-11-12)
+
+The official SmartGuard SmartCrypt product page states that SmartCrypt encrypts game files with a custom key and that each copy has a unique serial number and individual file-encryption keys:
+https://smart-guard.eu/en/smartcrypt
+
+This changes the threat model: the transform routine in `npkscrypt.dll` is not enough to decode a protected file. The matching SmartCrypt license/key material is required. The public `SmartDecrypt.dll` method is a runtime capture shim: it records the buffer after the protected client has applied its own key. It does not generate or recover the unique key by itself.
+
+Independent evidence for a separately supplied client-side component:
+- SmartGuard's FAQ describes protection as a client-side package installed in the game folder plus a server-side component.
+- A public SmartGuard setup discussion lists the client package as including `L2.exe`, `L2.bin`, `dsetup.u`, `dsetup.dll`, and `SmartGuard.ini`.
+- The supplied L2Sudamerica `dsetup.dll` is not that key provider: its export table has only ordinals 1–18, while this `npkscrypt.dll` initialization path requests ordinal `0x67`.
+- The supplied repository and system archive contain no `dsetup.u` or `SmartGuard.ini`. The headless probe confirms the key pointer and activation flag remain zero; the actual-client harness also exits before it opens the target file.
+
+Conclusion: SmartCrypt 1.5.2.2 is the strongest identified outer-protection candidate, but the Dunk3l files may be tied to a different SmartCrypt license/client package. Keep investigating offline key recovery and external-provider discovery in parallel; do not claim the files are decryptable with the generic L2 111/413 codecs alone.
+
 ## Target identity
 
 The supplied interface.u and interface.xdat are from an interface made by **Dunk3l**, not original L2Sudamerica interface assets. The server/client installation is a runtime environment and a source of possible loader components, not proof of the interface author's encryption method.
