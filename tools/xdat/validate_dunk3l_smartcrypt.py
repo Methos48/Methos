@@ -16,7 +16,7 @@ HEADER_SIZE = 28
 TAIL_SIZE = 20
 
 
-def decode_smartcrypt_and_111(data: bytes) -> tuple[bytes, bytes, bytes, int]:
+def decode_smartcrypt_and_111(data: bytes) -> tuple[bytes, bytes, bytes, bytes, int, int, int]:
     if len(data) < 0x400 or data[:4] != MAGIC:
         raise ValueError("No se reconoce el contenedor SmartCrypt FF ED FA CE.")
     seed = bytearray(data[4:28])
