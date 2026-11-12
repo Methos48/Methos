@@ -9,7 +9,7 @@ on:
       - "interface.u"
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 jobs:
@@ -80,11 +80,22 @@ jobs:
           print("=== XDAT_CORE.PY HEADER ===")
           print("\\n".join((tool / "xdat_core.py").read_text(encoding="utf-8").splitlines()[:100]))
           PY
-      - name: Run reference XDAT round-trip tests
+      - name: Integrate and test the verified XDAT codec
         shell: bash
         run: |
-          cd "xdat-reference/XDAT Interlude Tool - Silent Dark"
-          python tests/test_roundtrip.py
+          mkdir -p tools/xdat
+          cp "xdat-reference/XDAT Interlude Tool - Silent Dark/xdat_core.py" tools/xdat/xdat_core.py
+          export XDAT_REFERENCE_ROOT="$PWD/xdat-reference/XDAT Interlude Tool - Silent Dark"
+          python tools/xdat/tests/test_roundtrip.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/xdat/xdat_core.py
+          if git diff --cached --quiet; then
+            echo "XDAT_CODEC_ALREADY_INTEGRATED=1"
+          else
+            git commit -m "Integrate verified Interlude XDAT XML codec"
+            git push
+          fi
       - name: Preserve decoded XDAT reference sources
         if: always()
         uses: actions/upload-artifact@v4
