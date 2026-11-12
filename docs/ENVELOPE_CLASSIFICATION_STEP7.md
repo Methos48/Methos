@@ -325,3 +325,22 @@ Sources:
 
 Status:
 The two-stage SmartCrypt -> standard L2 encryption workflow is now independently corroborated. No capture/decryption of the user's exact `interface.u` or `interface.xdat` has yet been executed or verified.
+
+
+## Step 17 — 2025 SmartDecrypt variant and ActiveAntiCheatCrypt boundary
+
+Date: 2026-11-12
+
+A later author update in the same Smart Crypt Decryptor 1.5.2.2 thread (2025-08-16) links a revised source at https://pastebin.com/ESvWBZ4H and states that it works with "Active Anti Cheat Crypt". This is a distinct compatibility claim from the original 2024 source, which documents SmartCrypt capture and the remaining regular Lineage II archive encryption.
+
+Interpretation:
+- ActiveAntiCheatCrypt may be an additional wrapper/layer in some clients or target files. The 2025 update suggests the revised hook can handle that case.
+- The user's unusual sample prefix alone does not prove ActiveAntiCheatCrypt. Do not classify the exact U or XDAT as AAC-protected without inspecting the revised source or validating captured output.
+- The 2025 source paste is not accessible through the current web retrieval interface, so its code changes, hook points, and correctness have not been audited. The original source's known byte-count, offset, partial-read, and overlapped-I/O risks must not be assumed fixed.
+- Continue with isolated per-file capture, full-output validation, inner L2 version detection, and standard archive decoding. Treat any remaining AAC wrapper as a separate stage.
+
+Source:
+- https://maxcheaters.com/topic/249577-smart-crypt-decryptor-1522/ (author's 2025-08-16 update linking https://pastebin.com/ESvWBZ4H)
+
+Status:
+New compatibility lead only. Neither the revised source nor the exact user's U/XDAT outputs have been executed or validated. No decryption success is claimed.
