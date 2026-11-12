@@ -63,6 +63,17 @@ jobs:
           Write-Host "COMPILED_PACKAGE_DECOMPILED_CLASSES=$compiledCount"
           "DECOMPILED_ORIGINAL=$originalOut" | Out-File -FilePath $env:GITHUB_ENV -Append
           "DECOMPILED_COMPILED=$compiledOut" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Rebuild the real Dunk3l Interface.u through UELib and UCC
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP "Dunk3l-Rebuilt-Interface.u"
+          $sources = Join-Path $env:RUNNER_TEMP "Dunk3l-Decompiled-Classes"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --dunk3l-u-rebuild $env:KIT "$PWD/interface.u" $output $sources
+          if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile, compile, and re-encrypt the real Dunk3l Interface.u" }
+          if (!(Test-Path $output) -or (Get-Item $output).Length -lt 65536) { throw "Rebuilt Dunk3l Interface.u is missing or too small" }
+          Get-FileHash $output -Algorithm SHA256 | Format-List
+          "DUNK3L_OUTPUT=$output" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "DUNK3L_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Preserve the compiled U package for inspection
         uses: actions/upload-artifact@v4
         with:
@@ -71,4 +82,6 @@ jobs:
             ${{ env.OUTPUT }}
             ${{ env.DECOMPILED_ORIGINAL }}/*.uc
             ${{ env.DECOMPILED_COMPILED }}/*.uc
+            ${{ env.DUNK3L_OUTPUT }}
+            ${{ env.DUNK3L_SOURCES }}/*.uc
           if-no-files-found: error
