@@ -6,6 +6,9 @@ on:
       - 'engine.zip'
       - 'Core.dll'
       - 'l2.exe'
+      - 'interface.u'
+      - 'interface.xdat'
+      - 'Dunk3lFX_ByBALENCIAGA.u'
       - '.github/workflows/smartcrypt-reverse-engineering.yml'
   workflow_dispatch:
 permissions:
@@ -36,7 +39,7 @@ jobs:
                           name=pathlib.PurePosixPath(info.filename).name.lower()
                           if name.endswith((".dll",".exe")):
                               files[name]=z.read(info)
-          for name in ("Core.dll","l2.exe"):
+          for name in ("Core.dll","l2.exe","interface.u","interface.xdat","Dunk3lFX_ByBALENCIAGA.u"):
               p=pathlib.Path(name)
               if p.exists(): files[name.lower()]=p.read_bytes()
           lines=[]
@@ -47,6 +50,10 @@ jobs:
           for name,data in files.items():
               (root/name).write_bytes(data)
               emit(f"\n===== {name} size={len(data)} md5={hashlib.md5(data).hexdigest()} sha256={hashlib.sha256(data).hexdigest()} =====")
+              emit("PREFIX_64 "+data[:64].hex(" "))
+              for marker in (bytes.fromhex("ff ed fa ce"),bytes.fromhex("fe ed fa ce"),bytes.fromhex("fa de de ad"),bytes.fromhex("ca fe f0 0d"),"Lineage2Ver111".encode("utf-16le"),"Lineage2Ver413".encode("utf-16le")):
+                  count=data.count(marker)
+                  if count: emit(f"MARKER {marker.hex(' ')} count={count} first={data.find(marker):#x}")
               try:
                   pe=pefile.PE(data=data, fast_load=False); parsed[name]=(pe,data)
                   machine=pe.FILE_HEADER.Machine
