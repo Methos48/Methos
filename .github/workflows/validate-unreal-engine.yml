@@ -1,0 +1,53 @@
+name: Validate Methos Unreal package engine
+on:
+  push:
+    paths:
+      - "methos_crypto/**"
+      - "tests/ProtectionPipelineSmoke/**"
+      - ".github/workflows/validate-unreal-engine.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-unreal:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Methos48/Methos-U-Editor
+          path: u-editor
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Extract the verified Interlude UCC runtime and 169 source classes
+        shell: pwsh
+        run: |
+          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $root = Join-Path $PWD "ucc-validation"
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $kit = Join-Path $root "Compilador  U"
+          $sources = Join-Path $kit "Interlude\Interface\Classes"
+          if (!(Test-Path (Join-Path $kit "Interlude\System\ucc.exe"))) { throw "Interlude UCC runtime missing" }
+          $classes = @(Get-ChildItem -LiteralPath $sources -Filter "*.uc" -File)
+          if ($classes.Count -ne 169) { throw "Expected 169 reference .uc classes, found $($classes.Count)" }
+          "KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "REFERENCE_UC_CLASSES=$($classes.Count)"
+      - name: Compile the full Interface.u source set using Methos UccCompiler
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP "Methos-Compiled-Interface.u"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:KIT $env:SOURCES $output
+          if ($LASTEXITCODE -ne 0) { throw "Methos UCC integration failed" }
+          if (!(Test-Path $output) -or (Get-Item $output).Length -lt 65536) { throw "Compiled Interface.u is missing or too small" }
+          Get-FileHash $output -Algorithm SHA256 | Format-List
+          "OUTPUT=$output" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Preserve the compiled U package for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: methos-compiled-interlude-interface-u
+          path: ${{ env.OUTPUT }}
+          if-no-files-found: error
