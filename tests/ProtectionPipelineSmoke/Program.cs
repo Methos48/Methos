@@ -32,8 +32,8 @@ static void Check(bool value, string message)
 
 byte[] smartSample = Convert.FromHexString("FFEDFACE0100").Concat(new byte[32]).ToArray();
 var smart = ProtectionPipelinePlanner.Inspect(smartSample, "interface.xdat");
-Check(smart.Status == "recognized-candidate" && !smart.CanDecode && !smart.CanEncode,
-    "SmartCrypt sample must be identified as a candidate, never falsely reported as decrypted.");
+Check(smart.Status == "recognized-key-required" && !smart.CanDecode && !smart.CanEncode,
+    "SmartCrypt sample must require its matching per-handle key profile.");
 
 byte[] l2 = Encoding.Unicode.GetBytes("Lineage2Ver413");
 var lineage = ProtectionPipelinePlanner.Inspect(l2, "systemmsg-e.dat");
