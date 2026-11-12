@@ -66,12 +66,24 @@ jobs:
           "SILENT_U_SOURCES=$src" | Out-File -FilePath $env:GITHUB_ENV -Append
           "UCC_KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "SILENT_DARK_UC_SOURCE_COUNT=$count"
-          $offender = Join-Path $src "AutoSkillWnd.uc"
-          if (Test-Path $offender) {
-            Write-Host "=== AutoSkillWnd.uc lines 85-105 ==="
-            $lines = Get-Content -LiteralPath $offender
-            for ($i = 84; $i -lt [Math]::Min(105, $lines.Count); $i++) { Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i]) }
-          } else { Write-Host "AutoSkillWnd.uc not found at source root" }
+          $diagnostics = Join-Path $env:RUNNER_TEMP "SilentDark-Diagnostics"
+          New-Item -ItemType Directory -Force $diagnostics | Out-Null
+          $offender = Get-ChildItem -LiteralPath $src -Filter "AutoSkillWnd.uc" -File -Recurse | Select-Object -First 1
+          if ($offender) {
+            Write-Host "=== AutoSkillWnd.uc path: $($offender.FullName) ==="
+            $lines = Get-Content -LiteralPath $offender.FullName
+            $start = [Math]::Max(0, 74)
+            $end = [Math]::Min(115, $lines.Count)
+            for ($i = $start; $i -lt $end; $i++) { Write-Host ("{0}: {1}" -f ($i + 1), $lines[$i]) }
+            $lines | Set-Content -LiteralPath (Join-Path $diagnostics "AutoSkillWnd.uc")
+          } else {
+            Write-Host "AutoSkillWnd.uc not found anywhere in extracted sources"
+            Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse | Select-Object -First 30 -ExpandProperty FullName
+          }
+          $allSources = Get-ChildItem -LiteralPath $src -Filter "*.uc" -File -Recurse
+          "SOURCE_COUNT=$($allSources.Count)" | Set-Content (Join-Path $diagnostics "source-inventory.txt")
+          $allSources | ForEach-Object { $_.FullName.Substring($src.Length).TrimStart('\','/') } | Add-Content (Join-Path $diagnostics "source-inventory.txt")
+          "DIAGNOSTICS_DIR=$diagnostics" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Create isolated Methos U compile/decompile test harness
         shell: pwsh
@@ -146,5 +158,6 @@ jobs:
           path: |
             ${{ runner.temp }}/SilentDark-Compiled-Interface.u
             ${{ runner.temp }}/SilentDark-Decompiled/*.uc
+            ${{ runner.temp }}/SilentDark-Diagnostics/**
           if-no-files-found: warn
           retention-days: 14
