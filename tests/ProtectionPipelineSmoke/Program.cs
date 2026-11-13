@@ -487,6 +487,44 @@ Check(damageLiteAniArrayRepairs.Count == 1 &&
     "DamageLiteAni array dimension repair duplicated the existing property instead of resizing it.");
 Console.WriteLine("PASS: DamageLiteAni inferred array dimension replaces the stale declaration without a duplicate.");
 
+string olympiadTargetExistingFieldSample = """
+class OlympiadTargetWnd extends UICommonAPI;
+var int DamageReceived;
+var int EnemyMPLost;
+function OnLoad()
+{
+    EnemyMPLost = 0;
+}
+""";
+string olympiadTargetExistingFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "OlympiadTargetWnd", olympiadTargetExistingFieldSample, out IReadOnlyList<string> olympiadExistingRepairs);
+int olympiadExistingFieldCount = olympiadTargetExistingFieldRepaired
+    .Split('\n')
+    .Select(line => line.Trim())
+    .Count(line => line == "var int EnemyMPLost;");
+Check(olympiadExistingRepairs.Count == 0 && olympiadExistingFieldCount == 1,
+    "OlympiadTargetWnd repair duplicated EnemyMPLost even though it already existed.");
+Console.WriteLine("PASS: OlympiadTargetWnd keeps an existing EnemyMPLost field without duplicating it.");
+
+string olympiadTargetMissingFieldSample = """
+class OlympiadTargetWnd extends UICommonAPI;
+var int DamageReceived;
+function OnLoad()
+{
+    EnemyMPLost = 0;
+}
+""";
+string olympiadTargetMissingFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "OlympiadTargetWnd", olympiadTargetMissingFieldSample, out IReadOnlyList<string> olympiadMissingRepairs);
+int olympiadMissingFieldCount = olympiadTargetMissingFieldRepaired
+    .Split('\n')
+    .Select(line => line.Trim())
+    .Count(line => line == "var int EnemyMPLost;");
+Check(olympiadMissingRepairs.Count == 1 && olympiadMissingFieldCount == 1,
+    "OlympiadTargetWnd repair failed to restore a genuinely missing EnemyMPLost field.");
+Console.WriteLine("PASS: OlympiadTargetWnd restores EnemyMPLost only when the field is missing.");
+
+
 
 
 
