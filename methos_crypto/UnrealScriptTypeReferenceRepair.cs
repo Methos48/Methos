@@ -261,11 +261,16 @@ public static class UnrealScriptTypeReferenceRepair
             source.Contains("RecoveredName_2803.GetItemNum()", StringComparison.Ordinal))
         {
             const string malformed = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + (EquipItemGetItemNum());";
-            const string corrected = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + EquipItemGetItemNum();";
-            if (source.Contains(malformed, StringComparison.Ordinal))
+            const string partiallyRepaired = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + EquipItemGetItemNum();";
+            const string corrected = "Count = RecoveredName_2802.GetItemNum();" + Environment.NewLine +
+                "\tCount = Count + RecoveredName_2803.GetItemNum();" + Environment.NewLine +
+                "\tCount = Count + EquipItemGetItemNum();";
+            if (source.Contains(malformed, StringComparison.Ordinal) ||
+                source.Contains(partiallyRepaired, StringComparison.Ordinal))
             {
-                source = source.Replace(malformed, corrected, StringComparison.Ordinal);
-                applied.Add("InventoryWnd.SetItemCount redundant function-call parentheses removed");
+                source = source.Replace(malformed, corrected, StringComparison.Ordinal)
+                    .Replace(partiallyRepaired, corrected, StringComparison.Ordinal);
+                applied.Add("InventoryWnd.SetItemCount split nested handle calls into sequential assignments");
             }
         }
 
