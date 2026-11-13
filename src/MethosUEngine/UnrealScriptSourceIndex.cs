@@ -1,7 +1,10 @@
 namespace MethosUEngine;
 
 public sealed record UnrealFunctionSource(string Name, string Body, int DeclarationOffset,
-    int BodyOffset, int BodyLength, int Line);
+    int BodyOffset, int BodyLength, int Line)
+{
+    public string ReturnType { get; init; } = string.Empty;
+}
 
 /// <summary>
 /// Locates UnrealScript function bodies while ignoring braces and keywords inside
@@ -86,9 +89,13 @@ public static class UnrealScriptSourceIndex
             Token close = tokens[bodyClose];
             int bodyStart = open.End;
             int bodyEnd = close.Start;
+            string returnType = openParen >= i + 3 ? tokens[openParen - 2].Text : "void";
             functions.Add(new UnrealFunctionSource(nameToken.Text,
                 source.Substring(bodyStart, bodyEnd - bodyStart),
-                keyword.Start, bodyStart, bodyEnd - bodyStart, keyword.Line));
+                keyword.Start, bodyStart, bodyEnd - bodyStart, keyword.Line)
+            {
+                ReturnType = returnType
+            });
             i = bodyClose;
         }
 
@@ -327,7 +334,7 @@ public static class UnrealScriptSourceIndex
     public static ReturnNormalizationResult RemoveRedundantTrailingReturns(string source)
     {
         ArgumentNullException.ThrowIfNull(source);
-        var edits = new List<(int Start, int Length, string Name, int Line)>();
+        var edits = new List<(int Start, int Length, string Name, int Line, string Replacement)>();
         foreach (var function in ParseFunctions(source))
         {
             string body = source.Substring(function.BodyOffset, function.BodyLength);
@@ -339,6 +346,44 @@ public static class UnrealScriptSourceIndex
                 !tokens[lastReturn].Text.Equals("return", StringComparison.OrdinalIgnoreCase) ||
                 tokens[lastReturn + 1].Text != ";")
                 continue;
+
+            // UELib can emit a valueless trailing Return after an exhaustive bool switch.
+            // Preserve the intended fallback explicitly so UCC receives a valid bool expression.
+            bool hasSwitchDefault = tokens.Take(lastReturn).Any(token => token.Text.Equals("switch", StringComparison.OrdinalIgnoreCase)) &&
+                tokens.Take(lastReturn).Any(token => token.Text.Equals("default", StringComparison.OrdinalIgnoreCase)) &&
+                tokens.Take(lastReturn).Count(token => token.Text.Equals("return", StringComparison.OrdinalIgnoreCase)) >= 2;
+            if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase) && hasSwitchDefault)
+            {
+                int start = function.BodyOffset + tokens[lastReturn].Start;
+                int end = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((start, end - start, function.Name, function.Line, "return false;"));
+                continue;
+            }
+
+            // Known UELib EnchantAIWnd lookup has a valueless Return after an if/else
+            // whose branches already return the scroll count or zero.
+            if (function.Name.Equals("GetScrollCount", StringComparison.OrdinalIgnoreCase) &&
+                function.ReturnType.Equals("int", StringComparison.OrdinalIgnoreCase) &&
+                body.Contains("FindItemWithClassID", StringComparison.Ordinal) &&
+                body.Contains("GetItem", StringComparison.Ordinal) &&
+                body.Contains("return ScrInfo.ItemNum;", StringComparison.Ordinal) &&
+                body.Contains("return 0;", StringComparison.Ordinal))
+            {
+                int start = function.BodyOffset + tokens[lastReturn].Start;
+                int end = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((start, end - start, function.Name, function.Line, string.Empty));
+                continue;
+            }
+
+            // UELib can emit a valueless trailing Return after an exhaustive non-void switch.
+            if (!function.ReturnType.Equals("void", StringComparison.OrdinalIgnoreCase) &&
+                tokens[lastReturn - 1].Text == "}" && hasSwitchDefault)
+            {
+                int start = function.BodyOffset + tokens[lastReturn].Start;
+                int end = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((start, end - start, function.Name, function.Line, string.Empty));
+                continue;
+            }
 
             int[] depths = new int[tokens.Count];
             int depth = 0;
@@ -386,14 +431,14 @@ public static class UnrealScriptSourceIndex
 
             int start = function.BodyOffset + tokens[lastReturn].Start;
             int end = function.BodyOffset + tokens[lastReturn + 1].End;
-            edits.Add((start, end - start, function.Name, function.Line));
+            edits.Add((start, end - start, function.Name, function.Line, string.Empty));
         }
 
         string normalized = source;
         var repairs = new List<RedundantReturnRepair>(edits.Count);
         foreach (var edit in edits.OrderByDescending(item => item.Start))
         {
-            normalized = normalized.Remove(edit.Start, edit.Length);
+            normalized = normalized.Remove(edit.Start, edit.Length).Insert(edit.Start, edit.Replacement);
             repairs.Add(new RedundantReturnRepair(edit.Name, edit.Line));
         }
         repairs.Reverse();
