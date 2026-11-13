@@ -594,6 +594,17 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
         }
 
+        if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal) &&
+            !source.Contains("const MANA_BURN_SKILL_ID", StringComparison.Ordinal))
+        {
+            source = source.Replace(
+                "class TargetStatusWnd extends UICommonAPI;",
+                "class TargetStatusWnd extends UICommonAPI;\n\nconst MANA_BURN_SKILL_ID = 1398;",
+                StringComparison.Ordinal);
+            applied.Add("Dunk3l Mana Burn notice filter restored with the Interlude skill ID");
+        }
+
         if (className.Equals("SystemMsgWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("RecoveredName_4557.Clear()", StringComparison.Ordinal))
         {
