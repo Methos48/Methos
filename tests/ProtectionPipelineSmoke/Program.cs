@@ -300,6 +300,7 @@ function int UnkFuncSomeID_1(int SkillID)
 }
 """;
 var intSwitchRepair = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(recoveredIntSwitchSample);
+Console.WriteLine($"DEBUG int switch repairs={intSwitchRepair.Repairs.Count}; source={intSwitchRepair.Source}");
 Check(intSwitchRepair.Repairs.Any(repair => repair.FunctionName == "UnkFuncSomeID_1") &&
       !intSwitchRepair.Source.Contains("    return;\n}", StringComparison.Ordinal),
     "Recovered int switch functions with exhaustive return branches must drop the invalid trailing bare return.");
