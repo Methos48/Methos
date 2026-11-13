@@ -582,6 +582,26 @@ Check(dunk3lSystemMsgRepairs.Count == 1 &&
     "Dunk3l SystemMsgWnd clear calls were not rebound to their declared chat handles.");
 Console.WriteLine("PASS: Dunk3l SystemMsgWnd clear calls use declared chat handles.");
 
+string dunk3lManaBurnSample = """
+class TargetStatusWnd extends UICommonAPI;
+function HandleManaBurnNotice(string param)
+{
+    local int SkillID;
+    if(!ParseInt(param, "SkillID", SkillID) || SkillID != MANA_BURN_SKILL_ID)
+    {
+        return;
+    }
+}
+""";
+string dunk3lManaBurnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "TargetStatusWnd", dunk3lManaBurnSample, out IReadOnlyList<string> dunk3lManaBurnRepairs);
+Check(dunk3lManaBurnRepairs.Count == 1 &&
+      dunk3lManaBurnRepaired.Contains("const MANA_BURN_SKILL_ID = 1398;", StringComparison.Ordinal) &&
+      dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal),
+    "Dunk3l TargetStatusWnd Mana Burn filter did not receive the Interlude skill ID constant.");
+Console.WriteLine("PASS: Dunk3l TargetStatusWnd preserves the Mana Burn skill filter.");
+
+
 
 
 
