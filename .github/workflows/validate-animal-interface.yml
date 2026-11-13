@@ -63,16 +63,28 @@ jobs:
       - name: Restore missing Animal class property declarations from reference sources
         shell: pwsh
         run: |
-          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes"
           $sourceFile = Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc"
-          $referenceFile = Join-Path $referenceRoot "AutoPotionsWnd.uc"
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/AutoPotionsWnd.uc"
           if (!(Test-Path -LiteralPath $referenceFile)) { throw "Reference AutoPotionsWnd.uc missing." }
           $sourceText = [IO.File]::ReadAllText($sourceFile)
           $referenceText = [IO.File]::ReadAllText($referenceFile)
           $missing = [Collections.Generic.List[string]]::new()
           foreach ($match in [regex]::Matches($referenceText, '(?im)^\s*var\s+[^;]+;')) {
             $declaration = $match.Value.Trim()
-            $nameMatch = [regex]::Match($declaration, '(?i)([A-Za-z_]\w*)\s*(?:\[[^\]]+\])?\s*;
+            $nameMatch = [regex]::Match($declaration, '(?i)([A-Za-z_]\w*)\s*(?:\[[^\]]+\])?\s*;$')
+            if ($nameMatch.Success -and $sourceText -notmatch ('(?im)^\s*var\s+[^;]*\b' + [regex]::Escape($nameMatch.Groups[1].Value) + '\b')) {
+              $missing.Add($declaration)
+            }
+          }
+          if ($missing.Count -gt 0) {
+            $classLine = [regex]::Match($sourceText, '(?m)^class\s+[^;]+;\s*')
+            if (!$classLine.Success) { throw "Could not locate AutoPotionsWnd class declaration." }
+            $insert = [Environment]::NewLine + ($missing -join [Environment]::NewLine) + [Environment]::NewLine
+            $sourceText = $sourceText.Insert($classLine.Index + $classLine.Length, $insert)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+          }
+          Write-Host "ANIMAL_RESTORED_PROPERTY_DECLARATIONS=$($missing.Count)"
+          Write-Host "ANIMAL_RESTORED_PROPERTY_NAMES=$($missing | ForEach-Object { $_ })"
 
       - name: Compile unmodified Animal sources
         shell: pwsh
