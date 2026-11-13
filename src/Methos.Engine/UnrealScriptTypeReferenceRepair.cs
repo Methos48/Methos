@@ -595,6 +595,14 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("if(ActiveIgnoreAggro)", StringComparison.Ordinal) &&
+            source.Contains("GetOptionBool(\"Custom\", \"IgnoreAggr\")", StringComparison.Ordinal))
+        {
+            source = source.Replace("if(ActiveIgnoreAggro)", "if(GetOptionBool(\"Custom\", \"IgnoreAggr\"))", StringComparison.Ordinal);
+            applied.Add("Dunk3l target aggro filter rebound to its existing IgnoreAggr option");
+        }
+
+        if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal) &&
             !source.Contains("const MANA_BURN_SKILL_ID", StringComparison.Ordinal))
         {
