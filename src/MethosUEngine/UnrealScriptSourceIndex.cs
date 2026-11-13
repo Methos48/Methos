@@ -352,7 +352,7 @@ public static class UnrealScriptSourceIndex
             bool hasSwitchDefault = tokens.Take(lastReturn).Any(token => token.Text.Equals("switch", StringComparison.OrdinalIgnoreCase)) &&
                 tokens.Take(lastReturn).Any(token => token.Text.Equals("default", StringComparison.OrdinalIgnoreCase)) &&
                 tokens.Take(lastReturn).Count(token => token.Text.Equals("return", StringComparison.OrdinalIgnoreCase)) >= 2;
-            if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase) && hasSwitchDefault)
+            if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase))
             {
                 int boolStart = function.BodyOffset + tokens[lastReturn].Start;
                 int boolEnd = function.BodyOffset + tokens[lastReturn + 1].End;
