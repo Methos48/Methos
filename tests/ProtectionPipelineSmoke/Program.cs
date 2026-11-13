@@ -520,6 +520,45 @@ Check(dunk3lTimerActorRepairs.Count == 1 &&
     "Dunk3l timer actor package reference was not restored to Interface.");
 Console.WriteLine("PASS: Dunk3l timer actor reference targets the Interface package.");
 
+string dunk3lSystemBarSample = """
+class SystemBarWnd extends UICommonAPI;
+var private TextBoxHandle MethosRecoveredName_4561;
+var private TextBoxHandle MethosRecoveredName_4562;
+var private bool MethosRecoveredName_4564;
+var private bool MethosRecoveredName_4571;
+var private int MethosRecoveredName_4572;
+var private int MethosRecoveredName_4573;
+var private int MethosRecoveredName_4574;
+var private int MethosRecoveredName_4575;
+var private bool MethosRecoveredName_4577;
+var string m_WindowName;
+function OnLoad()
+{
+    RecoveredName_4534 = TextBoxHandle(GetHandle(m_WindowName $ ".PVPInfo"));
+    RecoveredName_4533 = TextBoxHandle(GetHandle("SystemBarWnd.AdenaText"));
+    RecoveredName_4535 = false;
+    RecoveredName_4536 = false;
+    RecoveredName_4537 = 0;
+    RecoveredName_4538 = 0;
+    RecoveredName_4539 = 0;
+    RecoveredName_4540 = 0;
+    RecoveredName_4544 = 0;
+    RecoveredName_4545 = 0;
+    RecoveredName_4546 = 0;
+    RecoveredName_4542 = false;
+}
+""";
+string dunk3lSystemBarRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "SystemBarWnd", dunk3lSystemBarSample, out IReadOnlyList<string> dunk3lSystemBarRepairs);
+Check(dunk3lSystemBarRepairs.Count == 1 &&
+      dunk3lSystemBarRepaired.Contains("MethosRecoveredName_4562 = TextBoxHandle", StringComparison.Ordinal) &&
+      dunk3lSystemBarRepaired.Contains("MethosRecoveredName_4561 = TextBoxHandle", StringComparison.Ordinal) &&
+      dunk3lSystemBarRepaired.Contains("local int RecoveredName_4544, RecoveredName_4545, RecoveredName_4546;", StringComparison.Ordinal) &&
+      !dunk3lSystemBarRepaired.Contains("RecoveredName_4534", StringComparison.Ordinal),
+    "Dunk3l SystemBarWnd recovered handles and state were not reconciled.");
+Console.WriteLine("PASS: Dunk3l SystemBarWnd fields are reconciled to declared handles and state.");
+
+
 
 
 
