@@ -263,7 +263,7 @@ public static class UnrealScriptTypeReferenceRepair
             const string correctedPredicate = "if (Info.DragSrcName != \"InventoryItem\" && Info.DragSrcName != \"QuestItem\" && Info.DragSrcName != InventoryItem_1 && InStr(Info.DragSrcName, \"EquipItem\") == -1 && Info.DragSrcName != \"PetInvenWnd\")";
             string normalizedPredicate = System.Text.RegularExpressions.Regex.Replace(
                 source,
-                @"(?m)^(?<indent>[ \t]*)if\s*\(.*Info\.DragSrcName\s*==\s*""PetInvenWnd"".*\)\s*$",
+                @"(?m)^(?<indent>[ \t]*)if\s*\([^;\r\n]*Info\.DragSrcName[^;\r\n]*PetInvenWnd[^;\r\n]*\)\s*$",
                 "${indent}" + correctedPredicate,
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant);
             if (!string.Equals(source, normalizedPredicate, StringComparison.Ordinal))
