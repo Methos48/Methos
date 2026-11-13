@@ -526,6 +526,30 @@ Check(intSwitchRepair.Repairs.Any(repair => repair.FunctionName == "UnkFuncSomeI
     "Recovered int switch functions with exhaustive return branches must drop the invalid trailing bare return.");
 Console.WriteLine("PASS: exhaustive int switch trailing bare returns are removed.");
 
+var enchantScrollCountSample = """
+class EnchantAIWnd extends Object;
+function int GetScrollCount(out ItemInfo ScrollInform)
+{
+    local int Index;
+    local ItemInfo ScrInfo;
+    Index = Class'NWindow.UIAPI_ITEMWINDOW'.static.FindItemWithClassID("InventoryWnd.InventoryItem", ScrollInform.ClassID);
+    if(Class'NWindow.UIAPI_ITEMWINDOW'.static.GetItem("InventoryWnd.InventoryItem", Index, ScrInfo))
+    {
+        ScrollInform = ScrInfo;
+        return ScrInfo.ItemNum;
+    }
+    else
+    {
+        return 0;
+    }
+    return;
+}
+""";
+var enchantScrollCountRepair = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(enchantScrollCountSample);
+Check(enchantScrollCountRepair.Repairs.Any(repair => repair.FunctionName == "GetScrollCount") &&
+      !enchantScrollCountRepair.Source.Contains("    return;\n}", StringComparison.Ordinal),
+    "EnchantAIWnd exhaustive inventory lookup must not retain a valueless trailing return.");
+Console.WriteLine("PASS: EnchantAIWnd GetScrollCount trailing return is removed.");
 
 
 static void Check(bool value, string message)
