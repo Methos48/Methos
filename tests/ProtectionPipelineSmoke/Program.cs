@@ -735,7 +735,7 @@ Check(uiCommonLabelRepairs.Count == 7 &&
           uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i != -1) )", StringComparison.Ordinal) &&
       uiCommonMissingGotoLabelRepaired.IndexOf("JL000F:", StringComparison.Ordinal) <
           uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i < Len(Source)) )", StringComparison.Ordinal),
-    "UICommonAPI did not restore all six missing loop destination labels.");
+    "UICommonAPI did not restore its six loop labels and two dynamic-array append operations.");
 Console.WriteLine("PASS: UICommonAPI restores all six missing loop destination labels.");
 
 string decompilerStackTraceSample = """
