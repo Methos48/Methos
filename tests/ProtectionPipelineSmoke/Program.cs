@@ -584,6 +584,22 @@ Check(partyMatchWaitListQuoteRepairs.Count == 1 &&
     "PartyMatchWaitListWnd did not normalize both malformed quote literals.");
 Console.WriteLine("PASS: PartyMatchWaitListWnd quote literals are emitted as Chr(34) for UCC.");
 
+string partyMatchPostNormalizedQuoteSample = """"
+class PartyMatchOutWaitListWnd extends UICommonAPI;
+function string BuildMessage(string szData1)
+{
+    return (""" $ szData1);
+}
+"""";
+string partyMatchPostNormalizedQuoteRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PartyMatchOutWaitListWnd", partyMatchPostNormalizedQuoteSample, out IReadOnlyList<string> partyMatchPostNormalizedQuoteRepairs);
+Check(partyMatchPostNormalizedQuoteRepairs.Count == 1 &&
+      partyMatchPostNormalizedQuoteRepaired.Contains("Chr(34) $ szData1", StringComparison.Ordinal) &&
+      !partyMatchPostNormalizedQuoteRepaired.Contains("\"\"\"", StringComparison.Ordinal),
+    "PartyMatch quote repair did not handle a triple quote after native-call normalization.");
+Console.WriteLine("PASS: PartyMatch quote repair works after native-call normalization.");
+
+
 
 string partyWndSetNameSample = """
 class PartyWnd extends UICommonAPI;
