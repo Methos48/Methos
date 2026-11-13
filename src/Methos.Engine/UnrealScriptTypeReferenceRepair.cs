@@ -345,7 +345,7 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("OlympiadTargetWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("EnemyMPLost", StringComparison.Ordinal) &&
-            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+int\\s+EnemyMPLost\\s*;"))
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\s*var\s+int\s+EnemyMPLost\s*;"))
         {
             const string fieldAnchor = "var int DamageReceived;";
             if (source.Contains(fieldAnchor, StringComparison.Ordinal))
