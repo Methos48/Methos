@@ -448,10 +448,11 @@ function OnLoad()
 string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
 Check(silentOverlayColorRepairs.Count == 1 &&
-      silentOverlayColorRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
-      !silentOverlayColorRepaired.Contains("MethosRecoveredName_85", StringComparison.Ordinal),
-    "Silent interface overlay textbox color call was not repaired with the correct two-argument API.");
-Console.WriteLine("PASS: Silent interface overlay textbox color call uses the declared two-argument API.");
+      silentOverlayColorRepaired.Contains("local Color MethosSilentTextColor;", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("MethosSilentTextColor = RecoveredName_98(\"white\");", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)", StringComparison.Ordinal),
+    "Silent interface overlay textbox color call did not use a typed local Color and the correct textbox handle.");
+Console.WriteLine("PASS: Silent interface overlay textbox color call uses a typed local Color.");
 
 
 
@@ -480,10 +481,11 @@ function OnLoad()
 string silentTextboxRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentTextboxSample, out IReadOnlyList<string> silentTextboxRepairs);
 Check(silentTextboxRepairs.Count == 1 &&
-      silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
-      !silentTextboxRepaired.Contains("OKTUBRE INTERFACE\", RecoveredName_98", StringComparison.Ordinal),
-    "Silent branding textbox color call did not receive the correct control and color arguments.");
-Console.WriteLine("PASS: Silent branding textbox color call uses the correct API signature.");
+      silentTextboxRepaired.Contains("local Color MethosSilentTextColor;", StringComparison.Ordinal) &&
+      silentTextboxRepaired.Contains("MethosSilentTextColor = RecoveredName_98(\"white\");", StringComparison.Ordinal) &&
+      silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)", StringComparison.Ordinal),
+    "Silent branding textbox color call did not use a typed local Color and the correct textbox handle.");
+Console.WriteLine("PASS: Silent branding textbox color call uses the typed local Color API pattern.");
 
 
 string logoWndFieldSample = """
