@@ -346,9 +346,9 @@ public static class UnrealScriptSourceIndex
             // the valueless return; preserve the intended boolean fallback explicitly.
             if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase))
             {
-                int start = function.BodyOffset + tokens[lastReturn].Start;
-                int end = function.BodyOffset + tokens[lastReturn + 1].End;
-                edits.Add((start, end - start, function.Name, function.Line, "return false;"));
+                int boolReturnStart = function.BodyOffset + tokens[lastReturn].Start;
+                int boolReturnEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((boolReturnStart, boolReturnEnd - boolReturnStart, function.Name, function.Line, "return false;"));
                 continue;
             }
 
