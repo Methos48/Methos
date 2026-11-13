@@ -573,6 +573,10 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        repairs = applied;
+        return source;
+    }
+
     private static bool TryRestoreMissingLoopLabel(
         ref string source,
         string functionName,
@@ -602,7 +606,4 @@ public static class UnrealScriptTypeReferenceRepair
         return true;
     }
 
-    private static string ReplaceIdentifierToken        repairs = applied;
-        return source;
-    }
 }
