@@ -23,7 +23,7 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 - La aplicación conserva un único ejecutable de producto: `Methos.exe`; XDAT se integra como módulo interno.
 - Se separó el paquete Unreal de referencia en `reference-data/Interface-UEditor.u` para evitar la colisión de nombres entre `Interface.u` y `interface.u` en Windows.
 - GitHub Actions confirmó la migración de fuentes y la generación del archivo de fuentes. La primera validación UCC detectó que un workflow todavía apuntaba al `interface.u` de XDAT; se corrigió para usar el paquete Unreal de referencia. La validación posterior y la compilación Windows están pendientes de su resultado final.
-- **No se vació todavía `Methos-U-Editor`**: primero se terminará de verificar el instalador, las pruebas y los archivos migrados. Solo después se retirará el contenido del repositorio anterior.
+- **Limpieza completada:** `Methos-U-Editor` quedó sin archivos en sus tres ramas (`main`, `backup/methos-foundation-2026-11-12` y `validate-native-engine`). El historial Git anterior se conserva como respaldo histórico; el repositorio activo del proyecto es únicamente `Methos-XDAT`.
 
 
 ### 12-11-2026 — Interfaz principal y presentación
