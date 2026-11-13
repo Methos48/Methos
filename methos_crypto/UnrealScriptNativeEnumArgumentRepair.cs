@@ -120,7 +120,7 @@ public static class UnrealScriptNativeEnumArgumentRepair
         };
 
     /// <summary>
-    /// Restores typed DrawItemInfo.eType enum assignments in UICommonAPI.
+    /// Restores typed DrawItemInfo.eType enum assignments in recovered interface classes.
     /// The values are defined by UIEventManager.EDrawItemType in the
     /// verified Interlude native API source.
     /// </summary>
@@ -130,11 +130,6 @@ public static class UnrealScriptNativeEnumArgumentRepair
         ArgumentNullException.ThrowIfNull(className);
         ArgumentNullException.ThrowIfNull(source);
         var applied = new List<string>();
-        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
-        {
-            repairs = applied;
-            return source;
-        }
 
         string repaired = Regex.Replace(
             source,
