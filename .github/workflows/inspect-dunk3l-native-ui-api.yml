@@ -1,0 +1,50 @@
+name: Inspect Dunk3l Native UI API
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-dunk3l-native-ui-api.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Methos48/Methos-U-Editor
+          path: u-editor
+          persist-credentials: false
+      - name: Decompile UCC packages and locate UIScript declarations
+        shell: pwsh
+        run: |
+          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $root = Join-Path $PWD "UCC-Native-API"
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $packages = Get-ChildItem -LiteralPath $root -Recurse -Filter "*.u" -File
+          if (!$packages) { throw "No UCC packages found" }
+          $summary = @()
+          foreach ($pkg in $packages) {
+            $safe = [IO.Path]::GetFileNameWithoutExtension($pkg.Name)
+            $out = Join-Path $root ("Classes-" + $safe)
+            Write-Host "DECOMPILING_PACKAGE=$($pkg.FullName)"
+            dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $pkg.FullName $out
+            if ($LASTEXITCODE -ne 0) { Write-Host "PACKAGE_DECOMPILE_WARNING=$safe" }
+            $files = Get-ChildItem -LiteralPath $out -Recurse -Filter "*.uc" -File -ErrorAction SilentlyContinue
+            if ($files) {
+              $matches = $files | Select-String -Pattern "class\s+UIScript|PlayConsoleSound|IFST_WINDOW|enum\s+.*Sound|ConsoleSound" -Context 2,3
+              foreach ($m in $matches) { Write-Host ("API_MATCH=" + $m.ToString()) }
+              $summary += [pscustomobject]@{ Package=$safe; Classes=$files.Count; UIScript=([bool]($files | Select-String -Pattern "class\s+UIScript" -Quiet)) }
+            }
+          }
+          Write-Host "PACKAGE_SUMMARY:"
+          $summary | Format-Table -AutoSize | Out-String | Write-Host
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dunk3l-Native-UI-API-Source
+          path: UCC-Native-API/Classes-*/*.uc
+          if-no-files-found: error
+          retention-days: 7
