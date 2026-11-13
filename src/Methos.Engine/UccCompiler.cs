@@ -678,7 +678,7 @@ function HandleHideLogo()
             foreach (Match function in declarations)
             {
                 string name = function.Groups["name"].Value;
-                if (Regex.IsMatch(source, @"(?im)^\s*function\s+(?:[A-Za-z_]\w*\s+)?" +
+                if (Regex.IsMatch(source, @"(?im)^\s*(?:simulated\s+)?function\s+(?:[A-Za-z_]\w*\s+)?" +
                     Regex.Escape(name) + @"\s*\("))
                     continue;
                 if (!Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\s*\("))
