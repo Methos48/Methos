@@ -273,7 +273,7 @@ jobs:
           if (Test-Path $referenceUiCommon) {
             Copy-Item -LiteralPath $referenceUiCommon -Destination (Join-Path $diagnostics "UICommonAPI-reference.uc") -Force
             Write-Host "=== REFERENCE UICOMMONAPI CHARACTER CONVERSION ==="
-            Select-String -LiteralPath $referenceUiCommon -Pattern "curAscii|Asc\\(|Chr\\(" | ForEach-Object { Write-Host "$($_.LineNumber): $($_.Line.Trim())" }
+            Select-String -LiteralPath $referenceUiCommon -Pattern 'curAscii|Asc\(|Chr\(' | ForEach-Object { Write-Host "$($_.LineNumber): $($_.Line.Trim())" }
           }
           $registry = Join-Path $env:RUNNER_TEMP "SilentDark-native-function-registry.json"
           if (Test-Path $registry) {
