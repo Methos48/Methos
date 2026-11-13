@@ -489,6 +489,126 @@ function AddTooltipItemIcon(ItemInfo item)
         return source;
     }
 
+    // Restore Berserker's missing item-icon and option-row tooltip helpers.
+    private static string RestoreToolTipItemIcon(string className, string source, out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("AddTooltipItemIcon(", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+AddTooltipItemIcon\s*\("))
+            return source;
+        const string handler = @"
+function AddTooltipItemIcon(ItemInfo item)
+{
+    local UIEventManager.EItemParamType EItemParamType;
+    EItemParamType = byte(item.ItemType);
+    StartItem();
+    m_Info.eType = DIT_TEXTURE;
+    m_Info.t_bDrawOneLine = true;
+    m_Info.u_nTextureWidth = 32;
+    m_Info.u_nTextureHeight = 32;
+    m_Info.u_strTexture = item.IconName;
+    EndItem();
+    if(IsEnchantableItem(EItemParamType) && item.Enchanted > 0 && item.Enchanted <= 50)
+    {
+        StartItem();
+        m_Info.eType = DIT_TEXTURE;
+        m_Info.nOffSetX = -32;
+        m_Info.t_bDrawOneLine = true;
+        m_Info.u_nTextureWidth = 32;
+        m_Info.u_nTextureHeight = 32;
+        m_Info.u_strTexture = ""L2UI_CH3.EnchantNumbers.enchant"" $ string(item.Enchanted);
+        EndItem();
+    }
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
+    private static string RestoreToolTipOptionHelpers(string className, string source, out int restoredCount)
+    {
+        restoredCount = 0;
+        if (!className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)) return source;
+        var additions = new List<string>();
+        if (source.Contains("AddTooltipItemOptionETC(", StringComparison.Ordinal) &&
+            !Regex.IsMatch(source, @"(?im)^\s*function\s+AddTooltipItemOptionETC\s*\("))
+        {
+            additions.Add(@"
+function AddTooltipItemOptionETC(int TitleID, string Content, bool bTitle, bool bContent, bool IamFirst, bool isCard)
+{
+    if(bTitle)
+    {
+        StartItem(); m_Info.eType = DIT_TEXT; m_Info.nOffSetX = 36; m_Info.nOffSetY = -14;
+        m_Info.bLineBreak = true; m_Info.t_bDrawOneLine = true;
+        m_Info.t_color.R = 163; m_Info.t_color.G = 163; m_Info.t_color.B = 163; m_Info.t_color.A = byte(255);
+        m_Info.t_ID = TitleID; EndItem();
+    }
+    if(bContent)
+    {
+        if(bTitle)
+        {
+            StartItem(); m_Info.eType = DIT_TEXT; m_Info.nOffSetY = -14; m_Info.t_bDrawOneLine = true;
+            m_Info.t_color.R = 163; m_Info.t_color.G = 163; m_Info.t_color.B = 163; m_Info.t_color.A = byte(255);
+            m_Info.t_strText = "" : ""; EndItem();
+        }
+        StartItem(); m_Info.eType = DIT_TEXT;
+        if(!IamFirst) m_Info.nOffSetY = -14;
+        if(!bTitle) m_Info.bLineBreak = true;
+        if(isCard) m_Info.nOffSetX = 36;
+        m_Tooltip.SimpleLineCount = 2; m_Info.t_bDrawOneLine = true;
+        m_Info.t_color.R = 176; m_Info.t_color.G = 155; m_Info.t_color.B = 121; m_Info.t_color.A = byte(255);
+        m_Info.t_strText = Content; EndItem();
+    }
+    return;
+}
+");
+            restoredCount++;
+        }
+        if (source.Contains("AddTooltipItemOptionETC2(", StringComparison.Ordinal) &&
+            !Regex.IsMatch(source, @"(?im)^\s*function\s+AddTooltipItemOptionETC2\s*\("))
+        {
+            additions.Add(@"
+function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, bool bContent, bool IamFirst)
+{
+    if(bTitle)
+    {
+        StartItem(); m_Tooltip.SimpleLineCount = 2; m_Info.eType = DIT_TEXT; m_Info.nOffSetX = 36;
+        m_Info.nOffSetY = -14; m_Info.bLineBreak = true; m_Info.t_bDrawOneLine = true;
+        m_Info.t_color.R = 163; m_Info.t_color.G = 163; m_Info.t_color.B = 163; m_Info.t_color.A = byte(255);
+        m_Info.t_strText = TitleID; EndItem();
+    }
+    if(bContent)
+    {
+        if(bTitle)
+        {
+            StartItem(); m_Info.eType = DIT_TEXT; m_Info.nOffSetY = -14; m_Info.t_bDrawOneLine = true;
+            m_Info.t_color.R = 163; m_Info.t_color.G = 163; m_Info.t_color.B = 163; m_Info.t_color.A = byte(255);
+            m_Info.t_strText = "" : ""; EndItem();
+        }
+        StartItem(); m_Info.eType = DIT_TEXT;
+        if(!IamFirst) m_Info.nOffSetY = -14;
+        if(!bTitle) m_Info.bLineBreak = true;
+        m_Info.t_bDrawOneLine = true;
+        m_Info.t_color.R = 176; m_Info.t_color.G = 155; m_Info.t_color.B = 121; m_Info.t_color.A = byte(255);
+        m_Info.t_strText = Content; EndItem();
+    }
+    return;
+}
+");
+            restoredCount++;
+        }
+        if (additions.Count == 0) return source;
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        return source.Insert(firstFunction.Index,
+            string.Join(Environment.NewLine + Environment.NewLine, additions) + Environment.NewLine + Environment.NewLine);
+    }
+
     // OptionWnd's Berserker-specific checkbox controls the two PvP/PK count
     // text widgets exposed by DetailStatusWnd. Restore this missing UI handler.
     private static string RestoreOptionWndDualCountHandler(string className, string source,
@@ -869,6 +989,10 @@ function HandleHideLogo()
                 source = RestoreReferencedMissingFunctions(source, referenceSource,
                     out int restoredOptionWndHandlers);
                 repairedIdentifiers += restoredOptionWndHandlers;
+                source = RestoreToolTipItemIcon(className, source, out bool restoredToolTipItemIcon);
+                if (restoredToolTipItemIcon) repairedIdentifiers++;
+                source = RestoreToolTipOptionHelpers(className, source, out int restoredToolTipOptionHelpers);
+                repairedIdentifiers += restoredToolTipOptionHelpers;
                 if (restoredOptionWndHandlers > 0)
                 {
                     var allAvailableClassNames = sourceFiles
