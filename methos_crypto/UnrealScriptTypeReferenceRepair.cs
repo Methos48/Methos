@@ -45,7 +45,7 @@ public static class UnrealScriptTypeReferenceRepair
             var missingFields = new (string Type, string Name)[]
             {
                 ("WindowHandle", "RecoveredName_2057"),
-                ("TextBoxHandle[29]", "RecoveredName_2070"),
+                ("TextBoxHandle", "RecoveredName_2070[29]"),
                 ("string", "RecoveredName_2105"),
                 ("string", "RecoveredName_2106"),
                 ("string", "RecoveredName_2107"),
@@ -87,9 +87,9 @@ public static class UnrealScriptTypeReferenceRepair
             foreach (var field in missingFields)
             {
                 if (!System.Text.RegularExpressions.Regex.IsMatch(
-                    source, @"(?m)^\\s*var\\s+(?:private\\s+)?" +
-                    System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\\s+" +
-                    System.Text.RegularExpressions.Regex.Escape(field.Name) + @"(?:\\s*\\[[^]]+\\])?\\s*;"))
+                    source, @"(?m)^\s*var\s+(?:private\s+)?" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\s+" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Name) + @"\s*;"))
                     declarations.Add("var private " + field.Type + " " + field.Name + ";");
             }
             if (declarations.Count > 0)
