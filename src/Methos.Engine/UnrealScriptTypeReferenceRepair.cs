@@ -594,6 +594,15 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
         }
 
+        if (className.Equals("SystemMsgWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("RecoveredName_4557.Clear()", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_4557", "MethosRecoveredName_4596", StringComparison.Ordinal);
+            source = source.Replace("RecoveredName_4558", "MethosRecoveredName_4597", StringComparison.Ordinal);
+            source = source.Replace("RecoveredName_4559", "MethosRecoveredName_4598", StringComparison.Ordinal);
+            applied.Add("Dunk3l SystemMsgWnd clear calls rebound to their declared chat handles");
+        }
+
         if (className.Equals("SystemBarWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("RecoveredName_4534 = TextBoxHandle(GetHandle(m_WindowName $ \".PVPInfo\"))", StringComparison.Ordinal))
         {
