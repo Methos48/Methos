@@ -543,6 +543,20 @@ jobs:
           Write-Host "===== STAGED STATUSWND CALL ====="
           Select-String -LiteralPath $staged -Pattern 'SetNameWithColor' -Context 3,3
 
+      - name: Inspect Animal name color function signatures
+        shell: pwsh
+        run: |
+          Write-Host "===== SETNAMEWITHCOLOR DECLARATIONS IN REFERENCE KIT ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse |
+            Select-String -Pattern '(?i)function[^\r\n]*SetNameWithColor|SetNameWithColor\s*\(' |
+            Select-Object -First 100
+          Write-Host "===== RECOVEREDNAME_98 DECLARATIONS IN ANIMAL SOURCES ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse |
+            Select-String -Pattern '(?i)function[^\r\n]*RecoveredName_98|RecoveredName_98\s*\(' |
+            Select-Object -First 100
+          Write-Host "===== STATUSWND COLOR HELPER DECLARATIONS ====="
+          Select-String -LiteralPath (Join-Path $env:ANIMAL_SOURCES "StatusWnd.uc") -Pattern '(?i)function[^\r\n]*RecoveredName|function[^\r\n]*Color' -Context 1,4
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
