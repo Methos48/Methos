@@ -504,6 +504,23 @@ Check(dunk3lStatusColorRepairs.Count == 1 &&
     "Dunk3l StatusWnd did not bind its orange text color to the actual UICommonAPI helper.");
 Console.WriteLine("PASS: Dunk3l StatusWnd uses the recovered UICommonAPI Color helper.");
 
+string dunk3lTimerActorSample = """
+class UISublimityCommonAPI extends UICommonAPI;
+function SpawnTimerActor()
+{
+    m_TimerActor = new (none, "SublimityTimerActor") Class'Methos-Dunk3l-2f1f4a5be1ad40db805655b71e256c2a.SublimityTimerActor';
+    return;
+}
+""";
+string dunk3lTimerActorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "UISublimityCommonAPI", dunk3lTimerActorSample, out IReadOnlyList<string> dunk3lTimerActorRepairs);
+Check(dunk3lTimerActorRepairs.Count == 1 &&
+      dunk3lTimerActorRepaired.Contains("Class'Interface.SublimityTimerActor'", StringComparison.Ordinal) &&
+      !dunk3lTimerActorRepaired.Contains("Methos-Dunk3l-", StringComparison.Ordinal),
+    "Dunk3l timer actor package reference was not restored to Interface.");
+Console.WriteLine("PASS: Dunk3l timer actor reference targets the Interface package.");
+
+
 
 
 string silentTextboxSample = """
