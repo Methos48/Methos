@@ -192,14 +192,15 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
 """;
 string inventoryHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "InventoryWnd", inventoryHandleSample, out IReadOnlyList<string> inventoryHandleRepairs);
-Check(inventoryHandleRepairs.Count == 4 &&
+Check(inventoryHandleRepairs.Count == 3 &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2802;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
-      inventoryHandleRepaired.Contains("IsChecked(\"InventoryWnd\")", StringComparison.Ordinal) &&
-      inventoryHandleRepaired.Contains("SlotBitType == 1048576 || RecoveredName_2883.SlotBitType == 2097152", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("RecoveredName_1266", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("IsChecked(", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("RecoveredName_1455", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("if((!((((((((Info.DragSrcName", StringComparison.Ordinal),
     "InventoryWnd missing state fields or malformed drag-source predicate were not repaired.");
 Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
