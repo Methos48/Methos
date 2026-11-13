@@ -15,15 +15,28 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Estado actual y regla de arquitectura (13-11-2026)
 
-- **Nombre único del producto:** Methos.
-- **Repositorio único de trabajo:** https://github.com/Methos48/Methos (rama `main`).
-- **Aplicación única:** `Methos.exe`, con dos módulos accesibles desde la misma interfaz: **ARCHIVOS U** y **ARCHIVOS XDAT**.
-- U y XDAT no son dos productos ni dos instaladores. Se mantienen sus motores, dependencias y pruebas dentro del mismo proyecto; cualquier proceso auxiliar interno no cambia esta regla de producto.
-- No duplicar la aplicación, no crear un ejecutable de producto separado para XDAT y no dividir el desarrollo en repositorios independientes.
-- La compilación Windows (run `43387205032`) y la validación UCC (run `43386687102`) finalizaron correctamente. Esto acredita los pasos automatizados ejecutados, no compatibilidad universal ni pruebas completas dentro del cliente real.
-- Artefacto Windows más reciente: `Methos-Windows-Installer-x64`, ID `14018119516`, tamaño 77,736,613 bytes.
+- **Producto:** una sola aplicación Windows llamada Methos, con los módulos ARCHIVOS U y ARCHIVOS XDAT dentro de la misma interfaz.
+- **Distribución:** un solo ejecutable principal `Methos.exe` y un solo instalador `Methos-Setup.exe`; no se distribuyen aplicaciones independientes U/XDAT.
+- **Proyectos canónicos:** `src/Methos.App/Methos.App.csproj` y `src/Methos.Engine/Methos.Engine.csproj`. El motor es una biblioteca interna, no un segundo producto.
+- **Código XDAT:** `tools/xdat/xdat_core.py` es la fuente canónica del parser/compilador. El runtime copia ese archivo y `src/Methos.App/XdatBridge.py`; las pruebas se ejecutan desde el repositorio.
+- **Fixtures XDAT:** `reference-data/kits/Methos-XDAT-Reference-Fixtures.zip` contiene únicamente paquetes binarios/XML de referencia. El workflow extrae solo `interface.xdat` y los XML necesarios; no extrae ni ejecuta la antigua interfaz `app.py`, ni distribuye `l2encdec.exe`.
+- **Limpieza estructural:** se retiraron `methos_crypto/`, los proyectos/rutas heredados `MethosUEditor` y `MethosUEngine`, y los antiguos overlays `tools/xdat/maintenance/`. La estructura activa mantiene un solo motor C# y una sola fuente XDAT.
+- **Validación Windows:** [Windows Release 43401463785](https://github.com/Methos48/Methos/actions/runs/43401463785) terminó en **SUCCESS (27 pasos)**. Generó el instalador, probó instalación silenciosa y arranque de `Methos.exe`. Artefacto `Methos-Windows-Installer-x64`, ID `14024748596`, tamaño 77,768,945 bytes.
+- **Archivo limpio de fixtures:** el workflow generó `Methos-XDAT-Reference-Fixtures-Clean`, ID `14025406957`, tamaño 472,410 bytes, y lo normalizó en `main`.
+- **Límite funcional pendiente:** `auto_pipeline.py` se conserva como módulo fuente y tiene pruebas, pero todavía no está conectado al puente C# de la interfaz. No afirmar que el runtime actual procesa todas las variantes cifradas ni que usa `l2encdec.exe`.
+- **Incidencia UCC separada:** el workflow `Silent Dark U and XDAT round-trip` falla en la compilación U por `InventoryWnd.uc(1529): Error, Missing function name`. El mismo error aparece en una ejecución anterior a la unificación (run `43400534612`), por lo que no lo introduce esta limpieza. Debe tratarse como un problema funcional del compilador/fuente U; ese workflow aborta antes de llegar a la fase XDAT.
+- **Conclusión:** la unificación estructural y la distribución de un solo Methos están integradas y validadas por Windows Release. La siguiente etapa es resolver la incidencia UCC y validar recorridos funcionales reales U y XDAT, sin añadir capacidades no probadas.
 
 ## Registro de avances
+
+### 13-11-2026 — Cierre de unificación estructural y validación Windows
+
+- Se confirmó en `main` la aplicación única `Methos.exe`, con U y XDAT como módulos internos.
+- Se normalizaron los proyectos a `Methos.App` y `Methos.Engine`; no quedan las carpetas activas duplicadas `methos_crypto/`, `MethosUEditor/` ni `MethosUEngine/`.
+- El runtime XDAT usa directamente `tools/xdat/xdat_core.py`. El ZIP histórico fue sustituido por un archivo de fixtures que contiene solo datos de prueba; el workflow no extrae ni ejecuta `app.py` ni instala `l2encdec.exe`.
+- Windows Release `43401463785` terminó SUCCESS en 27 pasos, con instalador, instalación silenciosa y arranque verificados.
+- El round-trip UCC de Silent Dark mantiene una incidencia conocida en `InventoryWnd.uc(1529)`, reproducida también antes de la unificación. Se deja como tarea funcional separada.
+- No añadir funciones nuevas hasta resolver y probar los recorridos reales de U y XDAT.
 
 ### 13-11-2026 — Normalización de nombres internos (rama de revisión)
 
@@ -68,20 +81,11 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Pendientes prioritarios
 
-1. **Validar la versión actual en Windows CI:** comprobar compilación, generación del icono, instalador, acceso directo, instalación silenciosa y arranque. Revisar logs si falla y corregir antes de dar por finalizada la interfaz.
-2. **Revisar el recorrido real de ARCHIVOS U:** selector de archivos, copia de seguridad, descompilación, importación de fuentes, compilación, exportación y preservación de la protección original. Probar con archivos de referencia y verificar integridad/round-trip.
-3. **Revisar el recorrido real de ARCHIVOS XDAT:** selección, copia de seguridad, detección, descifrado, edición, recompilación y validación. Separar claramente protocolos confirmados de los desconocidos.
-4. **Investigar la segunda interfaz personalizada:** utilizar los dos lados (archivo protegido y archivo descifrado) que el usuario mantiene en sus repositorios Methos. No asumir que es Dunk3l ni confundirla con el ejemplo XDAT del proyecto.
-5. **Integrar cada método nuevo solo después de probarlo** con archivos de referencia y comprobar que el resultado vuelve a ser legible por el formato/herramienta correspondiente.
-6. **Preparar la entrega final llamada Methos:** instalador Windows, código fuente, instrucciones claras y registro actualizado en GitHub.
-
-
-- **Validación final de la unificación (13-11-2026):**
-  - GitHub Actions UCC: [ejecución 43386687102](https://github.com/Methos/actions/runs/43386687102) — SUCCESS. Compiló las 169 fuentes, validó la estructura del paquete, pasó las pruebas unitarias, la modificación real de bytecode y la comprobación de descompilación/recompilación.
-  - Methos Windows x64: [ejecución 43386686912](https://github.com/Methos/actions/runs/43386686912) — SUCCESS. Generó el ejecutable, integró UCC y XDAT, probó instalación silenciosa y arranque, y confirmó que no se instala un segundo ejecutable XDAT.
-  - Instalador: artefacto `Methos-Windows-Installer-x64`, ID `14019051859`, tamaño 77,735,569 bytes. SHA-256: `73937bc92cb5051d9b2270167b88b6d23c08043a95187b4e91a727078f8a8ea5`.
-  - La fuente del instalador y los artefactos de validación están publicados en el repositorio único `Methos`.
-- **Limpieza del repositorio anterior:** el contenido de `Methos-U-Editor` quedó vaciado en sus ramas después de la migración. Su historial Git permanece como respaldo histórico; no es un repositorio de trabajo.
+1. **Resolver la incidencia UCC conocida:** investigar `InventoryWnd.uc(1529): Missing function name` en el workflow Silent Dark; comparar el archivo de entrada, la salida reparada y el diagnóstico del compilador.
+2. **Validar ARCHIVOS U con paquetes reales:** copia de seguridad, descompilación, importación, compilación y round-trip sin modificar originales.
+3. **Validar ARCHIVOS XDAT con archivos reales:** paquetes ct0 limpios y editados, preservación binaria y verificación del resultado.
+4. **Mantener explícito el alcance de cifrado:** `auto_pipeline.py` no está conectado a la interfaz C#; integrar variantes protegidas solo después de validar el motor y su dependencia, sin afirmar soporte no probado.
+5. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
 
 ## Reglas para continuar el trabajo
 

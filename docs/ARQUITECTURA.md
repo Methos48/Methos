@@ -31,7 +31,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 |---|---|
 | `src/Methos.App/` | Aplicación gráfica principal Methos, navegación y conexión de los módulos U y XDAT. |
 | `src/Methos.Engine/` | Biblioteca interna C# del motor Unreal/UCC y codecs/protecciones, referenciada por Methos.App y las pruebas. |
-| `tools/xdat/` | Código y herramientas mantenidas del módulo XDAT: motor, detección de cifrado, pipeline, metadatos y validadores. Las adaptaciones del kit Windows están en `tools/xdat/maintenance/`; la migración total desde el kit histórico sigue pendiente. |
+| `tools/xdat/` | Fuente canónica del motor XDAT, detección, pipeline, metadatos, validadores y preparación segura de fixtures. |
 | `src/Methos.App/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
 | `tests/` | Pruebas automatizadas U, protección y XDAT. Las pruebas Python importan el código desde `tools/xdat/`. |
 | `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
@@ -42,7 +42,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 ## Archivos de entrada de compilación y referencias
 
-Los scripts de soporte XDAT ya no están en la raíz: su ubicación canónica es `tools/xdat/` y `tools/xdat/maintenance/`. Las pruebas Python permanecen bajo `tests/`. Los kits, paquetes y binarios de referencia están clasificados bajo `reference-data/kits/`, `reference-data/client/lineage2/`, `reference-data/ucc-runtime/`, `reference-data/packages/` y `reference-data/visuals/`. Los workflows deben consumirlos desde esas rutas. El kit XDAT histórico todavía alimenta la compilación de lanzamiento y aporta la aplicación fuente sobre la que se aplican las capas de mantenimiento; el código `tools/xdat/xdat_core.py` aún no sustituye por completo ese kit. No retirar el kit hasta migrar la aplicación base y validar el runtime resultante.
+El runtime XDAT se construye desde `tools/xdat/xdat_core.py` y `src/Methos.App/XdatBridge.py`. El archivo `reference-data/kits/Methos-XDAT-Reference-Fixtures.zip` contiene únicamente paquetes binarios/XML de prueba. `tools/xdat/prepare_reference_fixtures.py` extrae solo `interface.xdat` y los XML necesarios, con validación de rutas. No se extrae ni ejecuta la antigua interfaz `app.py`, no se instalan DLL ni ejecutables de ese kit y no se depende de overlays sobre una aplicación externa.
 
 Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
