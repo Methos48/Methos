@@ -55,7 +55,26 @@ try
         throw new InvalidDataException($"Berserker source export still contains {unresolved} unresolved native calls: {string.Join(", ", unresolvedFiles.Take(20))}");
 
     string marker = "MethosBerserkerFinalProbe_20261113";
-    string tooltip = Path.Combine(sourceDirectory, "ToolTip.uc");
+    Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+    // First produce a clean, installable rebuild from the untouched recovered sources.
+    UccCompileResult cleanCompile = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
+    byte[] cleanPackage = UnrealNameSanitizer.RestoreOriginalNames(cleanCompile.PackageBytes, sourceDirectory);
+    var cleanIndex = UnrealPackageIndex.Parse(cleanPackage);
+    if (cleanIndex.Names.Contains(marker, StringComparer.Ordinal))
+        throw new InvalidDataException("Clean Berserker package unexpectedly contains the test marker.");
+    var cleanReopened = ProtectionPipelinePlanner.InspectFullPipeline(cleanPackage, inputPath);
+    if (!cleanReopened.IsPlaintextCandidate || !cleanReopened.DecodedPayload.AsSpan().SequenceEqual(cleanPackage))
+        throw new InvalidDataException("Clean rebuilt Interface.u did not reopen correctly.");
+    string cleanOutputPath = Path.Combine(Path.GetDirectoryName(outputPath)!, "Interface-clean.u");
+    File.WriteAllBytes(cleanOutputPath, cleanPackage);
+
+    // Then compile a separate copy with a deliberate edit to prove changes survive rebuilding.
+    string editedSourceDirectory = Path.Combine(outputRoot, "EditedSources");
+    Directory.CreateDirectory(editedSourceDirectory);
+    foreach (string file in Directory.GetFiles(sourceDirectory, "*.uc", SearchOption.TopDirectoryOnly))
+        File.Copy(file, Path.Combine(editedSourceDirectory, Path.GetFileName(file)), true);
+    string tooltip = Path.Combine(editedSourceDirectory, "ToolTip.uc");
     if (!File.Exists(tooltip)) throw new FileNotFoundException("ToolTip.uc missing after export.", tooltip);
     string tooltipText = File.ReadAllText(tooltip);
     int declarationEnd = tooltipText.IndexOf(';');
@@ -64,27 +83,18 @@ try
     tooltipText = tooltipText.Insert(declarationEnd + 1, Environment.NewLine + "var string " + marker + ";" + Environment.NewLine);
     File.WriteAllText(tooltip, tooltipText, new UTF8Encoding(false));
 
-    UccCompileResult compiled = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
-    byte[] compiledPackage = UnrealNameSanitizer.RestoreOriginalNames(compiled.PackageBytes, sourceDirectory);
-    var compiledIndex = UnrealPackageIndex.Parse(compiledPackage);
-    if (!compiledIndex.Names.Contains(marker, StringComparer.Ordinal))
-        throw new InvalidDataException("The final edit marker was not found in the compiled U package.");
-
-    byte[] rebuiltProtected = compiledPackage;
-    if (inspection.Plan.Layers.Count > 0)
-        throw new NotSupportedException("Berserker was expected to be an unprotected plaintext candidate; a protection encoder path must be validated separately.");
-
-    var reopened = ProtectionPipelinePlanner.InspectFullPipeline(rebuiltProtected, inputPath);
-    if (!reopened.IsPlaintextCandidate || !reopened.DecodedPayload.AsSpan().SequenceEqual(compiledPackage))
-        throw new InvalidDataException("Rebuilt Interface.u did not reopen to the compiled package.");
-    if (!UnrealPackageIndex.Parse(reopened.DecodedPayload).Names.Contains(marker, StringComparer.Ordinal))
-        throw new InvalidDataException("Final edit marker did not persist after reopening.");
-
-    Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-    File.WriteAllBytes(outputPath, rebuiltProtected);
+    UccCompileResult editedCompile = UccCompiler.CompileInterface(runtimeRoot, editedSourceDirectory);
+    byte[] editedPackage = UnrealNameSanitizer.RestoreOriginalNames(editedCompile.PackageBytes, editedSourceDirectory);
+    if (!UnrealPackageIndex.Parse(editedPackage).Names.Contains(marker, StringComparer.Ordinal))
+        throw new InvalidDataException("The edit marker was not found in the compiled test U package.");
+    var editedReopened = ProtectionPipelinePlanner.InspectFullPipeline(editedPackage, inputPath);
+    if (!editedReopened.IsPlaintextCandidate || !editedReopened.DecodedPayload.AsSpan().SequenceEqual(editedPackage) ||
+        !UnrealPackageIndex.Parse(editedReopened.DecodedPayload).Names.Contains(marker, StringComparer.Ordinal))
+        throw new InvalidDataException("The modified test U package did not reopen with its edit intact.");
+    File.WriteAllBytes(outputPath, editedPackage);
     File.WriteAllText(Path.Combine(outputRoot, "final-validation.txt"),
-        $"PASS: Berserker U export/resolve/edit/compile/reopen; classes={decompiled.ExportedCount}; nativeEntries={natives.Count}; unresolvedNativeCalls={unresolved}; marker={marker}; bytes={rebuiltProtected.Length}{Environment.NewLine}");
-    Console.WriteLine($"PASS: Berserker final U validation; classes={decompiled.ExportedCount}; nativeEntries={natives.Count}; unresolved={unresolved}; markerPersisted=true; bytes={rebuiltProtected.Length}");
+        $"PASS: Berserker clean build and separate edit round-trip; classes={decompiled.ExportedCount}; nativeEntries={natives.Count}; unresolvedNativeCalls={unresolved}; cleanBytes={cleanPackage.Length}; editedBytes={editedPackage.Length}; markerPersisted=true{Environment.NewLine}");
+    Console.WriteLine($"PASS: Berserker final U validation; classes={decompiled.ExportedCount}; nativeEntries={natives.Count}; unresolved={unresolved}; cleanBuild=true; editPersisted=true; cleanBytes={cleanPackage.Length}; editedBytes={editedPackage.Length}");
 }
 finally
 {
