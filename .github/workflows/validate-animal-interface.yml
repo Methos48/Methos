@@ -490,6 +490,21 @@ jobs:
             throw "Expected LoadingWnd ServerAgeLimit byte cast was not found; refusing a broad replacement."
           }
 
+      - name: Diagnose Animal StatusCustomWnd SetName parameter types
+        shell: pwsh
+        run: |
+          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude"
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "StatusCustomWnd.uc"
+          $referenceFile = Join-Path $referenceRoot "Interface/Classes/StatusCustomWnd.uc"
+          Write-Host "===== DECOMPILED STATUSCUSTOMWND SETNAME CONTEXT ====="
+          Select-String -LiteralPath $sourceFile -Pattern 'SetName' -Context 3,3
+          Write-Host "===== EXACT REFERENCE STATUSCUSTOMWND SETNAME CONTEXT ====="
+          Select-String -LiteralPath $referenceFile -Pattern 'SetName' -Context 3,3
+          Write-Host "===== SETNAME DECLARATIONS AND CALLS IN INTERLUDE SOURCE ====="
+          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)(function|static function).*\bSetName\s*\(|\.SetName\s*\(' -Context 1,2 | Select-Object -First 100
+          Write-Host "===== NAMECTRL API SOURCE FILES ====="
+          Get-ChildItem -LiteralPath $referenceRoot -Filter "*NAMECTRL*" -File -Recurse | Select-Object -ExpandProperty FullName
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
