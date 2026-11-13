@@ -175,7 +175,7 @@ var EditBoxHandle ChatEditBox;
 function OnLoad()
 {
     ChatFilterBtn = ButtonHandle(GetHandle("ChatHideWnd.ChatFilterBtn"));
-    ChatFilterBtn.SetTooltipCustomType(SetTooltip("Chat Filter\\\\nMouse R-Click: Hide Chat"));
+    ChatFilterBtn.SetTooltipCustomType(SetTooltip("Chat Filter\\nMouse R-Click: Hide Chat"));
 }
 """;
 string chatHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
