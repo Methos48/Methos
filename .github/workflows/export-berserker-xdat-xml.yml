@@ -46,6 +46,7 @@ jobs:
               raise RuntimeError(f'Cantidad inesperada al reconstruir: windows={windows}; shortcuts={shortcuts}')
           if rebuilt != source:
               raise RuntimeError(f'El XDAT reconstruido difiere del original: original={len(source)} bytes; reconstruido={len(rebuilt)} bytes')
+          Path('Berserker-XDAT/interface-rebuilt.xdat').write_bytes(rebuilt)
           print(f'PASS: XML -> XDAT -> parser; exact byte match; windows={windows}; shortcuts={shortcuts}; bytes={len(rebuilt)}')
           PY
       - uses: actions/upload-artifact@v4
