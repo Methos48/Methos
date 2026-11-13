@@ -534,7 +534,7 @@ function HandleHideLogo()
                 continue;
             Match function = Regex.Match(referenceSource,
                 @"(?ims)^\s*function\s+" + Regex.Escape(functionName) +
-                @"\s*\([^)]*\)[^\{]*\{.*?^\s*\}");
+                @"\s*\([^)]*\)[^\{]*\{.*?^\}");
             if (!function.Success) continue;
             recovered.Add(function.Value.Trim());
         }
