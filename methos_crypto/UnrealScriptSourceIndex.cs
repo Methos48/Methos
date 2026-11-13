@@ -352,6 +352,22 @@ public static class UnrealScriptSourceIndex
                 continue;
             }
 
+            // UELib can also append a valueless Return after an exhaustive if/else
+            // whose two branches already return a value. Keep this repair narrowly
+            // fingerprinted to the recovered EnchantAIWnd inventory lookup.
+            if (function.Name.Equals("GetScrollCount", StringComparison.OrdinalIgnoreCase) &&
+                function.ReturnType.Equals("int", StringComparison.OrdinalIgnoreCase) &&
+                body.Contains("FindItemWithClassID", StringComparison.Ordinal) &&
+                body.Contains("GetItem", StringComparison.Ordinal) &&
+                body.Contains("return ScrInfo.ItemNum;", StringComparison.Ordinal) &&
+                body.Contains("return 0;", StringComparison.Ordinal))
+            {
+                int trailingStart = function.BodyOffset + tokens[lastReturn].Start;
+                int trailingEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((trailingStart, trailingEnd - trailingStart, function.Name, function.Line, string.Empty));
+                continue;
+            }
+
             // UELib can emit a valueless trailing Return after a switch
             // even when every branch (including default) already returns.
             // Remove only this terminal statement, and only for non-void
