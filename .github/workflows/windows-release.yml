@@ -11,7 +11,7 @@ on:
       - "THIRD-PARTY-NOTICES.txt"
       - "PROGRESO-METHOS.md"
       - "reference-data/kits/Compilador-U.zip"
-      - "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip"
+      - "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip"
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
       - "tools/xdat/xdat_core.py"
@@ -29,7 +29,7 @@ on:
       - "README.md"
       - "reference-data/**"
       - "reference-data/kits/Compilador-U.zip"
-      - "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip"
+      - "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip"
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
       - "tools/xdat/package_origin_metadata.py"
@@ -211,7 +211,7 @@ jobs:
         shell: pwsh
         run: |
           $fixtureRoot = Join-Path $env:RUNNER_TEMP "methos-xdat-fixtures"
-          python tools/xdat/prepare_reference_fixtures.py --archive "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip" --output $fixtureRoot
+          python tools/xdat/prepare_reference_fixtures.py --archive "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip" --output $fixtureRoot
           if ($LASTEXITCODE -ne 0) { throw "No se pudieron preparar los fixtures XDAT." }
           "XDAT_REFERENCE_ROOT=$fixtureRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
 
