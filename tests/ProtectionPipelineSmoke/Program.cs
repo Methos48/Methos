@@ -613,7 +613,7 @@ function HandleManaBurnNotice(string param)
 """;
 string dunk3lManaBurnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "TargetStatusWnd", dunk3lManaBurnSample, out IReadOnlyList<string> dunk3lManaBurnRepairs);
-Check(dunk3lManaBurnRepairs.Count == 1 &&
+Check(dunk3lManaBurnRepairs.Count == 2 &&
       dunk3lManaBurnRepaired.Contains("const MANA_BURN_SKILL_ID = 1398;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("const CARDINAL_CLASS_ID = 97;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal) &&
