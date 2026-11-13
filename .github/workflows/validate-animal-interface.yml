@@ -326,9 +326,9 @@ jobs:
           Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse | ForEach-Object {
             $path = $_.FullName
             $sourceText = [IO.File]::ReadAllText($path)
-            $matches = @([regex]::Matches($sourceText, $signaturePattern))
-            for ($m = $matches.Count - 1; $m -ge 0; $m--) {
-              $match = $matches[$m]
+            $functionMatches = @([regex]::Matches($sourceText, $signaturePattern))
+            for ($m = $functionMatches.Count - 1; $m -ge 0; $m--) {
+              $match = $functionMatches[$m]
               $typeName = $match.Groups["type"].Value
               $functionName = $match.Groups["name"].Value
               $openBrace = $sourceText.IndexOf('{', $match.Index)
