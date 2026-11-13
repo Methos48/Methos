@@ -445,6 +445,24 @@ function onActiveTex(bool bActive, int nIndex)
         return source;
     }
 
+    // Berserker's InventoryWnd also contains an ear-item ordering loop. Its
+    // indexed entries expose ItemInfo.ServerID, so restore the omitted ItemInfo array.
+    private static string RestoreInventoryWndEarItemArray(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("m_EarItemList.Length", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*var\s+array<ItemInfo>\s+m_EarItemList\s*;"))
+            return source;
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index,
+            "var array<ItemInfo> m_EarItemList;" + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // UELib emits integer ordinals for this recovered enum switch, while
     // Interlude UCC requires the declared enum labels.
     private static string NormalizeEventMatchObserverMessageModeSwitch(string className, string source)
@@ -638,6 +656,9 @@ function onActiveTex(bool bActive, int nIndex)
                 source = RestoreInventoryWndItemOrderArray(className, source,
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
+                source = RestoreInventoryWndEarItemArray(className, source,
+                    out bool restoredEarItemArray);
+                if (restoredEarItemArray) repairedIdentifiers++;
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
