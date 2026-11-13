@@ -461,6 +461,31 @@ function HandleHideDualCount()
         return source;
     }
 
+    // OptionWnd delegates shortcut-number visibility to the matching
+    // InterfaceOptionWnd implementation; preserve that existing behavior.
+    private static string RestoreOptionWndShortcutTransparencyDelegate(string className,
+        string source, out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("SetShortcutTransparencyNum(", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+SetShortcutTransparencyNum\s*\("))
+            return source;
+
+        const string handler = @"
+function SetShortcutTransparencyNum()
+{
+    InterfaceOptionWnd(GetScript(""InterfaceOptionWnd"")).SetShortcutTransparencyNum();
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // The Berserker XDAT contains the separate aglogo window. Its matching
     // OptionWnd checkbox stores Custom/Logo and labels it "Hide Logo".
     private static string RestoreOptionWndLogoHandler(string className, string source,
@@ -747,6 +772,9 @@ function HandleHideLogo()
                 source = RestoreOptionWndLogoHandler(className, source,
                     out bool restoredLogoHandler);
                 if (restoredLogoHandler) repairedIdentifiers++;
+                source = RestoreOptionWndShortcutTransparencyDelegate(className, source,
+                    out bool restoredShortcutTransparencyDelegate);
+                if (restoredShortcutTransparencyDelegate) repairedIdentifiers++;
                 source = RestoreInventoryWndEarItemArray(className, source,
                     out bool restoredEarItemArray);
                 if (restoredEarItemArray) repairedIdentifiers++;
