@@ -871,6 +871,15 @@ function HandleHideLogo()
                 repairedIdentifiers += restoredOptionWndHandlers;
                 if (restoredOptionWndHandlers > 0)
                 {
+                    var allAvailableClassNames = sourceFiles
+                        .Select(path => Path.GetFileNameWithoutExtension(path))
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    source = RestoreMissingReferencedClassFields(className, source, referenceSource,
+                        allAvailableClassNames, out int restoredFieldsForRecoveredFunctions);
+                    repairedIdentifiers += restoredFieldsForRecoveredFunctions;
+                }
+                if (restoredOptionWndHandlers > 0)
+                {
                     source = UnrealScriptNativeFunctionNormalizer.Normalize(
                         source, nativeRegistryPath, out int optionWndNormalizedCalls,
                         out int optionWndUnresolvedCalls);
