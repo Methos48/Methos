@@ -449,7 +449,8 @@ string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownM
     "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
 Check(silentOverlayColorRepairs.Count == 1 &&
       silentOverlayColorRepaired.Contains("local Color MethosSilentTextColor;", StringComparison.Ordinal) &&
-      silentOverlayColorRepaired.Contains("MethosSilentTextColor = RecoveredName_98(\"white\");", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("MethosSilentTextColor.R = 255;", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("MethosSilentTextColor.A = 255;", StringComparison.Ordinal) &&
       silentOverlayColorRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)", StringComparison.Ordinal),
     "Silent interface overlay textbox color call did not use a typed local Color and the correct textbox handle.");
 Console.WriteLine("PASS: Silent interface overlay textbox color call uses a typed local Color.");
@@ -483,7 +484,8 @@ string silentTextboxRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismat
     "Interface_by_SILENT", silentTextboxSample, out IReadOnlyList<string> silentTextboxRepairs);
 Check(silentTextboxRepairs.Count == 1 &&
       silentTextboxRepaired.Contains("local Color MethosSilentTextColor;", StringComparison.Ordinal) &&
-      silentTextboxRepaired.Contains("MethosSilentTextColor = RecoveredName_98(\"white\");", StringComparison.Ordinal) &&
+      silentTextboxRepaired.Contains("MethosSilentTextColor.R = 255;", StringComparison.Ordinal) &&
+      silentTextboxRepaired.Contains("MethosSilentTextColor.A = 255;", StringComparison.Ordinal) &&
       silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)", StringComparison.Ordinal),
     "Silent branding textbox color call did not use a typed local Color and the correct textbox handle.");
 Console.WriteLine("PASS: Silent branding textbox color call uses the typed local Color API pattern.");
