@@ -563,6 +563,42 @@ jobs:
           Write-Host "===== STATUSWND COLOR HELPER DECLARATIONS ====="
           Select-String -LiteralPath (Join-Path $env:ANIMAL_SOURCES "StatusWnd.uc") -Pattern '(?i)function[^\r\n]*RecoveredName|function[^\r\n]*Color' -Context 1,4
 
+      - name: Restore Animal StatusWnd color helper with typed Color values
+        shell: pwsh
+        run: |
+          $status = Join-Path $env:ANIMAL_SOURCES "StatusWnd.uc"
+          $source = Get-Content -LiteralPath $status -Raw
+          $source = $source.Replace('RecoveredName_98("White")', 'MethosGetStatusColor("White")')
+          $source = $source.Replace('RecoveredName_98("Goldlite")', 'MethosGetStatusColor("Goldlite")')
+          if ($source -notmatch 'function\s+Color\s+MethosGetStatusColor') {
+            $helper = @'
+
+          function Color MethosGetStatusColor(string ColorName)
+          {
+            local Color ResultColor;
+            ResultColor.A = byte(255);
+            switch (ColorName)
+            {
+              case "Goldlite":
+                ResultColor.R = 176;
+                ResultColor.G = 153;
+                ResultColor.B = 121;
+                break;
+              case "White":
+              default:
+                ResultColor.R = byte(255);
+                ResultColor.G = byte(255);
+                ResultColor.B = byte(255);
+                break;
+            }
+            return ResultColor;
+          }
+          '@
+            $source += $helper
+          }
+          Set-Content -LiteralPath $status -Value $source -NoNewline
+          Select-String -LiteralPath $status -Pattern 'MethosGetStatusColor|Goldlite|SetNameWithColor' -Context 0,1
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
