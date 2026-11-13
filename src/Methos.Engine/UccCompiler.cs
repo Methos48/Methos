@@ -316,6 +316,28 @@ public static class UccCompiler
         return source;
     }
 
+    // UELib emits numeric virtual-key values for InventoryWnd IsKeyDown calls,
+    // but Interlude UCC requires the Interactions.EInputKey enum identifiers.
+    // Restore the exact symbolic names for the known Windows virtual-key values.
+    private static string NormalizeInventoryWndKeyArguments(string className, string source)
+    {
+        if (!className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source, @"\\bIsKeyDown\\s*\\(\\s*(18|17|162|16)\\s*\\)", match =>
+        {
+            string key = match.Groups[1].Value;
+            string enumName = key switch
+            {
+                "18" => "IK_Alt",
+                "17" => "IK_Ctrl",
+                "162" => "IK_LControl",
+                "16" => "IK_Shift",
+                _ => key
+            };
+            return "IsKeyDown(" + enumName + ")";
+        }, RegexOptions.IgnoreCase);
+    }
+
     // Berserker's ShortcutWnd references NPHRN_KeyWnd, which is present in that
     // package. Do not rewrite the stock Interlude ShortcutWnd when that script is absent.
     private static string NormalizeShortcutWndKeySettingReference(string className, string source)
@@ -1023,6 +1045,7 @@ function HandleHideLogo()
                 source = NormalizeActionWndIntPropertyCasts(className, source, out int actionWndCastRepairs);
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
+                source = NormalizeInventoryWndKeyArguments(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeLoadingWndServerAgeEnum(className, source);
