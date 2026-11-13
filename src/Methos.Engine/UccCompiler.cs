@@ -453,7 +453,7 @@ function onActiveTex(bool bActive, int nIndex)
             return source;
         return Regex.Replace(source,
             @"(UIAPI_TEXTBOX'\.static\.SetAlign\([^,]+,\s*)2(\s*\))",
-            "$1TXTA_Right$2", RegexOptions.IgnoreCase);
+            "$1UIEventManager.ETextAlign(2)$2", RegexOptions.IgnoreCase);
     }
 
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
