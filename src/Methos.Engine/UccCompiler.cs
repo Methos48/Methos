@@ -446,11 +446,23 @@ public static class UccCompiler
                 !Regex.IsMatch(compilerOutput, @"Success\s*-\s*0 error\(s\)", RegexOptions.IgnoreCase))
             {
                 compilerOutput = AppendUccErrorSourceContext(compilerOutput, stagedClasses);
+                string[] diagnosticLines = compilerOutput
+                    .Split(new[] { "\\r\\n", "\\n" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(line => Regex.IsMatch(line,
+                        @"\\bError\\b|Compile aborted|Failure -",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                    .Take(30)
+                    .ToArray();
+                string diagnostics = diagnosticLines.Length == 0
+                    ? "No se pudieron extraer líneas de diagnóstico UCC."
+                    : string.Join(Environment.NewLine, diagnosticLines);
                 string detail = compilerOutput.Length > 10000
                     ? compilerOutput[^10000..]
                     : compilerOutput;
                 throw new InvalidOperationException(
-                    $"UCC no pudo compilar Interface.u (código {process.ExitCode}).{Environment.NewLine}{detail}");
+                    $"UCC no pudo compilar Interface.u (código {process.ExitCode}).{Environment.NewLine}" +
+                    "UCC_DIAGNOSTICS:" + Environment.NewLine + diagnostics +
+                    Environment.NewLine + detail);
             }
 
             string outputPath = Path.Combine(stagedSystem, "Interface.u");
