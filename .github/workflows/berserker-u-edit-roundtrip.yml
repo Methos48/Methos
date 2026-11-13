@@ -49,6 +49,10 @@ jobs:
           if (Test-Path $shortcutReference) { Copy-Item $shortcutReference (Join-Path $refDir "ShortcutWnd.uc") }
           $tooltipReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/ToolTip.uc"
           if (Test-Path $tooltipReference) { Copy-Item $tooltipReference (Join-Path $refDir "ToolTip.uc") }
+          $chatFilterReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/ChatFilterWnd.uc"
+          if (Test-Path $chatFilterReference) { Copy-Item $chatFilterReference (Join-Path $refDir "ChatFilterWnd.uc") }
+          $chatReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/ChatWnd.uc"
+          if (Test-Path $chatReference) { Copy-Item $chatReference (Join-Path $refDir "ChatWnd.uc") }
       - name: Export NWindow API definitions for compiler diagnostics
         shell: pwsh
         run: |
