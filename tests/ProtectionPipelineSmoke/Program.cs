@@ -14,6 +14,35 @@ if (args.Length > 0 && args[0] == "--ucc-decompile")
     return;
 }
 
+
+if (args.Length > 0 && args[0] == "--repair-diagnostic")
+{
+    if (args.Length != 4)
+        throw new ArgumentException("Usage: --repair-diagnostic <decompiled.uc> <reference.uc> <output.uc>");
+    string source = File.ReadAllText(args[1]);
+    string reference = File.ReadAllText(args[2]);
+    try
+    {
+        var parsed = UnrealScriptSourceIndex.ParseFunctions(source);
+        var targetFunction = parsed.FirstOrDefault(function =>
+            function.Name.Equals("StrToLower", StringComparison.OrdinalIgnoreCase));
+        Console.WriteLine($"TARGET_PARSE_FUNCTIONS={parsed.Count}; STRTOLOWER_FOUND={targetFunction is not null}; STRTOLOWER_HAS_NFUN={targetFunction?.Body.Contains("__NFUN_", StringComparison.Ordinal) ?? false}");
+    }
+    catch (Exception exception)
+    {
+        Console.WriteLine($"TARGET_PARSE_ERROR={exception.GetType().Name}: {exception.Message}");
+    }
+    string repaired = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
+        source, reference, out IReadOnlyList<string> restored);
+    Console.WriteLine($"RESTORED_FUNCTION_COUNT={restored.Count}");
+    Console.WriteLine("RESTORED_FUNCTIONS=" + string.Join(",", restored));
+    var after = UnrealScriptSourceIndex.ParseFunctions(repaired).FirstOrDefault(function =>
+        function.Name.Equals("StrToLower", StringComparison.OrdinalIgnoreCase));
+    Console.WriteLine($"STRTOLOWER_AFTER_HAS_NFUN={after?.Body.Contains("__NFUN_", StringComparison.Ordinal) ?? false}");
+    File.WriteAllText(args[3], repaired, new UTF8Encoding(false));
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-compile")
 {
     if (args.Length != 4)
