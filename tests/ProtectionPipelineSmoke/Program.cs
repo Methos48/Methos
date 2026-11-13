@@ -278,6 +278,22 @@ Check(silentOverlayColorRepairs.Count == 1 &&
 Console.WriteLine("PASS: Silent interface overlay uses a valid explicit white RGBA color.");
 
 
+string recoveredColorHelperSample = """
+class LoginCharSelectWnd extends UICommonAPI;
+function TestColor()
+{
+    CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, RecoveredName_98("Goldlite"));
+}
+""";
+string recoveredColorHelperRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "LoginCharSelectWnd", recoveredColorHelperSample, out IReadOnlyList<string> recoveredColorHelperRepairs);
+Check(recoveredColorHelperRepairs.Count == 1 &&
+      recoveredColorHelperRepaired.Contains("MethosRecoveredName_85(\"Goldlite\")", StringComparison.Ordinal) &&
+      !recoveredColorHelperRepaired.Contains("RecoveredName_98", StringComparison.Ordinal),
+    "Recovered color-name helper was not redirected to inherited Color API.");
+Console.WriteLine("PASS: Recovered color-name helper resolves to inherited Color API.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
