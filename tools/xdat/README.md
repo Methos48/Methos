@@ -16,9 +16,9 @@ Los scripts de integración están en `maintenance/`. El workflow oficial los ej
 
 ## Fuente del motor en la compilación
 
-La fuente del repositorio está aquí, pero el workflow Windows todavía extrae `xdat_core.py` y la aplicación base del kit ZIP histórico antes de preparar el runtime embebido. Por eso este repositorio aún no tiene una única fuente efectiva de todos los archivos XDAT distribuidos.
+`tools/xdat/xdat_core.py` es ahora la fuente canónica del parser/compilador ct0. El workflow Windows la copia sobre la versión incluida en el kit histórico antes de aplicar las capas de integración y comprueba que el SHA-256 de la copia de trabajo coincide con el archivo versionado en Methos. Los cambios de `xdat_core.py` también disparan la validación Windows.
 
-La migración completa debe comparar los archivos del kit con los mantenidos aquí, copiar las funciones faltantes, ejecutar las pruebas y comprobar el instalador final. No borrar el ZIP ni afirmar que el motor está totalmente unificado antes de superar esa validación.
+El kit histórico todavía aporta la aplicación base (`app.py`), sus pruebas/fixtures y el binario de compatibilidad `l2encdec.exe`. Por tanto, el motor de formato ya tiene una fuente canónica, pero la migración completa del paquete XDAT no está cerrada hasta trasladar y validar esos componentes restantes. No borrar el ZIP ni afirmar que todo el paquete es autónomo antes de superar esa validación.
 
 ## Pruebas
 
