@@ -1045,7 +1045,6 @@ function HandleHideLogo()
                 repairedIdentifiers += restoredToolTipOptionHelpers;
                 source = RestoreUICommonAPIColorLookup(className, source, referenceSource, out bool restoredColorLookup);
                 if (restoredColorLookup) repairedIdentifiers++;
-                source = NormalizeRecoveredColorLookupBaseClass(className, source);
                 if (restoredOptionWndHandlers > 0)
                 {
                     var allAvailableClassNames = sourceFiles
