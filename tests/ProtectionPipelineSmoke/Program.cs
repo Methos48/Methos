@@ -617,6 +617,32 @@ Check(partyWndSetNameRepairs.Count == 1 &&
     "PartyWnd SetName arguments were not cast to the actual NWindow enum parameter types.");
 Console.WriteLine("PASS: PartyWnd.SetName arguments use the declared NWindow enum types.");
 
+string uiCommonMissingGotoLabelSample = """
+class UICommonAPI extends Object;
+function string StrToLower(string Source)
+{
+    local int i;
+    i = 0;
+    if ( (i < Len(Source)) )
+    {
+        i++;
+        goto JL000F;
+    }
+    return Source;
+}
+""";
+string uiCommonMissingGotoLabelRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "UICommonAPI", uiCommonMissingGotoLabelSample, out IReadOnlyList<string> uiCommonLabelRepairs);
+int uiCommonLabelIndex = uiCommonMissingGotoLabelRepaired.IndexOf("JL000F:", StringComparison.Ordinal);
+int uiCommonLoopConditionIndex = uiCommonMissingGotoLabelRepaired.IndexOf(
+    "if ( (i < Len(Source)) )", StringComparison.Ordinal);
+Check(uiCommonLabelRepairs.Count == 1 &&
+      uiCommonLabelIndex >= 0 &&
+      uiCommonLoopConditionIndex > uiCommonLabelIndex &&
+      uiCommonMissingGotoLabelRepaired.Contains("goto JL000F;", StringComparison.Ordinal),
+    "UICommonAPI StrToLower did not restore the missing loop destination label.");
+Console.WriteLine("PASS: UICommonAPI StrToLower restores the JL000F loop destination.");
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
