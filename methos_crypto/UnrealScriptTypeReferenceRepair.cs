@@ -307,6 +307,20 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("bLoginInitialized", StringComparison.Ordinal) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+bool\\s+bLoginInitialized\\s*;"))
+        {
+            const string fieldAnchor = "var bool Log;";
+            if (source.Contains(fieldAnchor, StringComparison.Ordinal))
+            {
+                source = source.Replace(fieldAnchor,
+                    fieldAnchor + Environment.NewLine + "var bool bLoginInitialized;",
+                    StringComparison.Ordinal);
+                applied.Add("OptionWnd.bLoginInitialized bool state field restored");
+            }
+        }
+
         if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("PetInvenWnd", StringComparison.Ordinal) &&
             source.Contains("Info.DragSrcName", StringComparison.Ordinal))
