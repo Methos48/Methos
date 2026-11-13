@@ -643,6 +643,24 @@ Check(uiCommonLabelRepairs.Count == 1 &&
     "UICommonAPI StrToLower did not restore the missing loop destination label.");
 Console.WriteLine("PASS: UICommonAPI StrToLower restores the JL000F loop destination.");
 
+string decompilerStackTraceSample = """
+function void DecompiledSwitch()
+{
+    // Failed to format nests!:System.ArgumentOutOfRangeException
+    at System.Collections.Generic.List.get_Item(Int32 index)
+    at UELib.Core.UStruct.UByteCodeDecompiler.DecompileNests(Boolean outputAllRemainingNests)
+    return;
+}
+""";
+string decompilerStackTraceSanitized = UnrealScriptSourceIndex.CommentDecompilerStackTraceLines(
+    decompilerStackTraceSample);
+Check(decompilerStackTraceSanitized.Contains(
+          "    // at System.Collections.Generic.List.get_Item(Int32 index)", StringComparison.Ordinal) &&
+      !decompilerStackTraceSanitized.Split('\n').Any(line =>
+          line.TrimStart().StartsWith("at ", StringComparison.Ordinal)),
+    "UELib stack trace lines were left as executable UnrealScript statements.");
+Console.WriteLine("PASS: UELib diagnostic stack traces are retained as comments, not source statements.");
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
