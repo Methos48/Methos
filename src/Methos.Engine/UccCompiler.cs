@@ -301,6 +301,16 @@ public static class UccCompiler
             int repairedIdentifiers = 0;
             int recoveredControlIdentifiers = 0;
             int skippedTrailingReturnFiles = 0;
+            int normalizedNativeCalls = 0;
+            int unresolvedNativeCalls = 0;
+            int restoredFailedFunctions = 0;
+            int restoredEnumArguments = 0;
+            int restoredCallsiteArguments = 0;
+            int restoredSymbolicAssignments = 0;
+            int removedSwitchDiagnostics = 0;
+            string referenceClasses = Path.Combine(runtimeRoot, "Interlude", "Interface", "Classes");
+            string nativeRegistryPath = Path.Combine(temporaryRoot, "native-function-registry.json");
+            NativeFunctionRegistryBuilder.Build(runtimeRoot, nativeRegistryPath);
             var stagedSourceDiagnostics = new List<string>();
             foreach (string file in sourceFiles)
             {
@@ -321,7 +331,38 @@ public static class UccCompiler
                 int genericControlRepairs = Math.Max(0, controlCharactersBefore - controlCharactersAfter);
                 repairedIdentifiers += genericControlRepairs;
                 recoveredControlIdentifiers += genericControlRepairs;
+
+                source = UnrealScriptNativeFunctionNormalizer.Normalize(
+                    source, nativeRegistryPath, out int normalizedCount, out int unresolvedCount);
+                normalizedNativeCalls += normalizedCount;
+                unresolvedNativeCalls += unresolvedCount;
+
                 string className = Path.GetFileNameWithoutExtension(file);
+                string referencePath = Path.Combine(referenceClasses, Path.GetFileName(file));
+                if (File.Exists(referencePath))
+                {
+                    string referenceSource = File.ReadAllText(referencePath);
+                    source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
+                        source, referenceSource, out IReadOnlyList<string> repairedFunctions);
+                    restoredFailedFunctions += repairedFunctions.Count;
+                    source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
+                        source, referenceSource, out IReadOnlyList<string> repairedTrailingReturns);
+                    repairedIdentifiers += repairedTrailingReturns.Count;
+                    source = UnrealScriptReferenceNormalizer.RestoreEnumArguments(
+                        source, referenceSource, out int enumArguments);
+                    restoredEnumArguments += enumArguments;
+                    source = UnrealScriptCallsiteArgumentRestorer.RestoreSymbolicArguments(
+                        source, referenceSource, out int callsiteArguments);
+                    restoredCallsiteArguments += callsiteArguments;
+                    source = UnrealScriptCallsiteArgumentRestorer.RestoreSymbolicAssignments(
+                        source, referenceSource, out int symbolicAssignments);
+                    restoredSymbolicAssignments += symbolicAssignments;
+                }
+
+                source = UnrealScriptDecompilerDiagnosticCleaner.RemoveOrphanedSwitchDiagnostics(
+                    source, out int switchDiagnostics);
+                removedSwitchDiagnostics += switchDiagnostics;
+
                 source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
                     className, source, out IReadOnlyList<string> typeReferenceRepairs);
                 repairedIdentifiers += typeReferenceRepairs.Count;
@@ -392,6 +433,13 @@ public static class UccCompiler
             string compilerOutput = standardOutput.Result + Environment.NewLine + standardError.Result;
             compilerOutput += Environment.NewLine + $"METHOS_SOURCE_REPAIRS={repairedIdentifiers}";
             compilerOutput += Environment.NewLine + $"METHOS_CONTROL_IDENTIFIER_REPAIRS={recoveredControlIdentifiers}";
+            compilerOutput += Environment.NewLine + $"METHOS_NATIVE_CALLS_NORMALIZED={normalizedNativeCalls}";
+            compilerOutput += Environment.NewLine + $"METHOS_NATIVE_CALLS_UNRESOLVED={unresolvedNativeCalls}";
+            compilerOutput += Environment.NewLine + $"METHOS_FAILED_FUNCTIONS_RESTORED={restoredFailedFunctions}";
+            compilerOutput += Environment.NewLine + $"METHOS_ENUM_ARGUMENTS_RESTORED={restoredEnumArguments}";
+            compilerOutput += Environment.NewLine + $"METHOS_SYMBOLIC_CALL_ARGUMENTS_RESTORED={restoredCallsiteArguments}";
+            compilerOutput += Environment.NewLine + $"METHOS_SYMBOLIC_ASSIGNMENTS_RESTORED={restoredSymbolicAssignments}";
+            compilerOutput += Environment.NewLine + $"METHOS_SWITCH_DIAGNOSTICS_REMOVED={removedSwitchDiagnostics}";
             compilerOutput += Environment.NewLine + string.Join(Environment.NewLine, stagedSourceDiagnostics);
             compilerOutput += Environment.NewLine + $"METHOS_TRAILING_RETURN_SKIPS={skippedTrailingReturnFiles}";
             if (process.ExitCode != 0 ||
