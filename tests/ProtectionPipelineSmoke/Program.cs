@@ -555,6 +555,21 @@ Check(logoWndFieldRepairs.Count == 2 &&
     "LogoWnd recovered handle/state and custom message helper references were not preserved.");
 Console.WriteLine("PASS: LogoWnd recovered references map to declared handle and lock fields.");
 
+string holdIgnoreMessageSample = """
+class HoldIgnoreTargetWnd extends UICommonAPI;
+function TestMessage()
+{
+    RecoveredName_255("Ignore target");
+}
+""";
+string holdIgnoreMessageRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "HoldIgnoreTargetWnd", holdIgnoreMessageSample, out IReadOnlyList<string> holdIgnoreMessageRepairs);
+Check(holdIgnoreMessageRepairs.Count == 1 &&
+      holdIgnoreMessageRepaired.Contains("MethosRecoveredName_255(\"Ignore target\")", StringComparison.Ordinal),
+    "Legacy HoldIgnoreTargetWnd message helper was incorrectly rebound to the Dunk3l helper index.");
+Console.WriteLine("PASS: Legacy HoldIgnoreTargetWnd keeps its own UICommonAPI message helper mapping.");
+
+
 
 string manorCropCastSample = """
 class ManorCropInfoChangeWnd extends UICommonAPI;
