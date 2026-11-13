@@ -250,6 +250,18 @@ jobs:
           } else {
             Write-Host "DamageLiteAni.uc is not present in the extracted reference source archive"
           }
+          $party = Join-Path $generated "PartyMatchOutWaitListWnd.uc"
+          $referenceParty = Join-Path $env:SILENT_U_REFERENCE_SOURCES "PartyMatchOutWaitListWnd.uc"
+          if (Test-Path $party) {
+            Copy-Item -LiteralPath $party -Destination (Join-Path $diagnostics "PartyMatchOutWaitListWnd-generated.uc") -Force
+            Write-Host "=== GENERATED PARTY MATCH QUOTE EXPRESSIONS ==="
+            Select-String -LiteralPath $party -Pattern 'SetChatMessage|UnknownFunction112' | ForEach-Object { Write-Host $_.Line }
+          }
+          if (Test-Path $referenceParty) {
+            Copy-Item -LiteralPath $referenceParty -Destination (Join-Path $diagnostics "PartyMatchOutWaitListWnd-reference.uc") -Force
+          } else {
+            Write-Host "PartyMatchOutWaitListWnd.uc is not present in the extracted reference source archive"
+          }
           if (Test-Path $inventory) {
             Select-String -LiteralPath $inventory -Pattern "function MethosRecoveredName_|function !" | ForEach-Object { Write-Host $_.Line }
             Get-Content -LiteralPath $inventory | Set-Content -LiteralPath (Join-Path $diagnostics "SilentDark-InventoryWnd-Generated.uc")
