@@ -573,6 +573,18 @@ Check(partyMatchQuoteRepairs.Count == 1 &&
     "PartyMatchOutWaitListWnd did not normalize both malformed quote literals.");
 Console.WriteLine("PASS: PartyMatchOutWaitListWnd quote literals are emitted as Chr(34) for UCC.");
 
+string partyMatchWaitListQuoteSample = partyMatchQuoteSample.Replace(
+    "PartyMatchOutWaitListWnd", "PartyMatchWaitListWnd", StringComparison.Ordinal);
+string partyMatchWaitListQuoteRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PartyMatchWaitListWnd", partyMatchWaitListQuoteSample, out IReadOnlyList<string> partyMatchWaitListQuoteRepairs);
+int partyMatchWaitListQuoteCount = partyMatchWaitListQuoteRepaired.Split("Chr(34)", StringSplitOptions.None).Length - 1;
+Check(partyMatchWaitListQuoteRepairs.Count == 1 &&
+      partyMatchWaitListQuoteCount == 2 &&
+      !partyMatchWaitListQuoteRepaired.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal),
+    "PartyMatchWaitListWnd did not normalize both malformed quote literals.");
+Console.WriteLine("PASS: PartyMatchWaitListWnd quote literals are emitted as Chr(34) for UCC.");
+
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
