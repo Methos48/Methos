@@ -244,6 +244,25 @@ public static class UnrealScriptTypeReferenceRepair
                 }
             }
         }
+        if (className.Equals("AutoBuffWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function int getItemCount(int ItemID)", StringComparison.Ordinal) &&
+            source.Contains("UnknownFunction154(Info.ItemNum, SkillID)", StringComparison.Ordinal))
+        {
+            var itemCount = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(function => function.Name.Equals("getItemCount", StringComparison.OrdinalIgnoreCase));
+            if (itemCount is not null)
+            {
+                string repairedBody = System.Text.RegularExpressions.Regex.Replace(
+                    itemCount.Body, @"\bSkillID\b", "ItemID");
+                if (!string.Equals(itemCount.Body, repairedBody, StringComparison.Ordinal))
+                {
+                    source = source.Remove(itemCount.BodyOffset, itemCount.BodyLength)
+                        .Insert(itemCount.BodyOffset, repairedBody);
+                    applied.Add("AutoBuffWnd.getItemCount restored ItemID parameter references");
+                }
+            }
+        }
+
         if (className.Equals("PrivateShopWnd", StringComparison.OrdinalIgnoreCase) &&
             System.Text.RegularExpressions.Regex.IsMatch(
                 source, @"(?m)^\s*var\s+PrivateShopWnd\.PrivateShopType\s+m_type\s*;") &&
