@@ -820,6 +820,13 @@ Check(dunk3lChatFilterRepairs.Count == 1 &&
     "Dunk3l ChatFilterWnd tab visibility calls were not bound to the explicit NWindow API.");
 Console.WriteLine("PASS: ChatFilterWnd tab visibility calls use the explicit NWindow API.");
 
+string dunk3lChatFilterSecondPass = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ChatFilterWnd", dunk3lChatFilterRepaired, out IReadOnlyList<string> dunk3lChatFilterSecondPassRepairs);
+Check(dunk3lChatFilterSecondPassRepairs.Count == 0 &&
+      string.Equals(dunk3lChatFilterSecondPass, dunk3lChatFilterRepaired, StringComparison.Ordinal),
+    "Dunk3l ChatFilterWnd NWindow API binding repair is not idempotent.");
+Console.WriteLine("PASS: ChatFilterWnd API binding repair is idempotent.");
+
 
 
 
