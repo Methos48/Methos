@@ -274,6 +274,15 @@ public static class UccCompiler
                 int genericControlRepairs = Math.Max(0, controlCharactersBefore - controlCharactersAfter);
                 repairedIdentifiers += genericControlRepairs;
                 recoveredControlIdentifiers += genericControlRepairs;
+                int recoveredFunctionHeaders = Regex.Matches(source,
+                    @"(?m)^[ \\t]*function[ \\t]+MethosRecoveredFunction_\\d+[ \\t]*\\(").Count;
+                if (recoveredFunctionHeaders > 0)
+                {
+                    source = Regex.Replace(source,
+                        @"(?m)^([ \\t]*function)[ \\t]+(MethosRecoveredFunction_\\d+)[ \\t]*\\(",
+                        "$1 void $2(");
+                    repairedIdentifiers += recoveredFunctionHeaders;
+                }
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
