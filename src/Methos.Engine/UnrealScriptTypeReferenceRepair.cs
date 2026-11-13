@@ -571,7 +571,7 @@ public static class UnrealScriptTypeReferenceRepair
                 StringComparison.Ordinal);
             source = source.Replace(
                 "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
-                "MethosSilentTextColor = RecoveredName_98(\"white\");\n\tClass'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)",
+                "MethosSilentTextColor.R = 255;\n\tMethosSilentTextColor.G = 255;\n\tMethosSilentTextColor.B = 255;\n\tMethosSilentTextColor.A = 255;\n\tClass'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)",
                 StringComparison.Ordinal);
             applied.Add("Silent branding text color call uses a typed local Color and the textbox handle");
         }
