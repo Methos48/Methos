@@ -174,7 +174,7 @@ public static class UnrealScriptTypeReferenceRepair
         {
             string repairedCalls = System.Text.RegularExpressions.Regex.Replace(
                 source, @"\bSetDefaultAction\s*\(\s*([0-9]+)\s*\)",
-                "SetDefaultAction(UICommonAPI.DialogDefaultAction($1))");
+                "SetDefaultAction(DialogDefaultAction($1))");
             if (!string.Equals(source, repairedCalls, StringComparison.Ordinal))
             {
                 source = repairedCalls;
