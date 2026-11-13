@@ -323,6 +323,23 @@ Check(logoWndFieldRepairs.Count == 2 &&
 Console.WriteLine("PASS: LogoWnd recovered references map to declared handle and lock fields.");
 
 
+string manorCropCastSample = """
+class ManorCropInfoChangeWnd extends UICommonAPI;
+function ShowErrorDialog(int MinValue, int MaxValue, int SystemStringIdx)
+{
+    local string ParamString;
+    ParamAdd(ParamString, "Type", string(int(1)));
+}
+""";
+string manorCropCastRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ManorCropInfoChangeWnd", manorCropCastSample, out IReadOnlyList<string> manorCropCastRepairs);
+Check(manorCropCastRepairs.Count == 1 &&
+      manorCropCastRepaired.Contains("string(1)", StringComparison.Ordinal) &&
+      !manorCropCastRepaired.Contains("string(int(1))", StringComparison.Ordinal),
+    "ManorCropInfoChangeWnd redundant integer cast was not removed.");
+Console.WriteLine("PASS: ManorCropInfoChangeWnd redundant integer casts are normalized.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
