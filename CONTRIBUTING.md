@@ -7,7 +7,7 @@ Methos es una sola aplicación de Windows. El usuario inicia un único `Methos.e
 ## Fuente oficial
 
 - Repositorio único: `Methos48/Methos`
-- Rama de integración: `main`
+- Rama de integración: `main` (única rama activa; ver [estado de ramas](docs/BRANCHES.md))
 - Aplicación: `src/MethosUEditor/`
 - Motor Unreal/UCC y protección: `src/MethosUEngine/`
 - Motor y soporte XDAT: `tools/xdat/`
