@@ -1,0 +1,42 @@
+name: Interface U decompilation validation
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - "tests/ProtectionPipelineSmoke/Program.cs"
+      - ".github/workflows/interface-u-decompilation.yml"
+      - "reference-data/packages/**/Interface.u"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  decompile-u:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [animal, berserker, l2sudamerica, silent-dark]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Decompile original Interface.u
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "InterfaceU-${{ matrix.package }}"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-decompile "reference-data/packages/${{ matrix.package }}/Interface.u" $out
+          if ($LASTEXITCODE -ne 0) { throw "Interface.u decompilation failed for ${{ matrix.package }}." }
+          $count = @(Get-ChildItem -LiteralPath $out -Filter "*.uc" -File -Recurse).Count
+          if ($count -lt 10) { throw "Unexpectedly few UnrealScript classes exported: $count" }
+          "EXPORTED_SOURCE_COUNT=$count" | Set-Content (Join-Path $out "decompile-summary.txt")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: InterfaceU-${{ matrix.package }}-Decompiled
+          path: ${{ runner.temp }}/InterfaceU-${{ matrix.package }}
+          if-no-files-found: error
+          retention-days: 7
