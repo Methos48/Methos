@@ -117,6 +117,22 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
     return;
 }
 
+
+string dialogTypeSample = """
+class DialogBox extends UICommonAPI;
+var UICommonAPI.EDialogType m_type;
+var UICommonAPI.DialogDefaultAction m_defaultAction;
+function ShowDialog(UICommonAPI.ESilentDialogType Style) {}
+function SetDefaultAction(UICommonAPI.ESilentDialogDefaultAction Action) {}
+""";
+string dialogTypeRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "DialogBox", dialogTypeSample, out IReadOnlyList<string> dialogTypeRepairs);
+Check(dialogTypeRepairs.Count == 2 &&
+      dialogTypeRepaired.Contains("function ShowDialog(UICommonAPI.EDialogType Style)", StringComparison.Ordinal) &&
+      dialogTypeRepaired.Contains("function SetDefaultAction(UICommonAPI.DialogDefaultAction Action)", StringComparison.Ordinal),
+    "Dunk3l DialogBox enum type references were not reconciled with its declared fields.");
+Console.WriteLine("PASS: Dunk3l DialogBox enum references are reconciled to the declared UICommonAPI types.");
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);

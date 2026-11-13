@@ -105,6 +105,8 @@ public static class UnrealPackageDecompiler
                             source, referenceSource, out _);
                         source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
                             source, referenceSource, out _);
+                        source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+                            safeName, source, out _);
                     }
                 }
 
