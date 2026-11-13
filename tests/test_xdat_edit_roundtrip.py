@@ -2,6 +2,7 @@ from pathlib import Path
 import tempfile
 import unittest
 import sys
+import os
 import xml.etree.ElementTree as ET
 
 from xdat_core import compile_from_folder, decompile_to_folder, parse_xdat
@@ -15,7 +16,8 @@ sys.path.insert(0, str(ROOT / "tools" / "xdat"))
 class EditedXmlRoundTripTest(unittest.TestCase):
     def test_modified_window_xml_is_used_by_compiler(self):
         root = Path(__file__).resolve().parents[1]
-        original_path = root / "xdat completo" / "interface.xdat"
+        reference_root = Path(os.environ.get("XDAT_REFERENCE_ROOT", root))
+        original_path = reference_root / "xdat completo" / "interface.xdat"
         original = original_path.read_bytes()
         with tempfile.TemporaryDirectory() as temp:
             parts = Path(temp) / "Decopilado"
