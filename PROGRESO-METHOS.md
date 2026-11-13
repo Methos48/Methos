@@ -22,11 +22,14 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 - **Protección integrada:** SmartCrypt 1.5.2.2, Lineage2Ver111 con trailer personalizado y Lineage2Ver413 estándar tienen codecs activos. El soporte de ActiveAntiCheat requiere un perfil de clave coincidente; otros protocolos reconocidos siguen bloqueados hasta implementar y validar su codec.
 - **Límite verificado:** el sample real Dunk3l interface.xdat pasa round-trip exacto SmartCrypt 1.5.2.2 + Lineage2Ver111. El workflow no tiene un fixture real protegido .u; no se afirma cobertura real U equivalente.
 - **Nombres Unreal:** el flujo principal y UnrealPackageDecompiler usan UnrealNameSanitizer; los identificadores temporales se registran en methos_name_map.json y se restauran en el paquete después de UCC. El mapa también se conserva en la caché de fuentes.
+- **Reparaciones UCC verificadas por pruebas:** DamageLiteAni ahora ajusta el array RecoveredName_2070 de [28] a [29] sin duplicarlo; OlympiadTargetWnd ya no agrega una segunda declaración EnemyMPLost; TradeWnd reordena las variables locales ItemInfo para evitar que el nombre de variable oculte el tipo. Las pruebas de estos casos pasan.
+- **Literales de comillas:** se añadió la normalización a Chr(34) para PartyMatchOutWaitListWnd y PartyMatchWaitListWnd. El workflow Silent Dark está validando ahora la compilación con ambas reparaciones.
+- **Dunk3l UCC:** la compilación de referencia de 169 clases pasa; la reconstrucción del paquete real todavía reporta un tipo incompatible en el segundo parámetro de PartyWnd.SetName. Se está inspeccionando NWindow.u, Engine.u y Core.u del runtime para recuperar la firma exacta y evitar adivinar el tipo.
 - **Branches:** el usuario eliminó las cinco ramas históricas. La consulta posterior confirmó que main es la única rama restante.
-- **Windows Release:** el commit 085126db72136fc1390f3dbedc42fad6993615cb pasó la validación Windows Release. Hay otra ejecución sobre el commit 3e79ac103e8bffff1a00d617029a892f85e6c2c2 en curso al redactar este bloque.
-- **Source Archive:** la generación del archivo de fuentes terminó correctamente en el commit 3e79ac103e8bffff1a00d617029a892f85e6c2c2.
-- **Silent Dark:** el nuevo workflow descompila el paquete original con Methos y exporta 169/169 clases sin errores. UCC encuentra una declaración duplicada de RecoveredName_2070 en DamageLiteAni.uc ([29] y [28]); la metadata del paquete muestra una sola propiedad de clase con ArrayDim=28. Se está comparando la salida UELib cruda con la fuente final para localizar el origen del duplicado.
-- **Conclusión:** la unificación estructural y el pipeline de protección limitado están integrados. La compilación completa de Silent Dark continúa abierta; no declarar terminado ese recorrido hasta resolver el duplicado y validar el round-trip.
+- **Windows Release:** la ejecución 43412563594 terminó correctamente en el commit bdbe047927f7504620eec24d1e92bb1ca047ceb4. Una ejecución posterior que incluye la integración del pipeline de reparaciones de la interfaz principal sigue en validación.
+- **Source Archive:** las generaciones de fuentes de los commits bdbe047 y 1cd0290 terminaron correctamente; hay otra ejecución posterior en curso.
+- **Silent Dark:** el workflow descompila el paquete original con Methos y exporta 169/169 clases sin errores. La compilación UCC está avanzando mediante reparaciones específicas; todavía no se ha confirmado el round-trip completo.
+- **Conclusión:** la unificación estructural y el pipeline de protección limitado están integrados. El desarrollo funcional continúa; no declarar finalizada la compilación U ni publicar una versión estable hasta completar las validaciones UCC y el round-trip.
 
 ## Registro de avances
 
@@ -81,12 +84,13 @@ Este bloque conserva el estado de una etapa anterior; sus pendientes sobre integ
 
 ## Pendientes prioritarios
 
-1. **Localizar el duplicado de DamageLiteAni:** comparar la salida cruda de UELib con la fuente final y con la metadata de la propiedad RecoveredName_2070.
-2. **Corregir la exportación sin alterar el comportamiento:** evitar la declaración duplicada o recuperar la distinción correcta de propiedades antes de UCC.
+1. **Validar las reparaciones de PartyMatch:** confirmar que las dos ventanas compilan con Chr(34) y continuar hasta completar el UCC round-trip Silent Dark.
+2. **Resolver PartyWnd.SetName:** obtener la firma real desde los paquetes del runtime y aplicar el cast exacto al segundo parámetro.
 3. **Completar el round-trip Silent Dark:** compilar y volver a descompilar las 169 clases, verificando las tablas del paquete y la restauración de nombres.
-4. **Ampliar pruebas de protección U:** incorporar un fixture real protegido .u y validar el mismo flujo reversible que ya se comprobó con .xdat.
-5. **Ampliar protocolos cifrados solo con evidencia:** implementar otras variantes después de verificar algoritmo, claves, trailers y round-trip real.
-6. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
+4. **Completar la reconstrucción real Dunk3l:** validar descompilación, compilación y lectura posterior del Interface.u original.
+5. **Ampliar pruebas de protección U:** incorporar un fixture real protegido .u y validar el mismo flujo reversible que ya se comprobó con .xdat.
+6. **Ampliar protocolos cifrados solo con evidencia:** implementar otras variantes después de verificar algoritmo, claves, trailers y round-trip real.
+7. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
 
 ## Reglas para continuar el trabajo
 
