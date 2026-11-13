@@ -11,7 +11,7 @@ Ambos módulos forman parte de la misma aplicación, la misma ventana principal 
 
 https://github.com/Methos48/Methos
 
-La rama activa es `main`. La arquitectura y las reglas de mantenimiento están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Consulta también el [mapa de workflows](docs/WORKFLOWS.md) y el [inventario de referencias conservadas en la raíz](docs/ROOT-REFERENCES.md).
+La rama activa es `main`. La arquitectura y las reglas de mantenimiento están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Consulta también el [mapa de workflows](docs/WORKFLOWS.md) y el [inventario de kits y referencias de prueba](docs/ROOT-REFERENCES.md).
 
 ## Instalación
 
@@ -20,15 +20,14 @@ El lanzamiento oficial genera un único instalador Windows x64: `Methos-Setup.ex
 ## Estructura del proyecto
 
 - `src/MethosUEditor/` — aplicación gráfica principal Methos (nombre técnico histórico de la carpeta).
-- `src/MethosUEngine/` — motor Unreal/UCC y procesamiento de paquetes U.
-- `tools/xdat/` — fuente canónica del motor XDAT, detección de cifrado, pipeline, metadatos y validadores; el runtime interno de Methos se prepara desde esta carpeta.
-- `src/MethosUEngine/` — motor único de Unreal/UCC, codecs y protecciones; la antigua copia `methos_crypto/` está en proceso de retirada.
+- `src/MethosUEngine/` — motor único Unreal/UCC, codecs y protecciones.
+- `tools/xdat/` — código XDAT canónico, detección de cifrado, pipeline y metadatos; `tools/xdat/maintenance/` contiene las capas que preparan el kit de Windows. La integración total del motor desde esta carpeta sigue pendiente.
 - `tests/` — pruebas automatizadas.
 - `installer/Methos.iss` — único instalador del producto.
 - `docs/` — arquitectura, manuales e investigación técnica.
 - `reference-data/` — archivos de referencia para pruebas e investigación.
 
-Los ZIP y archivos del cliente que todavía aparecen en la raíz son insumos históricos que algunos workflows utilizan. No deben moverse ni borrarse hasta actualizar y validar esos workflows. Consulta [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md) antes de reorganizar rutas.
+Los kits, binarios y paquetes de referencia están organizados bajo `reference-data/` y no se distribuyen automáticamente. Consulta [docs/ROOT-REFERENCES.md](docs/ROOT-REFERENCES.md) para conocer su función y [CONTRIBUTING.md](CONTRIBUTING.md) antes de modificar rutas.
 
 ## Seguridad de archivos
 

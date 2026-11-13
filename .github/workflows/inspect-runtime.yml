@@ -2,9 +2,9 @@ name: Inspect uploaded runtime files
 on:
   push:
     paths:
-      - 'l2.exe'
+      - 'reference-data/client/lineage2/l2.exe'
       - 'Core.dll'
-      - 'engine.zip'
+      - 'reference-data/client/lineage2/engine.zip'
       - '.github/workflows/inspect-runtime.yml'
   workflow_dispatch:
 permissions:
@@ -18,12 +18,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path runtime-analysis/input | Out-Null
-          if (Test-Path engine.zip) {
-            Expand-Archive -LiteralPath engine.zip -DestinationPath runtime-analysis/engine -Force
+          if (Test-Path reference-data/client/lineage2/engine.zip) {
+            Expand-Archive -LiteralPath reference-data/client/lineage2/engine.zip -DestinationPath runtime-analysis/engine -Force
           }
-          Copy-Item l2.exe, Core.dll -Destination runtime-analysis/input -ErrorAction Stop
+          Copy-Item reference-data/client/lineage2/l2.exe, reference-data/client/lineage2/Core.dll -Destination runtime-analysis/input -ErrorAction Stop
           $files = @()
-          $files += Get-Item l2.exe, Core.dll
+          $files += Get-Item reference-data/client/lineage2/l2.exe, reference-data/client/lineage2/Core.dll
           $files += Get-ChildItem runtime-analysis/engine -Recurse -File -ErrorAction SilentlyContinue
           $report = [System.Collections.Generic.List[string]]::new()
           foreach ($f in $files) {
@@ -48,7 +48,7 @@ jobs:
                 $imagebase = if ($magic -eq 0x20b) { $reader.ReadUInt64() } else { $reader.ReadUInt32() }
                 $report.Add(("  PE MACHINE=0x{0:X4} SECTIONS={1} MAGIC=0x{2:X} ENTRY_RVA=0x{3:X} IMAGEBASE=0x{4:X}" -f $machine,$sections,$magic,$entry,$imagebase))
                 $ascii = [Text.Encoding]::ASCII.GetString($bytes)
-                foreach ($needle in @('npkscrypt','ogg.dll','engine.dll','Core.dll','SysString-e.dat','SmartCrypt','Lineage2Ver','xdat','decrypt','encrypt')) {
+                foreach ($needle in @('npkscrypt','ogg.dll','engine.dll','reference-data/client/lineage2/Core.dll','SysString-e.dat','SmartCrypt','Lineage2Ver','xdat','decrypt','encrypt')) {
                   if ($ascii.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0) { $report.Add("  STRING $needle") }
                 }
                 $reader.Dispose(); $stream.Dispose()

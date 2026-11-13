@@ -5,7 +5,7 @@ import pefile
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 out=Path("npkscrypt-analysis"); out.mkdir(exist_ok=True)
-with zipfile.ZipFile("system.zip") as z:
+with zipfile.ZipFile("reference-data/client/lineage2/system.zip") as z:
     names=[n for n in z.namelist() if n.lower().endswith("/npkscrypt.dll") or n.lower()=="npkscrypt.dll"]
     if not names: raise SystemExit("npkscrypt.dll missing from system.zip")
     raw=z.read(names[0])

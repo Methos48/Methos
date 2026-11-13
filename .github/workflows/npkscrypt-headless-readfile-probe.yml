@@ -14,25 +14,25 @@ jobs:
       - name: Prepare exact DLLs and target file
         shell: pwsh
         run: |
-          Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
+          Expand-Archive -LiteralPath reference-data/client/lineage2/system.zip -DestinationPath client-system -Force
           New-Item -ItemType Directory -Force probe | Out-Null
           $npk = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'npkscrypt.dll' } | Select-Object -First 1
           $ogg = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'ogg.dll' } | Select-Object -First 1
-          if (!$npk) { throw 'npkscrypt.dll missing from system.zip' }
-          if (!$ogg) { throw 'ogg.dll missing from system.zip' }
+          if (!$npk) { throw 'npkscrypt.dll missing from reference-data/client/lineage2/system.zip' }
+          if (!$ogg) { throw 'ogg.dll missing from reference-data/client/lineage2/system.zip' }
           Copy-Item $npk.FullName probe/npkscrypt.dll
           Copy-Item $ogg.FullName probe/ogg.dll
-          if (Test-Path Core.dll) { Copy-Item Core.dll probe/Core.dll }
+          if (Test-Path reference-data/client/lineage2/Core.dll) { Copy-Item reference-data/client/lineage2/Core.dll probe/reference-data/client/lineage2/Core.dll }
           $ui = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'l2ui.dll' } | Select-Object -First 1
           if ($ui) { Copy-Item $ui.FullName probe/l2ui.dll }
-          Copy-Item interface.u probe/SysString-e.dat
-          if (Test-Path engine.zip) {
-            Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
+          Copy-Item reference-data/client/lineage2/interface.u probe/SysString-e.dat
+          if (Test-Path reference-data/client/lineage2/engine.zip) {
+            Expand-Archive -LiteralPath reference-data/client/lineage2/engine.zip -DestinationPath client-engine -Force
             $engine = Get-ChildItem client-engine -Recurse -File | Where-Object { $_.Name -ieq 'engine.dll' } | Select-Object -First 1
             if ($engine) { Copy-Item $engine.FullName probe/engine.dll }
           }
           $core = Get-ChildItem client-system,client-engine -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ieq 'Core.dll' } | Select-Object -First 1
-          if ($core) { Copy-Item $core.FullName probe/Core.dll }
+          if ($core) { Copy-Item $core.FullName probe/reference-data/client/lineage2/Core.dll }
           Get-ChildItem client-system,client-engine -Recurse -File -Filter *.dll -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName probe -Force }
           Get-FileHash probe/npkscrypt.dll,probe/ogg.dll,probe/SysString-e.dat -Algorithm SHA256 | Format-Table -AutoSize
           $csc = "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"

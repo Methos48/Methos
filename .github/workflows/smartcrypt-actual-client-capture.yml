@@ -11,15 +11,15 @@ on:
       - "tools/patch_ogg_imports.py"
       - "tools/smartcrypt-capture.def"
       - "third_party/minhook/**"
-      - "system.zip"
-      - "engine.zip"
-      - "l2.exe"
-      - "Engine.u"
-      - "Engine.int"
-      - "Window.dll"
-      - "interface.u"
-      - "interface.xdat"
-      - "sysstring-e.dat"
+      - "reference-data/client/lineage2/system.zip"
+      - "reference-data/client/lineage2/engine.zip"
+      - "reference-data/client/lineage2/l2.exe"
+      - "reference-data/client/lineage2/Engine.u"
+      - "reference-data/client/lineage2/Engine.int"
+      - "reference-data/client/lineage2/Window.dll"
+      - "reference-data/client/lineage2/interface.u"
+      - "reference-data/client/lineage2/interface.xdat"
+      - "reference-data/client/lineage2/sysstring-e.dat"
 jobs:
   actual-client:
     runs-on: windows-2022
@@ -29,8 +29,8 @@ jobs:
       - name: Prepare client with SmartCapture before npkscrypt
         shell: pwsh
         run: |
-          Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
-          Expand-Archive -LiteralPath engine.zip -DestinationPath client-engine -Force
+          Expand-Archive -LiteralPath reference-data/client/lineage2/system.zip -DestinationPath client-system -Force
+          Expand-Archive -LiteralPath reference-data/client/lineage2/engine.zip -DestinationPath client-engine -Force
           New-Item -ItemType Directory -Force probe/system | Out-Null
           foreach ($sourceRoot in @("client-system","client-engine")) {
             $payloadRoot = $sourceRoot
@@ -43,18 +43,20 @@ jobs:
               Copy-Item $_.FullName $destination -Force
             }
           }
-          foreach ($name in @("Core.dll","Core.u","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll","Engine.u","Engine.int")) {
-            if (Test-Path $name) { Copy-Item $name (Join-Path "probe/system" $name) -Force }
+          $clientSupportFiles = @("Core.dll","Core.u","ifc23.dll","vorbisfile.dll","vorbis.dll","dsetup.dll","Engine.u","Engine.int")
+          foreach ($name in $clientSupportFiles) {
+            $source = Join-Path "reference-data/client/lineage2" $name
+            if (Test-Path $source) { Copy-Item $source (Join-Path "probe/system" $name) -Force }
           }
           if (!(Test-Path "probe/system/Engine.int")) { throw "Engine.int is required but was not copied from the repository. Keep the verified client support file in the repository; do not request repeated uploads." }
           Write-Host "ENGINE_INT_READY size=$((Get-Item probe/system/Engine.int).Length) sha256=$((Get-FileHash probe/system/Engine.int -Algorithm SHA256).Hash)"
-          if (!(Test-Path "Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
-          Copy-Item Window.dll probe/system/Window.dll -Force
-          Copy-Item l2.exe probe/system/l2.exe -Force
-          if (!(Test-Path "sysstring-e.dat")) { throw "The real SysString-e.dat resource is required for the baseline client-load probe." }
-          Copy-Item sysstring-e.dat probe/system/SysString-e.dat -Force
-          Copy-Item interface.u probe/system/Interface.u -Force
-          Copy-Item interface.xdat probe/system/Interface.xdat -Force
+          if (!(Test-Path "reference-data/client/lineage2/Window.dll")) { throw "Missing required l2.exe import Window.dll. Upload the exact Window.dll from the same client system folder." }
+          Copy-Item reference-data/client/lineage2/Window.dll probe/system/Window.dll -Force
+          Copy-Item reference-data/client/lineage2/l2.exe probe/system/l2.exe -Force
+          if (!(Test-Path "reference-data/client/lineage2/sysstring-e.dat")) { throw "The real SysString-e.dat resource is required for the baseline client-load probe." }
+          Copy-Item reference-data/client/lineage2/sysstring-e.dat probe/system/SysString-e.dat -Force
+          Copy-Item reference-data/client/lineage2/interface.u probe/system/Interface.u -Force
+          Copy-Item reference-data/client/lineage2/interface.xdat probe/system/Interface.xdat -Force
           Write-Host "DUNK3L_INTERFACE_READY U=$((Get-Item probe/system/Interface.u).Length) XDAT=$((Get-Item probe/system/Interface.xdat).Length)"
           if (Test-Path "probe/system/Crest") { Move-Item probe/system/Crest probe/Crest -Force } else { New-Item -ItemType Directory -Force probe/Crest | Out-Null }
           if (Test-Path "probe/system/SysTextures") { Move-Item probe/system/SysTextures probe/SysTextures -Force } else { New-Item -ItemType Directory -Force probe/SysTextures | Out-Null }

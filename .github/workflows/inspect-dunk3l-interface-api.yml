@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "Compilador  U.zip"
+      - "reference-data/kits/Compilador-U.zip"
       - ".github/workflows/inspect-dunk3l-interface-api.yml"
   workflow_dispatch:
 permissions:
@@ -17,7 +17,7 @@ jobs:
       - name: Decompile Interface package and locate sound declarations
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "Compilador  U.zip"
+          $archive = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
           $root = Join-Path $PWD "UCC-Reference"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $pkg = Get-ChildItem -LiteralPath $root -Recurse -Filter "Interface.u" -File | Select-Object -First 1

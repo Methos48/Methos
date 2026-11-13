@@ -1,30 +1,39 @@
-# Archivos de referencia conservados en la raíz
+# Inventario de referencias de Methos
 
-La raíz todavía contiene insumos de clientes Lineage II, kits de compilación y paquetes de prueba. No todos forman parte de Methos.exe. Se conservan temporalmente en su ubicación actual porque varios workflows los consumen mediante rutas explícitas.
+Los archivos de esta sección son **material de prueba e investigación**, no componentes que se instalen automáticamente con Methos.exe. Se conservan con sus bytes originales y se organizan por función.
 
-## Kits y paquetes de fuente
+## Kits de compilación
 
-| Archivo | Uso conocido |
+| Ruta | Uso |
 |---|---|
-| `Compilador  U.zip` | Kit UCC/Interlude usado por workflows de compilación y validación Unreal. |
-| `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` | Paquete histórico utilizado temporalmente solo para extraer el fixture `xdat completo/interface.xdat` en CI. No aporta código al ejecutable ni al runtime XDAT. Pendiente migrar ese fixture a `reference-data/` para poder retirar el ZIP. |
-| `Carpeta interface.u.zip` | Paquete de fuentes Unreal de referencia; revisar su consumidor exacto antes de moverlo. |
-| `engine.zip`, `system.zip` | Archivos del cliente usados por workflows de inspección de runtime, DLL y protección. |
+| `reference-data/kits/Compilador-U.zip` | Kit UCC/Interlude usado por compilación y validación Unreal. |
+| `reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip` | Kit histórico del que Windows Release aún extrae la aplicación base y el motor XDAT. Dependencia pendiente de migración. |
+| `reference-data/kits/Carpeta-interface-u.zip` | Fuentes Unreal de referencia usadas por pruebas de compilación. |
 
-## Archivos del cliente y paquetes de prueba
+## Cliente Lineage II
 
-En la raíz hay referencias como `interface.u`, `interface.xdat`, `l2.exe`, `l2.ini`, `Core.dll`, `Core.u`, `Engine.u`, `Engine.int`, `Window.dll`, `ifc23.dll`, `npkcrypt.dll`, `npkscrypt.dll`, `ogg.dll`, `vorbis.dll`, `vorbisfile.dll`, `dsetup.dll` y `sysstring-e.dat`. Se usan en distintos análisis del cliente y pruebas de protección. No se deben incluir automáticamente en Methos.exe.
+`reference-data/client/lineage2/` conserva archivos del cliente y recursos relacionados: `interface.u`, `interface.xdat`, `l2.exe`, `l2.ini`, DLL, `system.zip`, `engine.zip` y `sysstring-e.dat`. Los workflows de inspección los leen desde esta carpeta. No se deben incorporar automáticamente a Methos.exe.
 
-También hay paquetes de referencia como `Dunk3lFX_ByBALENCIAGA.u` y una captura PNG. Mantenerlos como evidencia/fixtures, no como código de producto.
+## Runtime UCC
 
-## Carpetas de referencia
+`reference-data/ucc-runtime/System/` contiene el runtime/archivos de soporte UCC que usa la prueba Silent Dark. No es un segundo producto ni un runtime que el usuario tenga que instalar por separado.
 
-- `System/`: runtime y archivos de soporte UCC/Interlude utilizados por pruebas.
-- `animal/`, `berserker/`, `l2sudamerica/`: pares de paquetes U/XDAT de distintas referencias.
-- `silent dark/`: paquetes y archivos fuente de referencia para pruebas de ida y vuelta U/XDAT.
-- `reference-data/`: paquete Unreal de referencia ya clasificado.
-- `third_party/`: dependencias externas; conservar sus licencias y avisos.
+## Paquetes y fixtures
 
-## Regla para la siguiente reorganización
+- `reference-data/packages/animal/`, `berserker/` y `l2sudamerica/`: pares de paquetes de distintas referencias.
+- `reference-data/packages/silent-dark/`: paquetes y fuentes de referencia para pruebas de ida y vuelta U/XDAT.
+- `reference-data/packages/dunk3l/Dunk3lFX_ByBALENCIAGA.u`: paquete Unreal de referencia.
+- `reference-data/Interface-UEditor.u`: paquete Unreal de referencia usado en inspecciones.
+- `reference-data/visuals/`: capturas de referencia visual.
 
-Antes de mover un archivo, actualizar todos los workflows que lo leen, comprobar filtros `paths`, ejecutar las pruebas afectadas y verificar el artefacto resultante. Los paquetes binarios deben moverse conservando sus bytes y hashes SHA-256. No renombrar ni volver a comprimir paquetes originales como sustituto de una migración.
+## Dependencias externas
+
+`third_party/` contiene dependencias externas utilizadas por herramientas; conservar sus licencias y avisos.
+
+## Reglas
+
+1. Mantener los archivos originales sin modificaciones.
+2. Al mover un archivo binario, conservar su blob Git y verificar que el SHA-256 no cambie.
+3. Actualizar las rutas y filtros `paths` de todos los workflows que lo consumen.
+4. No copiar referencias al instalador salvo que exista una necesidad explícita y documentada.
+5. No borrar un kit histórico hasta que su reemplazo integrado supere las mismas pruebas.

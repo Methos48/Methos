@@ -3,10 +3,10 @@ on:
   push:
     paths:
       - 'src/MethosUEngine/**'
-      - 'Engine.u'
-      - 'interface.u'
-      - 'interface.xdat'
-      - 'sysstring-e.dat'
+      - 'reference-data/client/lineage2/Engine.u'
+      - 'reference-data/client/lineage2/interface.u'
+      - 'reference-data/client/lineage2/interface.xdat'
+      - 'reference-data/client/lineage2/sysstring-e.dat'
       - 'tools/xdat/**'
       - 'tests/ProtectionPipelineSmoke/**'
       - '.github/workflows/protection-pipeline-smoke.yml'
@@ -29,4 +29,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate Dunk3l XDAT layered decode and XML round-trip
-        run: python tools/xdat/validate_dunk3l_smartcrypt.py interface.xdat
+        run: python tools/xdat/validate_dunk3l_smartcrypt.py reference-data/client/lineage2/interface.xdat

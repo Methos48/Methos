@@ -5,11 +5,11 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/inspect-xdat.yml"
-      - "interface.xdat"
+      - "reference-data/client/lineage2/interface.xdat"
       - "tools/xdat/**"
       - "tests/**"
-      - "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
-      - "interface.u"
+      - "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip"
+      - "reference-data/client/lineage2/interface.u"
 
 permissions:
   contents: write
@@ -27,7 +27,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import hashlib
-          for name in ("interface.u", "interface.xdat"):
+          for name in ("reference-data/client/lineage2/interface.u", "reference-data/client/lineage2/interface.xdat"):
               p = Path(name)
               b = p.read_bytes()
               print("\\nFILE:", p.name)
@@ -69,7 +69,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import zipfile
-          archive = Path("Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip")
+          archive = Path("reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip")
           root = Path("xdat-reference")
           with zipfile.ZipFile(archive) as z:
               z.extractall(root)
@@ -114,8 +114,8 @@ jobs:
         with:
           name: Methos-Lineage2-Original-Files
           path: |
-            interface.u
-            interface.xdat
+            reference-data/client/lineage2/interface.u
+            reference-data/client/lineage2/interface.xdat
           if-no-files-found: error
           retention-days: 2
 

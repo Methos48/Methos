@@ -60,7 +60,7 @@ def decode_smartcrypt_and_111(data: bytes) -> tuple[bytes, bytes, bytes, bytes, 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", nargs="?", default="interface.xdat")
+    parser.add_argument("file", nargs="?", default="reference-data/client/lineage2/interface.xdat")
     args = parser.parse_args()
     source = Path(args.file)
     original = source.read_bytes()

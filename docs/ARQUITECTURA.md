@@ -22,7 +22,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 ## Documentación complementaria
 
 - `docs/WORKFLOWS.md`: inventario y responsabilidad de cada workflow.
-- `docs/ROOT-REFERENCES.md`: clasificación de archivos binarios y kits de referencia en la raíz.
+- `docs/ROOT-REFERENCES.md`: inventario de kits, archivos del cliente y paquetes de referencia organizados bajo `reference-data/`.
 - `tools/xdat/README.md`: estructura y estado de integración del motor XDAT.
 
 ## Mapa del código
@@ -30,12 +30,11 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 | Ruta | Responsabilidad |
 |---|---|
 | `src/MethosUEditor/` | Aplicación gráfica principal, navegación y conexión con los módulos. El nombre de carpeta/namespace conserva un identificador técnico histórico; el producto visible es Methos. |
-| `src/MethosUEngine/` | Motor de paquetes Unreal, UCC y herramientas de UnrealScript utilizadas por el módulo U. |
-| `tools/xdat/` | Fuente canónica del motor XDAT: `xdat_core.py`, detección de cifrado, pipeline, metadatos de origen y validadores. El workflow de distribución copia `xdat_core.py` desde aquí al runtime interno de Methos; no debe obtener código de aplicación desde un kit externo. |
+| `tools/xdat/` | Paquete de código XDAT mantenido: `xdat_core.py`, detección de cifrado, pipeline, metadatos de origen y validadores. Las adaptaciones del kit de Windows están en `tools/xdat/maintenance/`. El instalador todavía obtiene `xdat_core.py` del kit histórico; la migración completa del motor sigue pendiente. |
 | `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
 | `tools/xdat/xdat_core.py` | Código XDAT mantenido en el repositorio. Debe ser la fuente canónica una vez completada la migración del kit histórico. |
-| `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` (raíz) | Paquete histórico conservado temporalmente como fuente de un fixture de prueba XDAT. No es fuente del ejecutable ni del motor distribuido. Debe sustituirse por el fixture versionado en `reference-data/` antes de retirar el ZIP. |
-| `src/MethosUEngine/` | Único proyecto C# del motor Unreal/UCC y de los codecs/protecciones. También es la referencia usada por las pruebas de protección y round-trip. |
+
+| `src/MethosUEngine/` | Proyecto C# canónico del motor Unreal/UCC y de los codecs/protecciones, referenciado por la aplicación y las pruebas. |
 | `tests/` | Pruebas automatizadas U y XDAT. Las pruebas Python añaden `tools/xdat/` al camino de importación para que la fuente canónica no dependa de archivos en la raíz. |
 | `tools/` | Herramientas de diagnóstico, inspección y validación; no todas forman parte del producto distribuido. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
@@ -45,13 +44,13 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 ## Archivos de entrada de compilación y referencias
 
-Los scripts de soporte XDAT ya no están en la raíz: su ubicación canónica es `tools/xdat/` y `tools/xdat/maintenance/`. Las pruebas Python permanecen bajo `tests/`. Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflows actuales todavía los consumen como insumos de compilación o pruebas. No moverlos ni eliminarlos hasta migrar sus consumidores a rutas canónicas y comprobar la compilación resultante. En particular, el ZIP histórico XDAT se conserva temporalmente solo para extraer un fixture de prueba; el runtime distribuido debe construirse desde `tools/xdat/xdat_core.py`. Las pruebas de Methos se ejecutan desde `tests/` contra el código versionado en este repositorio.
+Los scripts de soporte XDAT ya no están en la raíz: su ubicación canónica es `tools/xdat/` y `tools/xdat/maintenance/`. Las pruebas Python permanecen bajo `tests/`. Los kits, paquetes y binarios de referencia están clasificados bajo `reference-data/kits/`, `reference-data/client/lineage2/`, `reference-data/ucc-runtime/`, `reference-data/packages/` y `reference-data/visuals/`. Los workflows deben consumirlos desde esas rutas. El kit XDAT histórico todavía alimenta la compilación de lanzamiento y aporta la aplicación fuente sobre la que se aplican las capas de mantenimiento; el código `tools/xdat/xdat_core.py` aún no sustituye por completo ese kit. No retirar el kit hasta migrar la aplicación base y validar el runtime resultante.
 
 Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
 ## Workflows y repositorios históricos
 
-Los workflows de inspección de Dunk3l y validación Unreal/UCC deben tomar sus fuentes desde este repositorio. Se eliminaron las descargas del antiguo repositorio `Methos-U-Editor`; los paquetes UCC y el paquete de referencia se leen ahora desde `Compilador  U.zip` y `reference-data/Interface-UEditor.u`. El runtime XDAT se copia desde `tools/xdat/`; no reintroducir checkouts ni código de aplicación desde repositorios o kits históricos.
+Los workflows de inspección de Dunk3l y validación Unreal/UCC deben tomar sus fuentes desde este repositorio. Se eliminaron las descargas del antiguo repositorio `Methos-U-Editor`; los paquetes UCC y el paquete de referencia se leen ahora desde `reference-data/kits/Compilador-U.zip` y `reference-data/Interface-UEditor.u`. No reintroducir checkouts del repositorio histórico.
 
 ## Flujo oficial de compilación
 
@@ -97,4 +96,4 @@ Los originales seleccionados por el usuario deben conservarse sin cambios. Las o
 
 ## Estado de limpieza
 
-La distribución XDAT independiente fue retirada y el workflow oficial fue actualizado para preparar el runtime desde `tools/xdat/xdat_core.py` y ejecutar las pruebas XDAT versionadas en `tests/`. El ZIP histórico queda limitado temporalmente a suministrar un fixture de prueba; su eliminación final requiere guardar ese fixture en `reference-data/` y verificar que ningún otro workflow lo consuma.
+La raíz ya no contiene los kits ni los archivos del cliente usados por los workflows. Se trasladaron a `reference-data/` conservando sus blobs binarios originales y se actualizaron las rutas de las automatizaciones. La duplicación entre `tools/xdat/` y el kit XDAT histórico aún debe resolverse mediante migración y pruebas, no mediante borrado.

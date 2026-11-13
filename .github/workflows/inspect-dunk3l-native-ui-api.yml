@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "Compilador  U.zip"
+      - "reference-data/kits/Compilador-U.zip"
       - ".github/workflows/inspect-dunk3l-native-ui-api.yml"
   workflow_dispatch:
 permissions:
@@ -17,7 +17,7 @@ jobs:
       - name: Decompile UCC packages and locate UIScript declarations
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "Compilador  U.zip"
+          $archive = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
           $root = Join-Path $PWD "UCC-Native-API"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $packages = Get-ChildItem -LiteralPath $root -Recurse -Filter "*.u" -File

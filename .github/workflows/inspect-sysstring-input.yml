@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "sysstring-e.dat"
+      - "reference-data/client/lineage2/sysstring-e.dat"
       - ".github/workflows/inspect-sysstring-input.yml"
 jobs:
   inspect:
@@ -16,9 +16,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import hashlib, math, collections, re
-          p=Path("sysstring-e.dat")
+          p=Path("reference-data/client/lineage2/sysstring-e.dat")
           b=p.read_bytes()
-          print("FILE=sysstring-e.dat")
+          print("FILE=reference-data/client/lineage2/sysstring-e.dat")
           print("SIZE=",len(b))
           print("SHA256=",hashlib.sha256(b).hexdigest())
           print("MD5=",hashlib.md5(b).hexdigest())
@@ -36,5 +36,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sysstring-e-dat-analysis-input
-          path: sysstring-e.dat
+          path: reference-data/client/lineage2/sysstring-e.dat
           retention-days: 7

@@ -21,7 +21,7 @@ jobs:
       - name: Ejecutar prueba de compatibilidad del paquete
         shell: pwsh
         run: |
-          dotnet run --project tools/PackageProbe/PackageProbe.csproj --configuration Release -- "Interface.u" "probe-export" 2>&1 | Tee-Object -FilePath probe-log.txt
+          dotnet run --project tools/PackageProbe/PackageProbe.csproj --configuration Release -- "reference-data/client/lineage2/interface.u" "probe-export" 2>&1 | Tee-Object -FilePath probe-log.txt
         continue-on-error: true
 
       - name: Guardar resultado de UELib
@@ -70,7 +70,7 @@ jobs:
           import pathlib, zipfile
           out = pathlib.Path("source-inputs.zip")
           with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-              for name in ("Interface.u", "Carpeta interface.u.zip"):
+              for name in ("reference-data/client/lineage2/interface.u", "reference-data/kits/Carpeta-interface-u.zip"):
                   p = pathlib.Path(name)
                   if p.exists():
                       z.write(p, name)

@@ -2,7 +2,7 @@ name: Isolated npkscrypt loader snapshot
 on:
   push:
     paths:
-      - 'system.zip'
+      - 'reference-data/client/lineage2/system.zip'
       - '.github/workflows/npkscrypt-loader-snapshot.yml'
   workflow_dispatch:
 permissions:
@@ -16,9 +16,9 @@ jobs:
       - name: Extract DLL and compile isolated x86 observer
         shell: pwsh
         run: |
-          Expand-Archive -LiteralPath system.zip -DestinationPath client-system -Force
+          Expand-Archive -LiteralPath reference-data/client/lineage2/system.zip -DestinationPath client-system -Force
           $dll = Get-ChildItem client-system -Recurse -File | Where-Object { $_.Name -ieq 'npkscrypt.dll' } | Select-Object -First 1
-          if (!$dll) { throw 'npkscrypt.dll not found in system.zip' }
+          if (!$dll) { throw 'npkscrypt.dll not found in reference-data/client/lineage2/system.zip' }
           New-Item -ItemType Directory -Force observer | Out-Null
           Copy-Item $dll.FullName observer\npkscrypt.dll
           @'

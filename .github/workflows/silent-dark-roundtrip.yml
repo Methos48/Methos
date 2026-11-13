@@ -5,11 +5,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "silent dark/**"
+      - "reference-data/packages/silent-dark/**"
       - ".github/workflows/silent-dark-roundtrip.yml"
       - "src/MethosUEngine/**"
       - "src/MethosUEngine/**"
-      - "System/**"
+      - "reference-data/ucc-runtime/System/**"
       - "tools/xdat/**"
   workflow_dispatch:
 
@@ -37,7 +37,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, str(Path.cwd() / "tools" / "xdat"))
           from xdat_core import parse_xdat, decompile_to_folder, compile_from_folder
-          original = Path("silent dark/interface.xdat").read_bytes()
+          original = Path("reference-data/packages/silent-dark/interface.xdat").read_bytes()
           parse_xdat(original)
           with tempfile.TemporaryDirectory() as tmp:
               folder = Path(tmp) / "parts"
@@ -52,9 +52,9 @@ jobs:
       - name: Extract Silent Dark UnrealScript sources and UCC runtime
         shell: pwsh
         run: |
-          Expand-Archive -LiteralPath "silent dark/Carpeta interface.u.zip" -DestinationPath "$env:RUNNER_TEMP\silent-u" -Force
+          Expand-Archive -LiteralPath "reference-data/packages/silent-dark/Carpeta-interface-u.zip" -DestinationPath "$env:RUNNER_TEMP\silent-u" -Force
           New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\ucc-kit\Interlude\System" | Out-Null
-          Copy-Item "System\*" "$env:RUNNER_TEMP\ucc-kit\Interlude\System" -Recurse -Force
+          Copy-Item "reference-data\ucc-runtime\System\*" "$env:RUNNER_TEMP\ucc-kit\Interlude\System" -Recurse -Force
           $src = Join-Path $env:RUNNER_TEMP "silent-u\Carpeta interface.u"
           $kit = Join-Path $env:RUNNER_TEMP "ucc-kit"
           if (!(Test-Path $src)) { throw "Silent Dark .uc source folder missing" }

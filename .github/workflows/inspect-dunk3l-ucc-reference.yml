@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths:
       - "tests/ProtectionPipelineSmoke/Program.cs"
-      - "Compilador  U.zip"
+      - "reference-data/kits/Compilador-U.zip"
       - ".github/workflows/inspect-dunk3l-ucc-reference.yml"
   workflow_dispatch:
 permissions:
@@ -27,7 +27,7 @@ jobs:
       - name: Inspect reference API and Engine package
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "Compilador  U.zip"
+          $archive = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
           $root = Join-Path $PWD "Dunk3l-UCC-Reference"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $classes = Join-Path $root "Compilador  U\Interlude\Interface\Classes"

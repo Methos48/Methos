@@ -126,7 +126,7 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Pruebas pendientes de este bloque: ejecutar el workflow Windows Release después de estos cambios y verificar que produzca un único instalador Methos.
 
 
-- **Auditoría adicional de dependencias:** `src/MethosUEngine/` es el motor compilado por el proyecto .NET. `methos_crypto/` contiene variantes históricas/experimentales y no debe confundirse con la carpeta que compila la aplicación. La migración posterior conectó el runtime distribuido a `tools/xdat/xdat_core.py`; el kit ZIP histórico dejó de aportar código de aplicación y quedó limitado a suministrar el fixture de prueba hasta moverlo a `reference-data/`.
+- **Auditoría adicional de dependencias:** `src/MethosUEngine/` es el motor compilado por el proyecto .NET. `methos_crypto/` contiene variantes históricas/experimentales y no debe confundirse con la carpeta que compila la aplicación. Asimismo, `tools/xdat/xdat_core.py` está versionado, pero el workflow de lanzamiento todavía extrae el motor XDAT del ZIP histórico `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip`. Esta duplicación quedó documentada como pendiente; no se borró el ZIP ni se afirmó que `tools/xdat` ya sea la única fuente efectiva del instalador.
 - **Compatibilidad de datos:** se mantienen rutas antiguas de caché y respaldos bajo `%LOCALAPPDATA%` para no romper datos existentes; sus nombres históricos no representan programas separados.
 
 - Se retiró también el workflow temporal `.github/workflows/migrate-unified.yml`: la migración del repositorio ya está completada y no debe repetirse como tarea activa.
@@ -137,19 +137,14 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - **Corrección de workflows heredados:** se eliminaron las referencias de checkout a `Methos48/Methos-U-Editor` en los workflows de inspección Dunk3l y validación Unreal. Ahora usan el kit UCC del repositorio único y el paquete de referencia ubicado en `reference-data/Interface-UEditor.u`. Se actualizaron también sus filtros de rutas.
 
 - **Organización del código XDAT:** se trasladaron los módulos `encryption_detection.py`, `auto_pipeline.py` y `package_origin_metadata.py` desde la raíz a `tools/xdat/`; los scripts de preparación `apply_detection_layer.py` y `auto_pipeline_overlay.py` pasaron a `tools/xdat/maintenance/`. Se actualizaron los imports de las pruebas Python y las rutas/filtros del workflow `windows-release.yml`. Los cinco archivos antiguos de la raíz se eliminaron después de verificar las copias nuevas.
-- La fuente del runtime XDAT quedó conectada a `tools/xdat/`. El kit ZIP histórico se mantiene temporalmente solo para el fixture de round-trip; su retirada final requiere migrar ese archivo de prueba a `reference-data/` y revisar otros workflows consumidores.
+- La fuente XDAT todavía no está completamente unificada: el workflow Windows continúa extrayendo el kit ZIP histórico para preparar el runtime de la app. La siguiente etapa debe sustituir esa dependencia mediante migración comprobada y pruebas, no borrando el ZIP.
 
 - **Unificación del motor C#:** se incorporaron a `src/MethosUEngine/` las cuatro clases que solo existían en `methos_crypto/`: `UnrealPackageDecompiler`, `UnrealScriptKnownNativeOperatorRepair`, `UnrealScriptNativeEnumArgumentRepair` y `UnrealScriptTypeReferenceRepair`. `tests/ProtectionPipelineSmoke` ahora referencia el proyecto real `src/MethosUEngine/MethosUEngine.csproj`, no la copia antigua. Los workflows afectados vigilan la ruta canónica.
 - La carpeta `methos_crypto/` se conserva temporalmente hasta que la nueva referencia compile y pasen las pruebas; después podrá retirarse como duplicado.
 
 
-### 13-11-2026 — Runtime XDAT conectado a la fuente canónica del repositorio
+### 13-11-2026 — Organización de archivos de referencia
 
-- Se modificó `.github/workflows/windows-release.yml` para que el runtime interno de Methos copie `xdat_core.py` directamente desde `tools/xdat/`; dejó de extraer el motor de aplicación desde el kit ZIP histórico.
-- El workflow ahora valida sintaxis y ejecuta las cinco suites XDAT versionadas en `tests/`: detección de cifrado, pipeline, metadatos de origen, round-trip de edición y publicación transaccional.
-- Se actualizaron `README.md` y `docs/ARQUITECTURA.md` para reflejar que `tools/xdat/` es la fuente canónica del motor distribuido.
-- El kit ZIP histórico todavía se conserva temporalmente como fuente de un fixture de prueba. No se eliminó porque antes debe migrarse ese fixture a `reference-data/` y comprobarse que ningún otro workflow lo consuma.
-- Commits publicados en `main`: `02d50d4` (workflow), `2728880` (arquitectura), `f04c84b` (README).
-- **Estado de validación:** cambio publicado; pendiente comprobar el resultado de GitHub Actions para esta nueva versión. No se declara todavía que el runtime migrado esté validado.
-
-- Ajuste de CI posterior: el kit ZIP histórico se extrae ahora únicamente para copiar `xdat completo/interface.xdat` como fixture temporal de pruebas; el workflow no toma de ese ZIP `app.py`, `xdat_core.py` ni otro código de aplicación. Commit: `a1c8821`.
+- Se definió la clasificación de kits, cliente, runtime UCC, paquetes de prueba y capturas bajo `reference-data/`.
+- Los workflows se actualizaron para consumir las rutas nuevas; el movimiento se realizará como una única actualización del árbol Git, reutilizando los blobs originales para conservar íntegros los binarios.
+- La fuente XDAT integrada sigue en migración: el kit Windows histórico permanece como insumo hasta demostrar que `tools/xdat/` puede sustituirlo sin pérdida funcional.

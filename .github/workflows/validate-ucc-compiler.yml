@@ -3,7 +3,7 @@ name: Methos - Validar compilador UCC de Interlude
 on:
   push:
     paths:
-      - "Compilador  U.zip"
+      - "reference-data/kits/Compilador-U.zip"
       - ".github/workflows/validate-ucc-compiler.yml"
       - "tests/**"
       - "src/**"
@@ -24,8 +24,8 @@ jobs:
       - name: Extraer el kit UCC de Interlude
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "Compilador  U.zip"
-          if (!(Test-Path -LiteralPath $archive)) { throw "No se encontró Compilador  U.zip." }
+          $archive = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
+          if (!(Test-Path -LiteralPath $archive)) { throw "No se encontró reference-data/kits/Compilador-U.zip." }
           $root = Join-Path $PWD "ucc-validation"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $kit = Join-Path $root "Compilador  U"

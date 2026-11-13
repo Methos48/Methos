@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "system.zip"
+      - "reference-data/client/lineage2/system.zip"
       - "tools/analyze_npkscrypt.py"
       - ".github/workflows/analyze-npkscrypt.yml"
 permissions:

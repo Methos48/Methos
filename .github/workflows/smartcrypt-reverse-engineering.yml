@@ -2,13 +2,13 @@ name: SmartCrypt runtime reverse engineering
 on:
   push:
     paths:
-      - 'system.zip'
-      - 'engine.zip'
-      - 'Core.dll'
-      - 'l2.exe'
-      - 'interface.u'
-      - 'interface.xdat'
-      - 'Dunk3lFX_ByBALENCIAGA.u'
+      - 'reference-data/client/lineage2/system.zip'
+      - 'reference-data/client/lineage2/engine.zip'
+      - 'reference-data/client/lineage2/Core.dll'
+      - 'reference-data/client/lineage2/l2.exe'
+      - 'reference-data/client/lineage2/interface.u'
+      - 'reference-data/client/lineage2/interface.xdat'
+      - 'reference-data/packages/dunk3l/Dunk3lFX_ByBALENCIAGA.u'
       - '.github/workflows/smartcrypt-reverse-engineering.yml'
   workflow_dispatch:
 permissions:
@@ -30,7 +30,7 @@ jobs:
           root=pathlib.Path("smartcrypt-analysis")
           root.mkdir(exist_ok=True)
           files={}
-          for archive_name in ("system.zip","engine.zip"):
+          for archive_name in ("reference-data/client/lineage2/system.zip","reference-data/client/lineage2/engine.zip"):
               p=pathlib.Path(archive_name)
               if p.exists():
                   with zipfile.ZipFile(p) as z:
@@ -39,9 +39,11 @@ jobs:
                           name=pathlib.PurePosixPath(info.filename).name.lower()
                           if name.endswith((".dll",".exe")):
                               files[name]=z.read(info)
-          for name in ("Core.dll","l2.exe","interface.u","interface.xdat","Dunk3lFX_ByBALENCIAGA.u"):
-              p=pathlib.Path(name)
+          for name in ("Core.dll","l2.exe","interface.u","interface.xdat"):
+              p=pathlib.Path("reference-data/client/lineage2")/name
               if p.exists(): files[name.lower()]=p.read_bytes()
+          dunk3l=pathlib.Path("reference-data/packages/dunk3l/Dunk3lFX_ByBALENCIAGA.u")
+          if dunk3l.exists(): files["dunk3lfx_bybalenciaga.u"]=dunk3l.read_bytes()
           lines=[]
           def emit(s=""): lines.append(str(s))
           emit("STATIC ANALYSIS ONLY — no game process launched, no file decryption claimed.")
