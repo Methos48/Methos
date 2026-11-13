@@ -91,9 +91,7 @@ jobs:
           $text = [IO.File]::ReadAllText($toolTip)
           $marker = "function MethosAnimalRoundTripProbe_20261113()"
           if ($text.Contains($marker)) { throw "Animal test marker already exists in source." }
-          $function = "`r`nfunction MethosAnimalRoundTripProbe_20261113()`r`n{`r
-}`r
-"
+          $function = [Environment]::NewLine + 'function MethosAnimalRoundTripProbe_20261113()' + [Environment]::NewLine + '{' + [Environment]::NewLine + '}' + [Environment]::NewLine
           $defaultProperties = [regex]::Match($text, '(?im)^\s*defaultproperties\b')
           if ($defaultProperties.Success) {
             $text = $text.Insert($defaultProperties.Index, $function)
