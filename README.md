@@ -1,50 +1,52 @@
-# Methos XDAT
+# Methos
 
-Aplicación para Windows destinada a detectar, descifrar, descompilar, editar y volver a compilar archivos de interfaz de Lineage II: Unreal `.u` y XDAT `.xdat`.
+**Methos** es una única aplicación de Windows x64 para trabajar con archivos de interfaz de Lineage II Interlude:
 
-## Estado del trabajo
+- **ARCHIVOS U:** importar, respaldar, descompilar, editar, compilar y validar paquetes Unreal `.u`.
+- **ARCHIVOS XDAT:** importar, respaldar, extraer, editar, reconstruir y validar paquetes `.xdat`.
 
-### Archivos Dunk3l originales
+Ambos módulos forman parte de la misma aplicación y del mismo instalador: `Methos.exe`. No se distribuye un segundo ejecutable de aplicación para XDAT.
 
-Los originales `interface.u` y `interface.xdat` se conservan intactos. Se identificaron y probaron las dos capas presentes en ambos archivos:
+## Repositorio único
 
-1. SmartCrypt 1.5.2.2 con semilla embebida.
-2. Envoltura Lineage2Ver111 con el tratamiento personalizado de los datos finales.
+Todo el desarrollo activo se mantiene en:
 
-**Prueba real aprobada:** ambos archivos se descifran y vuelven a cifrar byte por byte, reproduciendo exactamente los originales.
+https://github.com/Methos48/Methos-XDAT
 
-### Motor Unreal (.u)
+El código de la aplicación de Windows está en `src/MethosUEditor`, el motor Unreal y UCC en `src/MethosUEngine`, y el motor XDAT y sus herramientas en la raíz y `tools/xdat`.
 
-- El archivo Dunk3l es un paquete Unreal **126/0**.
-- Tablas verificadas: **5.482 nombres, 740 imports y 10.308 exports**.
-- La reconstrucción sin modificaciones conserva las tablas originales.
-- UELib pudo descompilar **167 de 167 clases**, sin errores de exportación.
-- El motor UCC de Interlude ya compila y vuelve a descompilar el paquete de referencia de 169 clases.
-- Está en curso la prueba de compilar las 167 clases reales de Dunk3l y reconstruir su `.u` protegido.
+## Seguridad de archivos
 
-### Motor XDAT (.xdat)
+- El archivo original seleccionado por el usuario no se modifica.
+- Methos trabaja sobre una copia dentro de `Compilados`.
+- Las compilaciones se validan antes de reemplazar el resultado de trabajo.
+- Se conservan respaldos independientes para permitir recuperación.
+- Si no se reconoce una protección o no se puede verificar el resultado, Methos se detiene sin generar un archivo aparentemente válido.
 
-- El archivo Dunk3l se descompila en **169 ventanas y 8 accesos directos**.
-- Se corrigió la conservación de listas internas, cadenas ANSI/Latin-1 y metadatos originales.
-- **Prueba real aprobada:** descompilar a XML, recompilar y obtener el mismo contenido binario, byte por byte.
-- La reconstrucción conserva la capa Lineage2Ver111 y vuelve a aplicar SmartCrypt con los mismos datos originales.
+## Construcción y validación
 
-### Otros formatos y muestras reales
+El proyecto utiliza .NET 8, Windows Forms, el runtime UCC de Interlude y un runtime Python embebido para el motor XDAT.
 
-- Lineage2Ver111: XOR.
-- Lineage2Ver413: RSA por bloques y zlib.
-- SmartCrypt 1.5.2.2: variante con semilla embebida comprobada en los dos archivos Dunk3l.
-- ActiveAntiCheatCrypt: motor RSA-2048/PKCS#1 v1.5 + RC4 integrado; requiere el perfil de clave privada correspondiente.
-- `SysString-e.dat` aportado como muestra real: descifrado y recompilado con protocolo 413; 14.896 bytes cifrados y 29.584 bytes recuperados.
+Los workflows de GitHub Actions validan, entre otras cosas:
 
-## Reglas de seguridad del programa
+- compilación de la aplicación e instalador Windows x64;
+- pruebas del motor Unreal/UCC y estructura de paquetes;
+- extracción, edición y reconstrucción XDAT;
+- instalación silenciosa y arranque de `Methos.exe`;
+- presencia del runtime UCC y del motor XDAT integrado.
 
-- El archivo original fuera de Methos nunca se modifica.
-- La copia de trabajo se guarda separada de los archivos descompilados.
-- Los perfiles de cifrado y los metadatos originales se conservan al importar modificaciones.
-- Si falta una clave o no se puede verificar una capa, Methos se detiene y no genera un archivo que parezca válido sin serlo.
-- Antes de guardar un archivo compilado, se vuelve a descifrar y se compara con el contenido compilado para comprobar la reconstrucción.
+Una ejecución correcta de CI demuestra únicamente las pruebas que ese workflow ejecuta. No equivale a garantizar compatibilidad con todos los clientes, cifrados o paquetes personalizados. Los archivos modificados deben probarse primero en una copia del cliente.
 
-## Próximo objetivo
+## Estructura principal
 
-Completar la compilación real de las 167 clases Dunk3l con UCC, validar el archivo protegido resultante y terminar la aplicación Windows con el flujo común para `.u` y `.xdat`.
+- `src/MethosUEditor/` — aplicación gráfica Methos.
+- `src/MethosUEngine/` — motor Unreal, UCC y reparaciones de UnrealScript.
+- `methos_crypto/` — componentes de análisis y protección.
+- `tools/xdat/` y `tests/` — motor, utilidades y pruebas XDAT.
+- `installer/` — configuración del instalador Windows.
+- `docs/` — documentación técnica y registros.
+- `reference-data/` — paquetes de referencia que no deben confundirse con archivos de trabajo.
+
+## Nombre del producto
+
+El único producto en desarrollo y entrega es **Methos**.
