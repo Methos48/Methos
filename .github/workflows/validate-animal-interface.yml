@@ -234,6 +234,20 @@ jobs:
           } else {
             throw "Expected InterfaceOptionsWnd SetAlign call was not found; refusing a broad replacement."
           }
+      - name: Diagnose Animal InventoryWnd return expression
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          Write-Host "===== DECOMPILED INVENTORY LINES 3225-3245 ====="
+          for ($n=3224; $n -lt [Math]::Min(3245,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
+          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes"
+          $referenceFile = Join-Path $referenceRoot "InventoryWnd.uc"
+          if (Test-Path -LiteralPath $referenceFile) {
+            Write-Host "===== REFERENCE INVENTORY LINES 3225-3245 ====="
+            $reference = Get-Content -LiteralPath $referenceFile
+            for ($n=3224; $n -lt [Math]::Min(3245,$reference.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$reference[$n]) }
+          } else { Write-Host "ANIMAL_REFERENCE_INVENTORYWND_NOT_FOUND" }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
