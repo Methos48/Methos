@@ -124,3 +124,7 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - No se eliminaron los ZIP, DLL, paquetes ni archivos del cliente de la raíz: el workflow oficial aún utiliza algunos como insumos. Su traslado requiere primero migrar referencias y validar el build.
 - Las carpetas y namespaces técnicos históricos `MethosUEditor` se mantienen temporalmente para evitar romper rutas, proyecto y pruebas. La marca que ve el usuario sigue siendo Methos.
 - Pruebas pendientes de este bloque: ejecutar el workflow Windows Release después de estos cambios y verificar que produzca un único instalador Methos.
+
+
+- **Auditoría adicional de dependencias:** `src/MethosUEngine/` es el motor compilado por el proyecto .NET. `methos_crypto/` contiene variantes históricas/experimentales y no debe confundirse con la carpeta que compila la aplicación. Asimismo, `tools/xdat/xdat_core.py` está versionado, pero el workflow de lanzamiento todavía extrae el motor XDAT del ZIP histórico `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip`. Esta duplicación quedó documentada como pendiente; no se borró el ZIP ni se afirmó que `tools/xdat` ya sea la única fuente efectiva del instalador.
+- **Compatibilidad de datos:** se mantienen rutas antiguas de caché y respaldos bajo `%LOCALAPPDATA%` para no romper datos existentes; sus nombres históricos no representan programas separados.
