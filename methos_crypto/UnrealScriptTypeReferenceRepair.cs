@@ -255,6 +255,56 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        // UELib also emits numeric labels when the switched enum is a function parameter.
+        foreach (System.Text.RegularExpressions.Match functionMatch in
+                 System.Text.RegularExpressions.Regex.Matches(
+                     source, @"\bfunction\b[^{;\r\n]*\((?<parameters>[^)]*)\)"))
+        {
+            string parameters = functionMatch.Groups["parameters"].Value;
+            foreach (System.Text.RegularExpressions.Match parameter in
+                     System.Text.RegularExpressions.Regex.Matches(
+                         parameters, @"(?<enumType>(?:[A-Za-z_][A-Za-z0-9_]*\.)*E[A-Za-z0-9_]+)\s+(?<variable>[A-Za-z_][A-Za-z0-9_]*)"))
+            {
+                string enumType = parameter.Groups["enumType"].Value;
+                string variable = parameter.Groups["variable"].Value;
+                var switchMatch = System.Text.RegularExpressions.Regex.Match(
+                    source, @"\bswitch\s*\(\s*" +
+                    System.Text.RegularExpressions.Regex.Escape(variable) + @"\s*\)\s*\{");
+                if (!switchMatch.Success) continue;
+                int openBrace = source.IndexOf('{', switchMatch.Index + switchMatch.Length - 1);
+                int depth = 0, closeBrace = -1;
+                bool inString = false, inLineComment = false, inBlockComment = false, escaped = false;
+                for (int i = openBrace; i < source.Length; i++)
+                {
+                    char ch = source[i], next = i + 1 < source.Length ? source[i + 1] : '\0';
+                    if (inLineComment) { if (ch == '\n') inLineComment = false; continue; }
+                    if (inBlockComment) { if (ch == '*' && next == '/') { inBlockComment = false; i++; } continue; }
+                    if (inString)
+                    {
+                        if (escaped) escaped = false;
+                        else if (ch == '\\') escaped = true;
+                        else if (ch == '"') inString = false;
+                        continue;
+                    }
+                    if (ch == '/' && next == '/') { inLineComment = true; i++; continue; }
+                    if (ch == '/' && next == '*') { inBlockComment = true; i++; continue; }
+                    if (ch == '"') { inString = true; continue; }
+                    if (ch == '{') depth++;
+                    else if (ch == '}' && --depth == 0) { closeBrace = i; break; }
+                }
+                if (closeBrace <= openBrace) continue;
+                string body = source.Substring(openBrace + 1, closeBrace - openBrace - 1);
+                string repaired = System.Text.RegularExpressions.Regex.Replace(
+                    body, @"(?m)(^[ \t]*case\s+)([0-9]+)(\s*:)",
+                    "$1" + enumType + "($2)$3");
+                if (!string.Equals(body, repaired, StringComparison.Ordinal))
+                {
+                    source = source.Remove(openBrace + 1, body.Length).Insert(openBrace + 1, repaired);
+                    applied.Add($"{className}.{variable} numeric parameter-enum switch labels -> {enumType} casts");
+                }
+            }
+        }
+
         if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("PetInvenWnd", StringComparison.Ordinal) &&
             source.Contains("Info.DragSrcName", StringComparison.Ordinal))
