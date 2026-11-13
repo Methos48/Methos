@@ -490,6 +490,21 @@ Check(silentLoginVersionRepairs.Count == 1 &&
     "Silent login version label did not receive the explicit Goldlite RGBA repair.");
 Console.WriteLine("PASS: Silent login version label uses explicit Goldlite RGBA values.");
 
+string dunk3lStatusColorSample = """
+class StatusWnd extends UICommonAPI;
+function OnEnterState(name a_PreStateName)
+{
+    MethosRecoveredName_408("status", RecoveredName_98("orange"));
+}
+""";
+string dunk3lStatusColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "StatusWnd", dunk3lStatusColorSample, out IReadOnlyList<string> dunk3lStatusColorRepairs);
+Check(dunk3lStatusColorRepairs.Count == 1 &&
+      dunk3lStatusColorRepaired.Contains("MethosRecoveredName_408(\"status\", MethosRecoveredName_85(\"orange\"))", StringComparison.Ordinal),
+    "Dunk3l StatusWnd did not bind its orange text color to the actual UICommonAPI helper.");
+Console.WriteLine("PASS: Dunk3l StatusWnd uses the recovered UICommonAPI Color helper.");
+
+
 
 string silentTextboxSample = """
 class Interface_by_SILENT extends UICommonAPI;
