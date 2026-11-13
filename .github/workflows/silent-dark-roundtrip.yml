@@ -262,6 +262,18 @@ jobs:
           } else {
             Write-Host "PartyMatchOutWaitListWnd.uc is not present in the extracted reference source archive"
           }
+          $partyWait = Join-Path $generated "PartyMatchWaitListWnd.uc"
+          $referencePartyWait = Join-Path $env:SILENT_U_REFERENCE_SOURCES "PartyMatchWaitListWnd.uc"
+          if (Test-Path $partyWait) {
+            Copy-Item -LiteralPath $partyWait -Destination (Join-Path $diagnostics "PartyMatchWaitListWnd-generated.uc") -Force
+          }
+          if (Test-Path $referencePartyWait) {
+            Copy-Item -LiteralPath $referencePartyWait -Destination (Join-Path $diagnostics "PartyMatchWaitListWnd-reference.uc") -Force
+          }
+          Write-Host "=== ALL GENERATED SOURCE LINES WITH TRIPLE QUOTES ==="
+          Get-ChildItem -LiteralPath $generated -Filter "*.uc" -File |
+            Select-String -Pattern '"""' |
+            ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
           if (Test-Path $inventory) {
             Select-String -LiteralPath $inventory -Pattern "function MethosRecoveredName_|function !" | ForEach-Object { Write-Host $_.Line }
             Get-Content -LiteralPath $inventory | Set-Content -LiteralPath (Join-Path $diagnostics "SilentDark-InventoryWnd-Generated.uc")
