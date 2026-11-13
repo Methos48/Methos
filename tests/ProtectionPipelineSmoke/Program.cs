@@ -594,10 +594,24 @@ function OnEvent(int Event_ID, string param)
             IgnoreAggrFunc(param);
         }
     }
+    if(Event_ID == 2960)
+    {
+        if(ActiveHoldTarget)
+        {
+            holdTargetFunc();
+        }
+    }
 }
 function UpdateTarget()
 {
     if(GetOptionBool("Custom", "IgnoreAggr") == true)
+    {
+        return;
+    }
+}
+function holdTargetFunc()
+{
+    if(GetOptionBool("Custom", "HoldTarget") == true)
     {
         return;
     }
@@ -613,12 +627,14 @@ function HandleManaBurnNotice(string param)
 """;
 string dunk3lManaBurnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "TargetStatusWnd", dunk3lManaBurnSample, out IReadOnlyList<string> dunk3lManaBurnRepairs);
-Check(dunk3lManaBurnRepairs.Count == 2 &&
+Check(dunk3lManaBurnRepairs.Count == 3 &&
       dunk3lManaBurnRepaired.Contains("const MANA_BURN_SKILL_ID = 1398;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("const CARDINAL_CLASS_ID = 97;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("if(GetOptionBool(\"Custom\", \"IgnoreAggr\"))", StringComparison.Ordinal) &&
-      !dunk3lManaBurnRepaired.Contains("ActiveIgnoreAggro", StringComparison.Ordinal),
+      dunk3lManaBurnRepaired.Contains("if(GetOptionBool(\"Custom\", \"HoldTarget\"))", StringComparison.Ordinal) &&
+      !dunk3lManaBurnRepaired.Contains("ActiveIgnoreAggro", StringComparison.Ordinal) &&
+      !dunk3lManaBurnRepaired.Contains("ActiveHoldTarget", StringComparison.Ordinal),
     "Dunk3l TargetStatusWnd Mana Burn filter did not receive the Interlude skill ID constant.");
 Console.WriteLine("PASS: Dunk3l TargetStatusWnd preserves the Mana Burn skill filter.");
 
