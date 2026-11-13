@@ -64,12 +64,12 @@ public static class UnrealScriptTypeReferenceRepair
         // requires labels to carry the same enum type as the switched value.
         foreach (System.Text.RegularExpressions.Match declaration in
                  System.Text.RegularExpressions.Regex.Matches(
-                     source, @"\\blocal\\s+(?:[A-Za-z_][A-Za-z0-9_]*\\.)*(E[A-Za-z0-9_]+)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*;"))
+                     source, @"\blocal\s+(?:[A-Za-z_][A-Za-z0-9_]*\.)*(E[A-Za-z0-9_]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;"))
         {
             string enumType = declaration.Groups[1].Value;
             string variable = declaration.Groups[2].Value;
-            string switchPattern = @"\\bswitch\\s*\\(\\s*" +
-                System.Text.RegularExpressions.Regex.Escape(variable) + @"\\s*\\)\\s*\\{";
+            string switchPattern = @"\bswitch\s*\(\s*" +
+                System.Text.RegularExpressions.Regex.Escape(variable) + @"\s*\)\s*\{";
             var switchMatch = System.Text.RegularExpressions.Regex.Match(source, switchPattern);
             if (!switchMatch.Success) continue;
             int openBrace = source.IndexOf('{', switchMatch.Index + switchMatch.Length - 1);
@@ -97,7 +97,7 @@ public static class UnrealScriptTypeReferenceRepair
             if (closeBrace <= openBrace) continue;
             string switchBody = source.Substring(openBrace + 1, closeBrace - openBrace - 1);
             string repairedSwitch = System.Text.RegularExpressions.Regex.Replace(
-                switchBody, @"(?m)(\\bcase\\s+)([0-9]+)(\\s*:)",
+                switchBody, @"(?m)(\bcase\s+)([0-9]+)(\s*:)",
                 "$1" + enumType + "($2)$3");
             if (!string.Equals(switchBody, repairedSwitch, StringComparison.Ordinal))
             {
