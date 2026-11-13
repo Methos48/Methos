@@ -184,3 +184,13 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - **Validaciones pendientes, no ocultar:** la reconstrucción completa de la interfaz de referencia aún falla por incompatibilidad de tipo en `PartyWnd.uc` (`SetName`, parámetro 2). El round-trip Silent Dark aún falla por identificadores de función corruptos/control characters en fuentes decompiladas y una clase `ChatFilterWnd` mal formada. No se inventaron nombres ni se cambiaron comportamientos para forzar esas compilaciones.
 - **Pendiente de integración XDAT:** Windows Release todavía necesita el kit histórico `reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip` para parte del runtime/código base. No retirar el kit hasta migrar esa función a `tools/xdat/` y validar extracción, reconstrucción, protección y round-trip.
 - Con esto queda organizada la estructura del repositorio para continuar el desarrollo en `main`; las limitaciones de compilación anteriores deben abordarse como tareas técnicas separadas, no como reorganización de carpetas.
+
+
+### 13-11-2026 — Motor XDAT canónico conectado al build
+
+- Se confirmó que `tools/xdat/xdat_core.py` contiene el parser/compilador ct0 mantenido en el repositorio.
+- Se modificó `.github/workflows/windows-release.yml` para copiar esa fuente canónica sobre la copia histórica del kit antes de aplicar las capas de detección y pipeline.
+- El workflow compara SHA-256 entre la fuente versionada y la copia que se utilizará en el runtime; si difieren, la compilación falla. Se añadió `tools/xdat/xdat_core.py` a los filtros de cambios que disparan la validación Windows.
+- Commits: `82f55b233449a9010ecae7ecc03b2541b2a944f1` (motor canónico en build) y `17972c54233a42eeef3a468c3504e0300fa088c9` (filtro CI).
+- **Límite aún pendiente:** el kit histórico sigue proporcionando la aplicación base `app.py`, las pruebas/fixtures del paquete y `l2encdec.exe`. No se borró porque todavía contiene dependencias efectivas del runtime. El motor ct0 ya tiene fuente canónica; la migración de todo el paquete XDAT aún requiere trasladar esos componentes y validarlos.
+- Estado de CI de estos commits: todavía no hay ejecución visible asociada en GitHub Actions al momento de registrar esta nota. No se declara validación de Windows superada por estos cambios hasta que aparezca el resultado.
