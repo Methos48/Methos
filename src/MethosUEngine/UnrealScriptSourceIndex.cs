@@ -13,6 +13,20 @@ public static class UnrealScriptSourceIndex
     private enum TokenKind { Identifier, Symbol, Literal }
     private readonly record struct Token(string Text, TokenKind Kind, int Start, int End, int Line);
 
+    public static string RepairInvalidControlCharacterIdentifiers(string source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        List<Token> tokens = Tokenize(source);
+        var edits = tokens
+            .Where(token => token.Kind == TokenKind.Symbol && token.Text.Length == 1 && char.IsControl(token.Text[0]))
+            .Select(token => (token.Start, token.End - token.Start, Replacement: $"MethosRecoveredIdentifier_{(int)token.Text[0]:X2}"))
+            .OrderByDescending(edit => edit.Start)
+            .ToList();
+        foreach (var edit in edits)
+            source = source.Remove(edit.Start, edit.Item2).Insert(edit.Start, edit.Replacement);
+        return source;
+    }
+
     public static IReadOnlyList<UnrealFunctionSource> ParseFunctions(string source)
     {
         ArgumentNullException.ThrowIfNull(source);
