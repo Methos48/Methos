@@ -157,6 +157,27 @@ Check(interfaceSoundRepairs.Count == 4 &&
     "Native Interlude interface sound enum arguments were not restored from their verified values.");
 Console.WriteLine("PASS: Interlude interface sound arguments are restored to their native enum identifiers.");
 
+var dialogArgumentSample = """
+class UICommonAPI extends UIScript;
+function TestDialog()
+{
+    DialogShow(8, "message");
+    DialogShow(99, "unknown");
+}
+""";
+string dialogArgumentRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
+    "UICommonAPI", dialogArgumentSample, out IReadOnlyList<string> dialogArgumentRepairs);
+string dialogArgumentUntouched = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
+    "OtherClass", dialogArgumentSample, out IReadOnlyList<string> ignoredDialogArgumentRepairs);
+Check(dialogArgumentRepairs.Count == 1 &&
+      dialogArgumentRepaired.Contains("DialogShow(DIALOG_Block, \"message\")", StringComparison.Ordinal) &&
+      dialogArgumentRepaired.Contains("DialogShow(99, \"unknown\")", StringComparison.Ordinal) &&
+      ignoredDialogArgumentRepairs.Count == 0 &&
+      dialogArgumentUntouched == dialogArgumentSample,
+    "UICommonAPI DialogShow enum argument was not restored safely.");
+Console.WriteLine("PASS: UICommonAPI DialogShow uses the verified EDialogType identifier.");
+
+
 var nativeOperatorSample = """
 class UICommonAPI extends UIScript;
 function TestAddress(string MethosRecoveredName_5448, string OtherAddress)
