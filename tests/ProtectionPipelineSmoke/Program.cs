@@ -179,10 +179,10 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
 {
     if(!Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435()))
     {
-    }
-    if((RecoveredName_2883.SlotBitType == (RecoveredName_1455())) || RecoveredName_2883.SlotBitType == (RecoveredName_1467()))
-    {
-        RecoveredName_1266(RecoveredName_2883);
+        if((RecoveredName_2883.SlotBitType == (RecoveredName_1455())) || RecoveredName_2883.SlotBitType == (RecoveredName_1467()))
+        {
+            RecoveredName_1266(RecoveredName_2883);
+        }
     }
     if((!((((((((Info.DragSrcName == "InventoryItem") || Info.DragSrcName == "QuestItem")) || Info.DragSrcName == InventoryItem_1)) || -1 != InStr(Info.DragSrcName, "EquipItem"))) || Info.DragSrcName == "PetInvenWnd")))
     {
