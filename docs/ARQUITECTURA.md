@@ -30,16 +30,14 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 | Ruta | Responsabilidad |
 |---|---|
 | `src/MethosUEditor/` | Aplicación gráfica principal, navegación y conexión con los módulos. El nombre de carpeta/namespace conserva un identificador técnico histórico; el producto visible es Methos. |
-| `tools/xdat/` | Paquete de código XDAT mantenido: `xdat_core.py`, detección de cifrado, pipeline, metadatos de origen y validadores. Las adaptaciones del kit de Windows están en `tools/xdat/maintenance/`. El instalador todavía obtiene `xdat_core.py` del kit histórico; la migración completa del motor sigue pendiente. |
-| `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
-| `tools/xdat/xdat_core.py` | Código XDAT mantenido en el repositorio. Debe ser la fuente canónica una vez completada la migración del kit histórico. |
-
 | `src/MethosUEngine/` | Proyecto C# canónico del motor Unreal/UCC y de los codecs/protecciones, referenciado por la aplicación y las pruebas. |
-| `tests/` | Pruebas automatizadas U y XDAT. Las pruebas Python añaden `tools/xdat/` al camino de importación para que la fuente canónica no dependa de archivos en la raíz. |
+| `tools/xdat/` | Código y herramientas mantenidas del módulo XDAT: motor, detección de cifrado, pipeline, metadatos y validadores. Las adaptaciones del kit Windows están en `tools/xdat/maintenance/`; la migración total desde el kit histórico sigue pendiente. |
+| `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
+| `tests/` | Pruebas automatizadas U, protección y XDAT. Las pruebas Python importan el código desde `tools/xdat/`. |
 | `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
 | `docs/` | Documentación técnica, auditorías y resultados de investigación. |
-| `reference-data/` | Archivos de referencia para pruebas e investigación; no son archivos de trabajo del usuario ni necesariamente se instalan. |
+| `reference-data/` | Kits, archivos de cliente y paquetes de referencia para pruebas; no se instalan automáticamente. |
 | `.github/workflows/` | Automatización de compilación, validación, inspección y archivo de fuentes. |
 
 ## Archivos de entrada de compilación y referencias
