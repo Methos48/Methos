@@ -21,7 +21,7 @@ El lanzamiento oficial genera un único instalador Windows x64: `Methos-Setup.ex
 
 - `src/Methos.App/` — aplicación gráfica principal Methos.
 - `src/Methos.Engine/` — biblioteca interna del motor Unreal/UCC, codecs y protecciones.
-- `tools/xdat/` — código XDAT canónico, detección de cifrado, pipeline y metadatos; `tools/xdat/maintenance/` contiene las capas que preparan el kit de Windows. La integración total del motor desde esta carpeta sigue pendiente.
+- `tools/xdat/` — fuente canónica del parser/compilador XDAT, detección, pipeline, metadatos y validadores. El workflow copia `xdat_core.py` directamente al runtime y extrae del ZIP histórico solo los paquetes de referencia para las pruebas.
 - `tests/` — pruebas automatizadas.
 - `installer/Methos.iss` — único instalador del producto.
 - `docs/` — arquitectura, manuales e investigación técnica.

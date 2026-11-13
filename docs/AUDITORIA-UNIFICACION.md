@@ -30,11 +30,11 @@ La carpeta paralela `methos_crypto/` fue retirada de la rama principal por la co
 
 ## Migración XDAT pendiente
 
-El código mantenido está en `tools/xdat/`, pero el workflow de lanzamiento todavía extrae `reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip`, aplica las capas de mantenimiento y copia el `xdat_core.py` preparado desde el kit. No se debe retirar ese ZIP ni reemplazar el runtime distribuido hasta comparar sus funciones con `tools/xdat/`, migrar lo que falte y superar las pruebas de reconstrucción/round-trip.
+`tools/xdat/xdat_core.py` es la fuente canónica. La comparación automatizada encontró que el kit contiene tres archivos Python: `app.py` (sin equivalente en Methos), `xdat_core.py` y `tests/test_roundtrip.py`. La versión del repositorio añade compatibilidad Latin-1 y preservación de datos originales. La rama `work/xdat-runtime-source` cambia el workflow para copiar directamente la fuente canónica al runtime y extraer del ZIP solo los directorios de fixtures; deja de ejecutar o modificar `app.py`.
 
 ## Validación pendiente
 
-La rama `work/unification-audit` actualiza los nombres y rutas de proyectos, pruebas, workflows y documentación. Antes de integrar en `main` debe comprobarse:
+La rama `work/unification-audit` normalizó nombres y rutas de proyectos. La rama `work/xdat-runtime-source` elimina el uso del código fuente del kit y ejecuta las pruebas desde el repositorio. Antes de integrar esta segunda etapa en `main` debe comprobarse:
 
 1. Compilación Release de `src/Methos.App/Methos.App.csproj` para Windows x64.
 2. Compilación y pruebas de `src/Methos.Engine/Methos.Engine.csproj` y `tests/Methos.Engine.Tests/`.
@@ -44,4 +44,4 @@ La rama `work/unification-audit` actualiza los nombres y rutas de proyectos, pru
 
 ## Criterio de cierre
 
-No declarar finalizada la unificación hasta que los workflows y las pruebas anteriores pasen en la rama que contiene los cambios. No añadir nuevas funciones durante esta fase. Mantener intactos los archivos originales y las copias de respaldo de los usuarios.
+El ZIP histórico se conserva únicamente como archivo de fixtures de prueba; no se distribuye como aplicación ni como código fuente del runtime. No declarar finalizada la unificación hasta que el nuevo workflow y las pruebas anteriores pasen. No añadir nuevas funciones durante esta fase. Mantener intactos los archivos originales y las copias de respaldo de los usuarios.

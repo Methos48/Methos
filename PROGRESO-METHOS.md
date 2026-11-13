@@ -25,6 +25,14 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Registro de avances
 
+### 13-11-2026 — XDAT desde fuente canónica (validación Windows superada en PR)
+
+- La comparación del kit histórico confirmó que `app.py` no tiene equivalente en Methos y que `tools/xdat/xdat_core.py` es más completo que la copia antigua (incluye compatibilidad Latin-1 y preservación de listas originales).
+- La rama `work/xdat-runtime-source` elimina los overlays que modificaban la antigua interfaz Python. El ZIP se usa solo para extraer fixtures de referencia; no se ejecuta ni se copia su `app.py` al runtime.
+- El runtime copia directamente `tools/xdat/xdat_core.py` y `src/Methos.App/XdatBridge.py`. Las pruebas se ejecutan desde `tests/` y `tools/xdat/tests/` contra las fuentes del repositorio con `XDAT_REFERENCE_ROOT`.
+- **Validación:** Windows Release pasó en el PR: compilación, pruebas Python, creación del instalador, instalación silenciosa y arranque de `Methos.exe`.
+- El ZIP histórico se conserva como archivo de fixtures. `auto_pipeline.py` sigue sin estar conectado a la interfaz C#; no se declara integrado el uso de `l2encdec.exe` ni el soporte de todas las variantes cifradas.
+
 ### 13-11-2026 — Normalización de nombres internos (rama de revisión)
 
 - La rama `work/unification-audit` reemplaza los nombres técnicos heredados por `Methos.App` y `Methos.Engine`: proyecto de interfaz, biblioteca interna, namespaces, pruebas y rutas de workflows.

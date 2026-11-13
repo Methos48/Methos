@@ -30,7 +30,7 @@ El proyecto de motor referenciado por la aplicación y las pruebas debe ser `src
 
 ## Integración XDAT
 
-`tools/xdat/` es la ubicación del código XDAT mantenido. La preparación de la distribución todavía depende de un kit ZIP histórico; esa dependencia solo puede retirarse después de migrar la aplicación base y el motor, comparar resultados y pasar pruebas de reconstrucción/instalación.
+`tools/xdat/` es la fuente canónica del motor que se distribuye dentro de Methos. El workflow copia `xdat_core.py` directamente al runtime y usa el ZIP histórico solo para extraer fixtures de prueba; no ejecuta ni empaqueta la antigua aplicación `app.py`. Mantener el ZIP como archivo de referencia hasta que los fixtures se migren y validen por separado.
 
 ## Documentación y estado
 

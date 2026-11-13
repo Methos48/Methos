@@ -1,27 +1,32 @@
 import json
+import sys
 import tempfile
 import unittest
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools" / "xdat"))
+
 from package_origin_metadata import (
-    build_origin_record, save_origin_record, load_and_validate_origin,
+    build_origin_record,
+    save_origin_record,
+    load_and_validate_origin,
     require_recorded_protocol,
 )
-
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tools" / "xdat"))
 
 
 class OriginMetadataTests(unittest.TestCase):
     def test_records_protocol_and_hash_without_secrets(self):
         raw = b"sample encrypted package"
-        detection = SimpleNamespace(status="recognized_encryption", version=121,
-                                    family="XOR", header="Lineage2Ver121",
-                                    filename_required=True, detail="filename required")
+        detection = SimpleNamespace(
+            status="recognized_encryption",
+            version=121,
+            family="XOR",
+            header="Lineage2Ver121",
+            filename_required=True,
+            detail="filename required",
+        )
         record = build_origin_record(Path("interface.xdat"), raw, detection)
         self.assertEqual(record["encoding"]["protocol_version"], 121)
         self.assertTrue(record["encoding"]["original_filename_required"])
@@ -34,11 +39,15 @@ class OriginMetadataTests(unittest.TestCase):
             root = Path(tmp)
             source = root / "interface.xdat"
             source.write_bytes(b"original")
-            detection = SimpleNamespace(status="plain_candidate", version=None,
-                                        family=None, header=None,
-                                        filename_required=False, detail="plain")
-            manifest = save_origin_record(root / "project", source,
-                                          source.read_bytes(), detection)
+            detection = SimpleNamespace(
+                status="plain_candidate",
+                version=None,
+                family=None,
+                header=None,
+                filename_required=False,
+                detail="plain",
+            )
+            manifest = save_origin_record(root / "project", source, source.read_bytes(), detection)
             loaded = load_and_validate_origin(manifest, source)
             self.assertEqual(loaded["source"]["file_name"], source.name)
             source.write_bytes(b"changed")

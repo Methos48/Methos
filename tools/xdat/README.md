@@ -1,25 +1,27 @@
 # Módulo XDAT de Methos
 
-Esta carpeta es la ubicación canónica del código Python XDAT mantenido en el repositorio.
+Esta carpeta contiene la fuente Python canónica mantenida por el repositorio.
 
 ## Código
 
-- `xdat_core.py`: lectura, análisis, extracción XML y reconstrucción XDAT.
-- `encryption_detection.py`: identificación explícita de cabeceras y protocolos; no inventa claves ni afirma que un cifrado desconocido sea compatible.
-- `auto_pipeline.py`: despacho de decodificación/codificación y publicación transaccional.
+- `xdat_core.py`: lectura, análisis, extracción XML y reconstrucción XDAT. Se copia directamente al runtime embebido de Methos.
+- `encryption_detection.py`: identificación explícita de cabeceras y protocolos.
+- `auto_pipeline.py`: despacho de decodificación/codificación y publicación transaccional. Todavía no está conectado al puente C# de la interfaz.
 - `package_origin_metadata.py`: manifiesto de origen, hash y protocolo registrado.
-- `validate_dunk3l_smartcrypt.py`: validación específica del paquete de referencia.
+- `compare_build_kit.py`: auditoría de solo lectura del ZIP histórico.
+- `extract_reference_fixtures.py`: extrae únicamente los directorios de referencia `xdat completo/` y `xdat por partes/`; no extrae ni ejecuta `app.py`, pruebas antiguas ni binarios del kit.
 
-## Preparación del kit Windows
+## Runtime de Methos
 
-Los scripts de integración están en `maintenance/`. El workflow oficial los ejecuta sobre una copia temporal del kit XDAT histórico. No se debe ejecutar la modificación directamente sobre los archivos originales del ZIP.
+El workflow Windows copia directamente `tools/xdat/xdat_core.py` a `publish/XdatRuntime/xdat_core.py` y `src/Methos.App/XdatBridge.py` a `xdat_bridge.py`. El runtime se carga dentro de `Methos.exe`; no se distribuye una aplicación Python separada.
 
-## Fuente del motor en la compilación
+`auto_pipeline.py` todavía referencia el motor externo `l2encdec.exe`, pero ese pipeline no forma parte del runtime actual ni se presenta como una capacidad integrada en la interfaz C#. Su integración requiere un bloque posterior de desarrollo y pruebas.
 
-`tools/xdat/xdat_core.py` es ahora la fuente canónica del parser/compilador ct0. El workflow Windows la copia sobre la versión incluida en el kit histórico antes de aplicar las capas de integración y comprueba que el SHA-256 de la copia de trabajo coincide con el archivo versionado en Methos. Los cambios de `xdat_core.py` también disparan la validación Windows.
+## Archivo histórico y pruebas
 
-El kit histórico todavía aporta la aplicación base (`app.py`), sus pruebas/fixtures y el binario de compatibilidad `l2encdec.exe`. Por tanto, el motor de formato ya tiene una fuente canónica, pero la migración completa del paquete XDAT no está cerrada hasta trasladar y validar esos componentes restantes. No borrar el ZIP ni afirmar que todo el paquete es autónomo antes de superar esa validación.
+`reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip` se conserva como archivo de referencia. El workflow extrae solo los fixtures y ejecuta los tests desde el repositorio:
 
-## Pruebas
+- `tests/`: detección, pipeline, metadatos, publicación y edición XML.
+- `tools/xdat/tests/`: reconstrucción con el paquete de referencia.
 
-Las pruebas Python compartidas están en `/tests`; las pruebas específicas del motor XDAT están en `tools/xdat/tests`. Ejecutar las pruebas sobre copias temporales y mantener intactos los paquetes de referencia.
+La variable `XDAT_REFERENCE_ROOT` apunta a la carpeta temporal de fixtures. El kit histórico no aporta código fuente al runtime y su antigua interfaz `app.py` no se ejecuta.
