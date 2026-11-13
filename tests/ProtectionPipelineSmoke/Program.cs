@@ -800,7 +800,7 @@ string dunk3lToolTipItemTypeRepaired = UnrealScriptTypeReferenceRepair.RepairKno
     "ToolTip", dunk3lToolTipItemTypeSample, out IReadOnlyList<string> dunk3lToolTipItemTypeRepairs);
 Check(dunk3lToolTipItemTypeRepairs.Count == 2 &&
       dunk3lToolTipItemTypeRepaired.Contains("local byte EItemType;", StringComparison.Ordinal) &&
-      dunk3lToolTipItemTypeRepaired.Contains("EEtcItemType = UIEventManager.EEtcItemType(item.ItemSubType);", StringComparison.Ordinal),
+      dunk3lToolTipItemTypeRepaired.Contains("EEtcItemType = EEtcItemType(item.ItemSubType);", StringComparison.Ordinal),
     "Dunk3l ToolTip item type locals were not restored to their reference types.");
 Console.WriteLine("PASS: ToolTip item type locals and enum assignment match the Interlude reference.");
 
