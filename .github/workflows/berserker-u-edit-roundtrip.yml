@@ -42,13 +42,15 @@ jobs:
           if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
           New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
           $output = Join-Path $outputDir "Interface.u"
-          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --interface-u-edit-roundtrip $env:UCC_ROOT $input $output $source
-          if ($LASTEXITCODE -ne 0) { throw "Berserker modified U round-trip failed." }
+          $log = Join-Path $root "roundtrip-console.log"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --interface-u-edit-roundtrip $env:UCC_ROOT $input $output $source 2>&1 | Tee-Object -FilePath $log
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) { throw "Berserker modified U round-trip failed with exit code $exitCode. See roundtrip-console.log artifact." }
           if (!(Test-Path -LiteralPath $output)) { throw "Rebuilt Berserker Interface.u is missing." }
           $length = (Get-Item -LiteralPath $output).Length
           if ($length -lt 1024) { throw "Rebuilt Berserker Interface.u is unexpectedly small: $length bytes." }
           "OUTPUT_BYTES=$length" | Set-Content (Join-Path $root "roundtrip-result.txt")
-      - name: Upload verified Berserker round-trip
+      - name: Upload Berserker round-trip diagnostics
         uses: actions/upload-artifact@v4
         if: always()
         with:
