@@ -580,17 +580,6 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
 
     // The LoadingWnd server-age local is an enum; UELib exposes its underlying
     // byte cast, which UCC correctly rejects when assigned back to the enum.
-    // UIAPI_NAMECTRL.SetName expects enum values for its type and alignment parameters.
-    private static string NormalizeStatusCustomWndNameControlEnums(string className, string source)
-    {
-        if (!className.Equals("StatusCustomWnd", StringComparison.OrdinalIgnoreCase))
-            return source;
-        return Regex.Replace(source,
-            @"(UIAPI_NAMECTRL'\.static\.SetName\([^,]+,\s*[^,]+,\s*)0(\s*,\s*)1(\s*\))",
-            "$1ENameCtrlType.NCT_Normal$2ETextAlign.TA_Left$3",
-            RegexOptions.IgnoreCase);
-    }
-
     private static string NormalizeLoadingWndServerAgeEnum(string className, string source)
     {
         if (!className.Equals("LoadingWnd", StringComparison.OrdinalIgnoreCase))
@@ -988,7 +977,6 @@ function HandleHideLogo()
                 source = NormalizeNameControlEnumArguments(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
-                source = NormalizeStatusCustomWndNameControlEnums(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
