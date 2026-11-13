@@ -190,7 +190,7 @@ function Test()
 string enumSwitchRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "ChatWnd", enumSwitchSample, out IReadOnlyList<string> enumSwitchRepairs);
 Check(enumSwitchRepairs.Count == 1 &&
-      enumSwitchRepaired.Contains("case EIMEType(1):", StringComparison.Ordinal) &&
+      enumSwitchRepaired.Contains("\"case 9: is text, not a label\"", StringComparison.Ordinal),
       enumSwitchRepaired.Contains("case EIMEType(2):", StringComparison.Ordinal) &&
       enumSwitchRepaired.Contains("\\"case 9: is text, not a label\\"", StringComparison.Ordinal),
     "Numeric switch labels for enum locals were not restored safely.");
