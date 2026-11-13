@@ -41,8 +41,10 @@ jobs:
           import hashlib, json, pathlib, struct, zipfile
           root = pathlib.Path(".")
           report = {"files": [], "zip_entries": [], "notes": []}
-          for p in sorted(root.iterdir()):
-              if p.is_file() and p.suffix.lower() in (".u", ".zip"):
+          reference_roots = [pathlib.Path("reference-data/kits"), pathlib.Path("reference-data/client/lineage2"), pathlib.Path("reference-data/packages")]
+          reference_files = sorted(p for base in reference_roots for p in base.rglob("*") if p.is_file())
+          for p in reference_files:
+              if p.suffix.lower() in (".u", ".zip"):
                   b = p.read_bytes()
                   item = {"name": p.name, "size": len(b), "sha256": hashlib.sha256(b).hexdigest(),
                           "first_32_bytes_hex": b[:32].hex(" ")}
