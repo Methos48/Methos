@@ -561,6 +561,34 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add(className + " custom message calls preserved through UICommonAPI helper");
         }
 
+        if ((className.Equals("LoginCharSelectWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("LoginEulaWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("LoginWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("LoginServerWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase)) &&
+            source.Contains("function respect()", StringComparison.Ordinal) &&
+            (source.Contains("CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, RecoveredName_98(\"Goldlite\"))", StringComparison.Ordinal) ||
+             source.Contains("CR.SetNameWithColor(\"INTERFACE OKTUBRE\", NCT_Normal, TA_Center, RecoveredName_98(\"white\"))", StringComparison.Ordinal)))
+        {
+            bool isOptionBranding = className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase);
+            source = Regex.Replace(
+                source,
+                @"(?is)(function\\s+respect\\s*\\(\\s*\\)\\s*\\{)",
+                "$1\\n\\tlocal Color MethosSilentVersionColor;",
+                1);
+            string colorSetup = isOptionBranding
+                ? "MethosSilentVersionColor.R = 255;\\n\\tMethosSilentVersionColor.G = 255;\\n\\tMethosSilentVersionColor.B = 255;\\n\\tMethosSilentVersionColor.A = 255;\\n\\t"
+                : "MethosSilentVersionColor.R = 240;\\n\\tMethosSilentVersionColor.G = 227;\\n\\tMethosSilentVersionColor.B = 200;\\n\\tMethosSilentVersionColor.A = 255;\\n\\t";
+            string originalCall = isOptionBranding
+                ? "CR.SetNameWithColor(\"INTERFACE OKTUBRE\", NCT_Normal, TA_Center, RecoveredName_98(\"white\"))"
+                : "CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, RecoveredName_98(\"Goldlite\"))";
+            string repairedCall = isOptionBranding
+                ? colorSetup + "CR.SetNameWithColor(\"INTERFACE OKTUBRE\", NCT_Normal, TA_Center, MethosSilentVersionColor)"
+                : colorSetup + "CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, MethosSilentVersionColor)";
+            source = source.Replace(originalCall, repairedCall, StringComparison.Ordinal);
+            applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
+        }
+
         if (className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
             source.Contains("local OptionWnd script;", StringComparison.Ordinal))
