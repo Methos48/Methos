@@ -210,6 +210,12 @@ Check(drawItemTypeRepairs.Count == 2 &&
       drawItemTypeRepaired.Contains("custom_1.DrawList[0].eType = DIT_TEXTURE", StringComparison.Ordinal),
     "DrawItemInfo EDrawItemType assignments were not restored to verified enum identifiers.");
 Console.WriteLine("PASS: UICommonAPI DrawItemInfo assignments use verified EDrawItemType identifiers.");
+string autoPotionDrawItemRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownDrawItemTypeAssignments(
+    "AutoPotionWnd", "function CustomTooltip SetTooltip(string Text) { Info.eType = 1; }", out IReadOnlyList<string> autoPotionDrawItemRepairs);
+Check(autoPotionDrawItemRepairs.Count == 1 &&
+      autoPotionDrawItemRepaired.Contains("Info.eType = DIT_TEXT", StringComparison.Ordinal),
+    "DrawItemInfo enum assignments were not restored in non-UICommonAPI classes.");
+Console.WriteLine("PASS: recovered interface classes restore typed DrawItemInfo enum assignments.");
 
 
 var nativeOperatorSample = """
