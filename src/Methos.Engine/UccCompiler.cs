@@ -283,7 +283,7 @@ public static class UccCompiler
         if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase) ||
             !source.Contains("InsertPotion(Potion[", StringComparison.Ordinal))
             return source;
-        if (Regex.IsMatch(source, @"(?im)^\\s*function\\s+InsertPotion\\s*\\("))
+        if (Regex.IsMatch(source, @"(?im)^\s*function\s+InsertPotion\s*\("))
             return source;
 
         const string dispatcher = @"
@@ -315,7 +315,7 @@ function InsertPotion(ItemInfo a_ItemInfo)
     return;
 }
 ";
-        Match classLine = Regex.Match(source, @"(?m)^\\s*class\\s+\\w+\\b[^;]*;[\\t ]*\\r?\\n?");
+        Match classLine = Regex.Match(source, @"(?m)^\s*class\s+\w+\b[^;]*;[\t ]*\r?\n?");
         if (!classLine.Success) return source;
         source = source.Insert(classLine.Index + classLine.Length, dispatcher + Environment.NewLine);
         restored = true;
