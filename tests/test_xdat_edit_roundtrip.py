@@ -1,9 +1,15 @@
 from pathlib import Path
 import tempfile
 import unittest
+import sys
 import xml.etree.ElementTree as ET
 
 from xdat_core import compile_from_folder, decompile_to_folder, parse_xdat
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools" / "xdat"))
 
 
 class EditedXmlRoundTripTest(unittest.TestCase):
