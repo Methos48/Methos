@@ -596,7 +596,7 @@ string partyWndSetNameRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMism
     "PartyWnd", partyWndSetNameSample, out IReadOnlyList<string> partyWndSetNameRepairs);
 Check(partyWndSetNameRepairs.Count == 1 &&
       partyWndSetNameRepaired.Contains(
-          "m_PlayerName[idx].SetName(\"\", UIEventManager.ENameCtrlType(0), UIEventManager.ETextAlign(2));",
+          "m_PlayerName[idx].SetName(\"\", UIEventManager.NCT_Normal, UIEventManager.TA_Center);",
           StringComparison.Ordinal),
     "PartyWnd SetName arguments were not cast to the actual NWindow enum parameter types.");
 Console.WriteLine("PASS: PartyWnd.SetName arguments use the declared NWindow enum types.");
