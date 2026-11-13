@@ -120,9 +120,9 @@ public static class UccCompiler
             var excerpt = new StringBuilder();
             for (int lineNumber = first; lineNumber <= last; lineNumber++)
             {
-                string printable = new(lines[lineNumber - 1].Select(ch =>
+                string printable = string.Concat(lines[lineNumber - 1].Select(ch =>
                     char.IsControl(ch) && ch is not '\r' and not '\n' and not '\t'
-                        ? $"\\u{(int)ch:X4}" : ch).ToArray());
+                        ? $"\\u{(int)ch:X4}" : ch.ToString()));
                 excerpt.AppendLine($"{fileName}:{lineNumber}: {printable}");
             }
             contexts.Add($"UCC_SOURCE_CONTEXT {fileName}:{errorLine} (staged source)" +
