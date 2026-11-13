@@ -313,6 +313,20 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("OlympiadTargetWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("EnemyMPLost", StringComparison.Ordinal) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+int\\s+EnemyMPLost\\s*;"))
+        {
+            const string fieldAnchor = "var int DamageReceived;";
+            if (source.Contains(fieldAnchor, StringComparison.Ordinal))
+            {
+                source = source.Replace(fieldAnchor,
+                    fieldAnchor + Environment.NewLine + "var int EnemyMPLost;",
+                    StringComparison.Ordinal);
+                applied.Add("OlympiadTargetWnd.EnemyMPLost integer state field restored");
+            }
+        }
+
         if ((className.Equals("ManorCropInfoChangeWnd", StringComparison.OrdinalIgnoreCase) ||
              className.Equals("ManorSeedInfoChangeWnd", StringComparison.OrdinalIgnoreCase)) &&
             source.Contains("string(int(1))", StringComparison.Ordinal))
