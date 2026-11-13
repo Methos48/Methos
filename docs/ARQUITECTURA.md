@@ -43,6 +43,10 @@ Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflo
 
 Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
+## Workflows y repositorios históricos
+
+Los workflows de inspección de Dunk3l y validación Unreal/UCC deben tomar sus fuentes desde este repositorio. Se eliminaron las descargas del antiguo repositorio `Methos-U-Editor`; los paquetes UCC y el paquete de referencia se leen ahora desde `Compilador  U.zip` y `reference-data/Interface-UEditor.u`. No reintroducir checkouts del repositorio histórico.
+
 ## Flujo oficial de compilación
 
 El workflow de distribución oficial es `.github/workflows/windows-release.yml`. Debe producir:
