@@ -368,6 +368,22 @@ jobs:
           for ($n=348; $n -lt [Math]::Min(368,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
           Write-Host "===== ISKEYDOWN DEFINITIONS AND EXAMPLES ====="
           Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)\bIsKeyDown\s*\(' -Context 2,3 | Select-Object -First 80
+      - name: Restore Animal InventoryWnd key enum arguments
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $oldCall = 'if(LogicalAND(IsKeyDown(18), IsKeyDown(17)))'
+          $newCall = 'if(LogicalAND(IsKeyDown(IK_Alt), IsKeyDown(IK_Ctrl)))'
+          if ($sourceText.Contains($oldCall)) {
+            $sourceText = $sourceText.Replace($oldCall, $newCall)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_KEY_ENUMS=IK_Alt,IK_Ctrl"
+          } elseif ($sourceText.Contains($newCall)) {
+            Write-Host "ANIMAL_KEY_ENUMS_ALREADY_RESTORED=IK_Alt,IK_Ctrl"
+          } else {
+            throw "Expected InventoryWnd key call was not found; refusing a broad replacement."
+          }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
