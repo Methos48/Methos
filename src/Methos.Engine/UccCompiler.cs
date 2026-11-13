@@ -568,6 +568,17 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             string.Join(Environment.NewLine + Environment.NewLine, additions) + Environment.NewLine + Environment.NewLine);
     }
 
+    // The LoadingWnd server-age local is an enum; UELib exposes its underlying
+    // byte cast, which UCC correctly rejects when assigned back to the enum.
+    private static string NormalizeLoadingWndServerAgeEnum(string className, string source)
+    {
+        if (!className.Equals("LoadingWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source,
+            @"ServerAgeLimit\s*=\s*byte\s*\(\s*ServerAgeLimitInt\s*\)",
+            "ServerAgeLimit = EServerAgeLimit(ServerAgeLimitInt)", RegexOptions.IgnoreCase);
+    }
+
     // ChatFilterWnd's numeric chat-type switch is emitted as script.1, script.2,
     // etc. by the decompiler. The matching Interlude implementation uses ordinals.
     private static string NormalizeChatFilterWndCaseLabels(string className, string source)
@@ -952,6 +963,7 @@ function HandleHideLogo()
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
+                source = NormalizeLoadingWndServerAgeEnum(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
