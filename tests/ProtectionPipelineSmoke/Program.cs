@@ -642,6 +642,9 @@ string dunk3lToolTipWidthSample = """
 class ToolTip extends UICommonAPI;
 var CustomTooltip m_Tooltip;
 var DrawItemInfo m_Info;
+function MethosRecoveredName_31()
+{
+}
 function AddTooltipItemBar(int minimum_width)
 {
     m_Info.u_nTextureWidth = getMaxWidth();
