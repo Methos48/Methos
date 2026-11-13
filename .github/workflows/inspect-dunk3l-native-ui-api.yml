@@ -17,7 +17,7 @@ jobs:
       - name: Decompile UCC packages and locate UIScript declarations
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $archive = Join-Path $PWD "Compilador  U.zip"
           $root = Join-Path $PWD "UCC-Native-API"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $packages = Get-ChildItem -LiteralPath $root -Recurse -Filter "*.u" -File
