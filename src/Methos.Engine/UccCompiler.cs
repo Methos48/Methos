@@ -520,22 +520,27 @@ function HandleHideLogo()
 
     // Recover two OptionWnd handlers directly from the exact Interlude reference class.
     // These routines control only client-side logo visibility and shortcut keycap textures.
+    // Restore only missing OptionWnd functions that are actually called by the recovered
+    // source, copying their complete implementations from the matching Interlude reference.
     private static string RestoreOptionWndReferenceHandlers(string className, string source,
         string referenceSource, out int restoredCount)
     {
         restoredCount = 0;
-        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase))
+        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(referenceSource))
             return source;
 
         var recovered = new List<string>();
-        foreach (string functionName in new[] { "HandleHideLogo", "SetShortcutTransparencyNum" })
+        var declarations = Regex.Matches(referenceSource,
+            @"(?ims)^\s*(?:(?:native|final|static|simulated|event)\s+)*function\s+(?:[A-Za-z_]\w*\s+)?(?<name>[A-Za-z_]\w*)\s*\([^)]*\)[^{]*\{.*?^\}");
+        foreach (Match function in declarations)
         {
-            if (Regex.IsMatch(source, @"(?im)^\s*function\s+" + Regex.Escape(functionName) + @"\s*\("))
+            string name = function.Groups["name"].Value;
+            if (Regex.IsMatch(source, @"(?im)^\s*function\s+(?:[A-Za-z_]\w*\s+)?" +
+                Regex.Escape(name) + @"\s*\("))
                 continue;
-            Match function = Regex.Match(referenceSource,
-                @"(?ims)^\s*function\s+" + Regex.Escape(functionName) +
-                @"\s*\([^)]*\)[^\{]*\{.*?^\}");
-            if (!function.Success) continue;
+            if (!Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\s*\("))
+                continue;
             recovered.Add(function.Value.Trim());
         }
 
