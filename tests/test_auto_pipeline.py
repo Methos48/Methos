@@ -2,11 +2,9 @@ import unittest
 import sys
 from pathlib import Path
 from unittest.mock import patch
-from auto_pipeline import ENGINE_PROTOCOLS, AutoPipelineError, decode_xdat
-
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools" / "xdat"))
+from auto_pipeline import ENGINE_PROTOCOLS, AutoPipelineError, decode_xdat
 
 
 class AutoPipelineTests(unittest.TestCase):
