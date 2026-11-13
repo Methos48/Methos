@@ -733,6 +733,23 @@ Check(dunk3lToolTipDeclarationOnlyRepairs.Count == 1 &&
     "Dunk3l ToolTip helper declaration was not renamed when its decompiled call site was absent.");
 Console.WriteLine("PASS: Dunk3l ToolTip helper is renamed even when UELib omits its call site.");
 
+string dunk3lToolTipAlreadyRenamedSample = """
+class ToolTip extends UICommonAPI;
+function MethosRecoveredName_31()
+{
+}
+function int MethosTooltipGetMaxWidth()
+{
+    return TOOLTIP_MINIMUM_WIDTH;
+}
+""";
+string dunk3lToolTipAlreadyRenamedRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipAlreadyRenamedSample, out IReadOnlyList<string> dunk3lToolTipAlreadyRenamedRepairs);
+Check(dunk3lToolTipAlreadyRenamedRepairs.Count == 0 &&
+      dunk3lToolTipAlreadyRenamedRepaired.Split("function int MethosTooltipGetMaxWidth()", StringSplitOptions.None).Length == 2,
+    "Dunk3l ToolTip helper was restored a second time after its safe rename.");
+Console.WriteLine("PASS: ToolTip repair does not append a second helper after the safe rename.");
+
 
 
 
