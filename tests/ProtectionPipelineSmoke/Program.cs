@@ -178,6 +178,23 @@ Check(dialogArgumentRepairs.Count == 1 &&
 Console.WriteLine("PASS: UICommonAPI DialogShow uses the verified EDialogType identifier.");
 
 
+var dialogDefaultActionSample = """
+class UICommonAPI extends UIScript;
+function TestDefaultAction()
+{
+    script.SetDefaultAction(1);
+    script.SetDefaultAction(2);
+}
+""";
+string dialogDefaultActionRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(
+    "UICommonAPI", dialogDefaultActionSample, out IReadOnlyList<string> dialogDefaultActionRepairs);
+Check(dialogDefaultActionRepairs.Count == 2 &&
+      dialogDefaultActionRepaired.Contains("SetDefaultAction(EDefaultOK)", StringComparison.Ordinal) &&
+      dialogDefaultActionRepaired.Contains("SetDefaultAction(EDefaultCancel)", StringComparison.Ordinal),
+    "DialogDefaultAction arguments were not restored to their declared enum identifiers.");
+Console.WriteLine("PASS: UICommonAPI DialogBox default-action arguments use declared enum identifiers.");
+
+
 var drawItemTypeSample = """
 class UICommonAPI extends UIScript;
 function TestDrawItem()
