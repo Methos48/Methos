@@ -594,6 +594,28 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
         }
 
+        if (className.Equals("SystemBarWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("RecoveredName_4534 = TextBoxHandle(GetHandle(m_WindowName $ \".PVPInfo\"))", StringComparison.Ordinal))
+        {
+            source = new Regex(@"(?is)(function\\s+OnLoad\\s*\\(\\s*\\)\\s*\\{)")
+                .Replace(source, "$1\\n\\tlocal int RecoveredName_4544, RecoveredName_4545, RecoveredName_4546;", 1);
+            string[,] fieldMappings =
+            {
+                { "RecoveredName_4533", "MethosRecoveredName_4561" },
+                { "RecoveredName_4534", "MethosRecoveredName_4562" },
+                { "RecoveredName_4535", "MethosRecoveredName_4564" },
+                { "RecoveredName_4536", "MethosRecoveredName_4571" },
+                { "RecoveredName_4537", "MethosRecoveredName_4572" },
+                { "RecoveredName_4538", "MethosRecoveredName_4573" },
+                { "RecoveredName_4539", "MethosRecoveredName_4574" },
+                { "RecoveredName_4540", "MethosRecoveredName_4575" },
+                { "RecoveredName_4542", "MethosRecoveredName_4577" }
+            };
+            for (int i = 0; i < fieldMappings.GetLength(0); i++)
+                source = Regex.Replace(source, @"\\b" + fieldMappings[i, 0] + @"\\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
+            applied.Add("Dunk3l SystemBarWnd recovered fields reconciled with their declared handles and state");
+        }
+
         if (className.Equals("UISublimityCommonAPI", StringComparison.OrdinalIgnoreCase) &&
             Regex.IsMatch(source, @"Class'Methos-Dunk3l-[0-9a-fA-F]+\.SublimityTimerActor'", RegexOptions.CultureInvariant))
         {
