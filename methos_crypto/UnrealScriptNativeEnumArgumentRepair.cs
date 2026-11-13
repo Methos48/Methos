@@ -96,14 +96,14 @@ public static class UnrealScriptNativeEnumArgumentRepair
 
         string repaired = Regex.Replace(
             source,
-            @"(?<![A-Za-z0-9_])DialogShow\\s*\\(\\s*(?<value>\\d+)\\s*,",
+            @"(?<![A-Za-z0-9_])DialogShow\s*\(\s*(?<value>\d+)\s*,",
             match =>
             {
                 if (!int.TryParse(match.Groups["value"].Value, out int value) ||
                     !DialogTypeNames.TryGetValue(value, out string? enumName))
                     return match.Value;
                 applied.Add($"{value} -> {enumName}");
-                return Regex.Replace(match.Value, @"(?<=\\()\\s*\\d+", enumName);
+                return Regex.Replace(match.Value, @"(?<=\()\s*\d+", enumName);
             },
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
