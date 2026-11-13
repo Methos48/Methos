@@ -558,7 +558,10 @@ public static class UnrealScriptTypeReferenceRepair
              className.Equals("HoldIgnoreTargetWnd", StringComparison.OrdinalIgnoreCase)) &&
             Regex.IsMatch(source, @"(?<!Methos)RecoveredName_255\(", RegexOptions.CultureInvariant))
         {
-            string recoveredMessageHelper = className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase)
+            bool isDunk3lLogo = className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
+                (source.Contains("MethosRecoveredName_2124", StringComparison.Ordinal) ||
+                 source.Contains("RecoveredName_2124", StringComparison.Ordinal));
+            string recoveredMessageHelper = isDunk3lLogo
                 ? "MethosRecoveredName_218("
                 : "MethosRecoveredName_255(";
             source = Regex.Replace(source, @"(?<!Methos)RecoveredName_255\(", recoveredMessageHelper, RegexOptions.CultureInvariant);
