@@ -208,6 +208,22 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
+      - name: Extraer únicamente el fixture XDAT histórico para pruebas
+        shell: pwsh
+        run: |
+          $zip = Join-Path $PWD "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
+          if (!(Test-Path $zip)) { throw "No se encontró el paquete de referencia que contiene el fixture XDAT." }
+          $extract = Join-Path $env:RUNNER_TEMP "methos-xdat-reference"
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+          $project = Get-ChildItem $extract -Directory | Select-Object -First 1
+          if (!$project) { throw "El paquete de referencia no contiene su carpeta de proyecto." }
+          $fixture = Join-Path $project.FullName "xdat completo\\interface.xdat"
+          if (!(Test-Path $fixture)) { throw "No se encontró el fixture xdat completo/interface.xdat." }
+          $fixtureRoot = Join-Path $PWD "xdat completo"
+          New-Item -ItemType Directory -Force $fixtureRoot | Out-Null
+          Copy-Item $fixture (Join-Path $fixtureRoot "interface.xdat") -Force
+          Write-Host "Se extrajo solo el fixture de prueba; ningún código de aplicación se toma del paquete histórico."
+
       - name: Preparar runtime Python embebido desde el motor XDAT canónico de Methos
         shell: pwsh
         run: |
@@ -227,7 +243,7 @@ jobs:
           Copy-Item (Join-Path $xdatRoot "xdat_core.py") (Join-Path $runtimeRoot "xdat_core.py") -Force
           Copy-Item "src/MethosUEditor/XdatBridge.py" (Join-Path $runtimeRoot "xdat_bridge.py") -Force
 
-          foreach ($required in @("python312.dll", "python312.zip")) {
+          foreach ($required in @("python312.dll", "python312.zip", "vcruntime140.dll")) {
             if (!(Test-Path (Join-Path $pythonRoot $required))) { throw "Falta el runtime Python embebido: $required." }
           }
           foreach ($required in @("xdat_core.py", "xdat_bridge.py")) {
