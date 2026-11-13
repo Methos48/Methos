@@ -12,10 +12,10 @@ on:
       - "PROGRESO-METHOS.md"
       - "Compilador  U.zip"
       - "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
-      - "apply_detection_layer.py"
-      - "auto_pipeline_overlay.py"
-      - "encryption_detection.py"
-      - "auto_pipeline.py"
+      - "tools/xdat/apply_detection_layer.py"
+      - "tools/xdat/auto_pipeline_overlay.py"
+      - "tools/xdat/encryption_detection.py"
+      - "tools/xdat/auto_pipeline.py"
       - ".github/workflows/windows-release.yml"
   pull_request:
     branches: [main]
@@ -30,10 +30,10 @@ on:
       - "reference-data/**"
       - "Compilador  U.zip"
       - "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
-      - "apply_detection_layer.py"
-      - "auto_pipeline_overlay.py"
-      - "encryption_detection.py"
-      - "auto_pipeline.py"
+      - "tools/xdat/apply_detection_layer.py"
+      - "tools/xdat/auto_pipeline_overlay.py"
+      - "tools/xdat/encryption_detection.py"
+      - "tools/xdat/auto_pipeline.py"
       - ".github/workflows/windows-release.yml"
   workflow_dispatch:
 
@@ -218,9 +218,9 @@ jobs:
           Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
           $xdatProject = Get-ChildItem $extract -Directory | Select-Object -First 1
           if (!$xdatProject) { throw "El kit XDAT no contiene la carpeta del proyecto." }
-          python "$xdatRepo\\apply_detection_layer.py" "$($xdatProject.FullName)"
+          python "$xdatRepo\\tools\\xdat\\maintenance\\apply_detection_layer.py" "$($xdatProject.FullName)"
           if ($LASTEXITCODE -ne 0) { throw "Falló la capa de detección XDAT." }
-          python "$xdatRepo\\auto_pipeline_overlay.py" "$($xdatProject.FullName)"
+          python "$xdatRepo\\tools\\xdat\\maintenance\\auto_pipeline_overlay.py" "$($xdatProject.FullName)"
           if ($LASTEXITCODE -ne 0) { throw "Falló la integración del pipeline XDAT." }
 
       - name: Preparar runtime Python embebido para XDAT (sin segundo ejecutable)
