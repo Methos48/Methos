@@ -80,8 +80,18 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
         File.WriteAllBytes(temporaryPackage, originalPackage);
         string referenceSourceDirectory = Path.Combine(
             runtimeRoot, "Interlude", "Interface", "Classes");
-        UnrealPackageDecompileResult decompiled = UnrealPackageDecompiler.DecompileToFolder(
-            temporaryPackage, sourceDirectory, referenceSourceDirectory);
+        string nativeRegistryPath = Path.Combine(Path.GetTempPath(), "Methos-Interlude-Natives-" + Guid.NewGuid().ToString("N") + ".json");
+        NativeFunctionRegistryBuilder.Build(runtimeRoot, nativeRegistryPath);
+        UnrealPackageDecompileResult decompiled;
+        try
+        {
+            decompiled = UnrealPackageDecompiler.DecompileToFolder(
+                temporaryPackage, sourceDirectory, referenceSourceDirectory, nativeRegistryPath);
+        }
+        finally
+        {
+            try { if (File.Exists(nativeRegistryPath)) File.Delete(nativeRegistryPath); } catch { }
+        }
         if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
             throw new InvalidDataException($"Dunk3l U decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
 
