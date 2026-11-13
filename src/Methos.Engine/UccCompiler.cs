@@ -316,6 +316,21 @@ public static class UccCompiler
         return source;
     }
 
+    // Some reference-only ShortcutWnd functions name a removed key-settings
+    // script. Berserker's package contains NPHRN_KeyWnd with the matching panel
+    // and apply routine; redirect the stale references to that present script.
+    private static string NormalizeShortcutWndKeySettingReference(string className, string source)
+    {
+        if (!className.Equals("ShortcutWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        source = source.Replace("InterfaceAI_KeySettingWnd", "NPHRN_KeyWnd",
+            StringComparison.OrdinalIgnoreCase);
+        source = Regex.Replace(source,
+            @"NPHRN_KeyWnd\.OnClickButton\s*\(\s*""btnKeyOK""\s*\)",
+            "NPHRN_KeyWnd.OnClickApply()", RegexOptions.IgnoreCase);
+        return source;
+    }
+
     // The reference HandleLoadPotions routine dispatches the six item IDs to the
     // specialized insertion routines already present in AutoPotionsWnd, but the
     // matching reference source omits the small dispatcher itself. Reconstruct it
@@ -798,6 +813,7 @@ function HandleHideLogo()
                 source = NormalizeActionWndIntPropertyCasts(className, source, out int actionWndCastRepairs);
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
+                source = NormalizeShortcutWndKeySettingReference(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
