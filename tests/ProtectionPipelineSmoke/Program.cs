@@ -157,6 +157,27 @@ Check(interfaceSoundRepairs.Count == 4 &&
     "Native Interlude interface sound enum arguments were not restored from their verified values.");
 Console.WriteLine("PASS: Interlude interface sound arguments are restored to their native enum identifiers.");
 
+var trailingReturnSample = """
+class ReturnSample extends Object;
+function int GetValue()
+{
+    return 7;
+    return;
+}
+function void DoNothing()
+{
+    return;
+}
+""";
+string trailingReturnRepaired = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
+    trailingReturnSample, trailingReturnSample, out IReadOnlyList<string> trailingReturnRepairs);
+Check(trailingReturnRepairs.SequenceEqual(new[] { "GetValue" }) &&
+      trailingReturnRepaired.Contains("return 7;", StringComparison.Ordinal) &&
+      !trailingReturnRepaired.Contains("return;\n}", StringComparison.Ordinal) &&
+      trailingReturnRepaired.Contains("function void DoNothing()", StringComparison.Ordinal),
+    "Unreachable bare return repair must affect only non-void functions with a preceding value return.");
+Console.WriteLine("PASS: unreachable trailing bare returns are removed without changing void functions.");
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);
