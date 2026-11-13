@@ -169,6 +169,22 @@ Check(chatEnumRepairs.Count == 1 &&
     "ChatWnd EChatType numeric assignments were not restored as enum casts.");
 Console.WriteLine("PASS: ChatWnd chat-tab values are explicitly cast to EChatType.");
 
+string chatHandleSample = """
+class ChatWnd extends UICommonAPI;
+var EditBoxHandle ChatEditBox;
+function OnLoad()
+{
+    ChatFilterBtn = ButtonHandle(GetHandle("ChatHideWnd.ChatFilterBtn"));
+}
+""";
+string chatHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ChatWnd", chatHandleSample, out IReadOnlyList<string> chatHandleRepairs);
+Check(chatHandleRepairs.Count == 1 &&
+      chatHandleRepaired.Contains("var ButtonHandle ChatFilterBtn;", StringComparison.Ordinal),
+    "Missing ChatWnd ChatFilterBtn handle declaration was not restored.");
+Console.WriteLine("PASS: missing ChatWnd ButtonHandle declaration is restored.");
+
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
