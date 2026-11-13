@@ -272,6 +272,14 @@ public static class UnrealScriptTypeReferenceRepair
                 applied.Add("InventoryWnd.OnDropItemSource malformed drag-source predicate normalized");
             }
 
+            const string malformedSlotCondition = "if((RecoveredName_2883.SlotBitType == (RecoveredName_1455())) || RecoveredName_2883.SlotBitType == (RecoveredName_1467()))";
+            const string repairedSlotCondition = "if (RecoveredName_2883.SlotBitType == 1048576 || RecoveredName_2883.SlotBitType == 2097152)";
+            if (source.Contains(malformedSlotCondition, StringComparison.Ordinal))
+            {
+                source = source.Replace(malformedSlotCondition, repairedSlotCondition, StringComparison.Ordinal);
+                applied.Add("InventoryWnd bracelet SlotBitType identifiers restored to Interlude bitmasks");
+            }
+
             const string malformedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435())";
             const string repairedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(\"InventoryWnd\")";
             if (source.Contains(malformedCheckbox, StringComparison.Ordinal))
