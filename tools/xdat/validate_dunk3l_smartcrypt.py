@@ -6,9 +6,10 @@ import argparse
 import struct
 import tempfile
 import zlib
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from xdat_core import compile_from_folder, decompile_to_folder
+from xdat_core import compile_from_folder, decompile_to_folder, parse_xdat
 
 
 MAGIC = bytes.fromhex("FF ED FA CE")
@@ -61,6 +62,8 @@ def decode_smartcrypt_and_111(data: bytes) -> tuple[bytes, bytes, bytes, bytes, 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", nargs="?", default="reference-data/client/lineage2/interface.xdat")
+    parser.add_argument("--edit-roundtrip", action="store_true", help="Change a window name, rebuild both protection layers, and verify the changed value.")
+    parser.add_argument("--output", help="Write the rebuilt protected XDAT to this path.")
     args = parser.parse_args()
     source = Path(args.file)
     original = source.read_bytes()
@@ -68,13 +71,29 @@ def main() -> int:
 
     parsed = None
     parse_errors = []
+    edit_name = None
     with tempfile.TemporaryDirectory(prefix="methos-dunk3l-xdat-") as temp:
         for label, payload in (("without-tail", payload_without_tail), ("with-tail", payload_with_tail)):
             parts = Path(temp) / label / "Descomprimido"
             try:
                 windows, shortcuts = decompile_to_folder(payload, parts)
+                if args.edit_roundtrip:
+                    window_files = sorted((parts / "windows").glob("*.xml"), key=lambda p: p.name.casefold())
+                    if not window_files:
+                        raise ValueError("No hay ventanas XML para modificar en la prueba XDAT.")
+                    tree = ET.parse(window_files[0])
+                    name_node = tree.getroot().find("name")
+                    if name_node is None or not (name_node.text or "").strip():
+                        raise ValueError(f"{window_files[0].name}: no se encontró un nombre de ventana modificable.")
+                    original_name = name_node.text
+                    edit_name = original_name + "__MethosProbe20261113"
+                    name_node.text = edit_name
+                    tree.write(window_files[0], encoding="utf-8", xml_declaration=True)
                 rebuilt_payload, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(parts, original_data=payload)
-                if rebuilt_payload != payload:
+                if args.edit_roundtrip:
+                    if rebuilt_payload == payload:
+                        raise ValueError("El XDAT recompilado no cambió pese a modificar el XML.")
+                elif rebuilt_payload != payload:
                     limit = min(len(rebuilt_payload), len(payload))
                     differences = [i for i in range(limit) if rebuilt_payload[i] != payload[i]][:16]
                     detail = ", ".join(
@@ -89,14 +108,14 @@ def main() -> int:
                         f"Las cantidades cambiaron: original={windows}/{shortcuts}, "
                         f"recompilado={rebuilt_windows}/{rebuilt_shortcuts}."
                     )
-                parsed = (label, payload, windows, shortcuts)
+                parsed = (label, payload, rebuilt_payload, windows, shortcuts)
                 break
             except Exception as exc:
                 parse_errors.append(f"{label}: {exc}")
     if parsed is None:
         raise ValueError("No se pudo descompilar/recompilar el XDAT después de retirar las capas: " + " | ".join(parse_errors))
 
-    label, payload, windows, shortcuts = parsed
+    label, original_payload, payload, windows, shortcuts = parsed
     encrypted_payload = bytearray(payload)
     for i in range(len(encrypted_payload)):
         encrypted_payload[i] ^= 0xAC
@@ -118,14 +137,27 @@ def main() -> int:
     rebuilt[4:28] = seed
     for i in range(28, len(rebuilt)):
         rebuilt[i] ^= key6[i % 6] ^ key16[i % 16] ^ (((i ^ 0x65) * 0x93) & 0xFF)
-    if rebuilt != original:
+    if not args.edit_roundtrip and rebuilt != original:
         raise ValueError("La recompilación SmartCrypt no coincide byte por byte con el original.")
+    if args.edit_roundtrip:
+        verified_without_tail, verified_with_tail, *_ = decode_smartcrypt_and_111(bytes(rebuilt))
+        candidates = (verified_without_tail, verified_with_tail)
+        if not any(any(w.get("name") == edit_name for w in parse_xdat(candidate)["windows"]) for candidate in candidates):
+            raise ValueError(f"El cambio XDAT no sobrevivió a la relectura del archivo protegido: {edit_name}.")
+        print(f"PASS: XDAT MODIFIED edit/compile/re-encrypt round-trip; window={edit_name}; markerPersisted=true.")
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(bytes(rebuilt))
 
     print(f"PASS: REAL Dunk3l {source.name}: SmartCrypt + Lineage2Ver{version} descifrados.")
     print(f"PASS: XDAT parse/decompile/compile XML exact round-trip: windows={windows}, shortcuts={shortcuts}; trailer={label}.")
     if stored_crc != actual_crc:
         print(f"NOTICE: custom Lineage2Ver111 trailer preserved; stock CRC differs (stored={stored_crc:08X}, stock={actual_crc:08X}).")
-    print(f"PASS: ambas capas reconstruidas byte por byte; size={len(original)}; seed={seed.hex().upper()}.")
+    if args.edit_roundtrip:
+        print(f"PASS: ambas capas reconstruidas con modificación verificada; size={len(rebuilt)}; seed={seed.hex().upper()}.")
+    else:
+        print(f"PASS: ambas capas reconstruidas byte por byte; size={len(original)}; seed={seed.hex().upper()}.")
     return 0
 
 
