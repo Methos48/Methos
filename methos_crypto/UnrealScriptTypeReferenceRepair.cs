@@ -169,6 +169,32 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
 
+        if (className.Equals("DialogBox", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("var UICommonAPI.DialogDefaultAction m_defaultAction;", StringComparison.Ordinal) &&
+            source.Contains("switch(m_defaultAction)", StringComparison.Ordinal))
+        {
+            var switchMatch = System.Text.RegularExpressions.Regex.Match(source, @"\bswitch\s*\(\s*m_defaultAction\s*\)\s*\{");
+            if (switchMatch.Success)
+            {
+                int openBrace = source.IndexOf('{', switchMatch.Index + switchMatch.Length - 1);
+                int depth = 0, closeBrace = -1;
+                for (int i = openBrace; i < source.Length; i++)
+                {
+                    if (source[i] == '{') depth++;
+                    else if (source[i] == '}' && --depth == 0) { closeBrace = i; break; }
+                }
+                if (closeBrace > openBrace)
+                {
+                    string body = source.Substring(openBrace + 1, closeBrace - openBrace - 1);
+                    string repaired = System.Text.RegularExpressions.Regex.Replace(body, @"(?m)(^[ \t]*case\s+)([0-9]+)(\s*:)", "$1DialogDefaultAction($2)$3");
+                    if (!string.Equals(body, repaired, StringComparison.Ordinal))
+                    {
+                        source = source.Remove(openBrace + 1, body.Length).Insert(openBrace + 1, repaired);
+                        applied.Add("DialogBox.m_defaultAction numeric switch labels -> DialogDefaultAction casts");
+                    }
+                }
+            }
+        }
         // UELib emits numeric switch labels for enum locals. Interlude UCC
         // requires labels to carry the same enum type as the switched value.
         foreach (System.Text.RegularExpressions.Match declaration in
