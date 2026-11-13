@@ -427,6 +427,14 @@ jobs:
             Write-Host "===== REFERENCE TOOLTIP MATCHING LINE CONTEXT ====="
             Select-String -LiteralPath $referenceFile -Pattern 'ToolTip|function' | Select-Object -Last 30
           }
+      - name: Inspect Animal ToolTip tail and compile source
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "ToolTip.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          Write-Host "ANIMAL_TOOLTIP_LINES=$($source.Length)"
+          $start = [Math]::Max(0,$source.Length-90)
+          for ($n=$start; $n -lt $source.Length; $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
