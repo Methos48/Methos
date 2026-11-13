@@ -3,7 +3,7 @@
 **Última actualización:** 13-11-2026  
 **Proyecto:** Methos (editor de archivos de Lineage II Interlude)  
 **Repositorio de trabajo:** https://github.com/Methos  
-**Repositorio único del proyecto:** https://github.com/Methos
+**Repositorio único del proyecto:** https://github.com/Methos48/Methos
 
 Este documento es la bitácora permanente del proyecto. Cada sesión de trabajo debe actualizarlo con cambios reales, pruebas ejecutadas, resultados, problemas pendientes y el siguiente paso. No marcar una tarea como terminada sin una prueba que lo demuestre.
 
@@ -27,13 +27,13 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ### 13-11-2026 — Unificación de repositorios en Methos
 
-- Se estableció `Methos-XDAT` como único repositorio activo del producto **Methos**.
+- Se estableció `Methos` como único repositorio activo del producto **Methos**.
 - Se migraron a la rama principal las fuentes de la aplicación gráfica, el motor Unreal/UCC, las pruebas .NET, el instalador, el kit UCC de Interlude, documentación y bitácora que estaban en `Methos-U-Editor`.
 - Se integraron también los componentes XDAT de la rama de investigación: detección de cifrado, pipeline, metadatos de origen y pruebas.
 - La aplicación conserva un único producto y ejecutable principal: `Methos.exe`. Los módulos ARCHIVOS U y ARCHIVOS XDAT forman parte de Methos; XDAT no se distribuye como una segunda aplicación independiente.
 - Se separó el paquete Unreal de referencia en `reference-data/Interface-UEditor.u` para evitar la colisión de nombres entre `Interface.u` y `interface.u` en Windows.
 - GitHub Actions confirmó la migración y las validaciones posteriores. La ejecución UCC `43386687102` terminó en SUCCESS; la compilación Windows más reciente, ejecución `43387205032`, también terminó en SUCCESS en sus 25 pasos principales. El archivo de fuentes se generó correctamente en la ejecución Source Archive `43387204850`.
-- **Limpieza completada:** `Methos-U-Editor` quedó sin archivos en sus tres ramas (`main`, `backup/methos-foundation-2026-11-12` y `validate-native-engine`). El historial Git anterior se conserva como respaldo histórico; el repositorio activo del proyecto es únicamente `Methos-XDAT`.
+- **Limpieza completada:** `Methos-U-Editor` quedó sin archivos en sus tres ramas (`main`, `backup/methos-foundation-2026-11-12` y `validate-native-engine`). El historial Git anterior se conserva como respaldo histórico; el repositorio activo del proyecto es únicamente `Methos`.
 
 
 ### 12-11-2026 — Interfaz principal y presentación
@@ -72,7 +72,7 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
   - GitHub Actions UCC: [ejecución 43386687102](https://github.com/Methos/actions/runs/43386687102) — SUCCESS. Compiló las 169 fuentes, validó la estructura del paquete, pasó las pruebas unitarias, la modificación real de bytecode y la comprobación de descompilación/recompilación.
   - Methos Windows x64: [ejecución 43386686912](https://github.com/Methos/actions/runs/43386686912) — SUCCESS. Generó el ejecutable, integró UCC y XDAT, probó instalación silenciosa y arranque, y confirmó que no se instala un segundo ejecutable XDAT.
   - Instalador: artefacto `Methos-Windows-Installer-x64`, ID `14019051859`, tamaño 77,735,569 bytes. SHA-256: `73937bc92cb5051d9b2270167b88b6d23c08043a95187b4e91a727078f8a8ea5`.
-  - La fuente del instalador y los artefactos de validación están publicados en el repositorio único `Methos-XDAT`.
+  - La fuente del instalador y los artefactos de validación están publicados en el repositorio único `Methos`.
 - **Limpieza del repositorio anterior:** el contenido de `Methos-U-Editor` quedó vaciado en sus ramas después de la migración. Su historial Git permanece como respaldo histórico; no es un repositorio de trabajo.
 
 ## Reglas para continuar el trabajo
