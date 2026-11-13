@@ -785,6 +785,25 @@ Check(dunk3lToolTipIntegerCastRepairs.Count == 1 &&
     "Dunk3l ToolTip redundant integer literal casts were not normalized for UCC.");
 Console.WriteLine("PASS: ToolTip redundant integer literal casts are normalized without altering typed variables.");
 
+string dunk3lToolTipItemTypeSample = """
+class ToolTip extends UICommonAPI;
+function BuildItem()
+{
+    local UICommonAPI.ItemInfo item;
+    local UIEventManager.EItemType EItemType;
+    local UIEventManager.EEtcItemType EEtcItemType;
+    EItemType = byte(item.ItemType);
+    EEtcItemType = byte(item.ItemSubType);
+}
+""";
+string dunk3lToolTipItemTypeRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipItemTypeSample, out IReadOnlyList<string> dunk3lToolTipItemTypeRepairs);
+Check(dunk3lToolTipItemTypeRepairs.Count == 2 &&
+      dunk3lToolTipItemTypeRepaired.Contains("local byte EItemType;", StringComparison.Ordinal) &&
+      dunk3lToolTipItemTypeRepaired.Contains("EEtcItemType = UIEventManager.EEtcItemType(item.ItemSubType);", StringComparison.Ordinal),
+    "Dunk3l ToolTip item type locals were not restored to their reference types.");
+Console.WriteLine("PASS: ToolTip item type locals and enum assignment match the Interlude reference.");
+
 
 
 
