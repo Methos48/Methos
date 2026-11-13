@@ -57,6 +57,14 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 5. **Integrar cada método nuevo solo después de probarlo** con archivos de referencia y comprobar que el resultado vuelve a ser legible por el formato/herramienta correspondiente.
 6. **Preparar la entrega final llamada Methos:** instalador Windows, código fuente, instrucciones claras y registro actualizado en GitHub.
 
+
+- **Validación final de la unificación (13-11-2026):**
+  - GitHub Actions UCC: [ejecución 43386687102](https://github.com/Methos48/Methos-XDAT/actions/runs/43386687102) — SUCCESS. Compiló las 169 fuentes, validó la estructura del paquete, pasó las pruebas unitarias, la modificación real de bytecode y la comprobación de descompilación/recompilación.
+  - Methos Windows x64: [ejecución 43386686912](https://github.com/Methos48/Methos-XDAT/actions/runs/43386686912) — SUCCESS. Generó el ejecutable, integró UCC y XDAT, probó instalación silenciosa y arranque, y confirmó que no se instala un segundo ejecutable XDAT.
+  - Instalador: artefacto `Methos-Windows-Installer-x64`, ID `14019051859`, tamaño 77,735,569 bytes. SHA-256: `73937bc92cb5051d9b2270167b88b6d23c08043a95187b4e91a727078f8a8ea5`.
+  - La fuente del instalador y los artefactos de validación están publicados en el repositorio único `Methos-XDAT`.
+- **Limpieza del repositorio anterior:** tras comprobar que los 63 archivos de la rama principal de `Methos-U-Editor` están migrados, conservados o sustituidos intencionalmente, se vaciará su contenido actual en todas sus ramas. El historial Git permanecerá disponible como respaldo histórico.
+
 ## Reglas para continuar el trabajo
 
 - Continuar desde el estado real de GitHub; consultar la rama principal y los últimos commits antes de modificar archivos.
