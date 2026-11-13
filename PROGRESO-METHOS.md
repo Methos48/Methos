@@ -148,3 +148,7 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Se definió la clasificación de kits, cliente, runtime UCC, paquetes de prueba y capturas bajo `reference-data/`.
 - Los workflows se actualizaron para consumir las rutas nuevas; el movimiento se realizará como una única actualización del árbol Git, reutilizando los blobs originales para conservar íntegros los binarios.
 - La fuente XDAT integrada sigue en migración: el kit Windows histórico permanece como insumo hasta demostrar que `tools/xdat/` puede sustituirlo sin pérdida funcional.
+
+- **Eliminación de motor duplicado:** se retiró `methos_crypto/` (25 archivos) después de trasladar las cuatro clases exclusivas a `src/MethosUEngine/`, integrar las diferencias necesarias de los índices/reparadores y cambiar las pruebas para referenciar el motor canónico. El historial Git conserva la copia anterior.
+- **Organización de pruebas:** el smoke test del planificador se movió de `tools/ProtectionPipelineSmoke/` a `tests/ProtectionPlannerSmoke/`; el smoke test de integración Unreal permanece en `tests/ProtectionPipelineSmoke/`. Se actualizaron el workflow y la guía de pruebas.
+- Los archivos del cliente, kits UCC/XDAT, runtime y paquetes de referencia se agruparon bajo `reference-data/` y sus rutas de workflows fueron actualizadas. Los blobs Git de los 51 archivos movidos se conservaron sin cambios.
