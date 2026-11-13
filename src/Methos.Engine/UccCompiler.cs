@@ -248,6 +248,23 @@ public static class UccCompiler
         return output.ToString();
     }
 
+    // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
+    // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
+    // in the temporary staged source, preserving the user's extracted source unchanged.
+    private static string NormalizeActionWndIntPropertyCasts(string className, string source, out int repairs)
+    {
+        repairs = 0;
+        if (!className.Equals("ActionWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+
+        source = Regex.Replace(source, @"\\bint\\s*\\(\\s*Type\\s*\\)", match =>
+        {
+            repairs++;
+            return "Type";
+        }, RegexOptions.IgnoreCase);
+        return source;
+    }
+
     public static bool IsAvailable(string runtimeRoot)
     {
         string system = Path.Combine(runtimeRoot, "Interlude", "System");
@@ -366,6 +383,8 @@ public static class UccCompiler
                 source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
                     className, source, out IReadOnlyList<string> typeReferenceRepairs);
                 repairedIdentifiers += typeReferenceRepairs.Count;
+                source = NormalizeActionWndIntPropertyCasts(className, source, out int actionWndCastRepairs);
+                repairedIdentifiers += actionWndCastRepairs;
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
