@@ -351,11 +351,6 @@ public static class UccCompiler
                 repairedIdentifiers += genericControlRepairs;
                 recoveredControlIdentifiers += genericControlRepairs;
 
-                source = UnrealScriptNativeFunctionNormalizer.Normalize(
-                    source, nativeRegistryPath, out int normalizedCount, out int unresolvedCount);
-                normalizedNativeCalls += normalizedCount;
-                unresolvedNativeCalls += unresolvedCount;
-
                 string className = Path.GetFileNameWithoutExtension(file);
                 string referencePath = Path.Combine(referenceClasses, Path.GetFileName(file));
                 if (File.Exists(referencePath))
@@ -377,6 +372,14 @@ public static class UccCompiler
                         source, referenceSource, out int symbolicAssignments);
                     restoredSymbolicAssignments += symbolicAssignments;
                 }
+
+                // Reference-source repairs can reintroduce synthetic UnknownFunctionNNN
+                // calls after the initial decompiler pass. Normalize again after all such
+                // repairs so every restored native call is resolved before UCC compilation.
+                source = UnrealScriptNativeFunctionNormalizer.Normalize(
+                    source, nativeRegistryPath, out int normalizedCount, out int unresolvedCount);
+                normalizedNativeCalls += normalizedCount;
+                unresolvedNativeCalls += unresolvedCount;
 
                 source = UnrealScriptDecompilerDiagnosticCleaner.RemoveOrphanedSwitchDiagnostics(
                     source, out int switchDiagnostics);
