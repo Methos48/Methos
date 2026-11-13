@@ -1,61 +1,51 @@
-# Methos XDAT — encryption support audit
+# Methos XDAT and U package encryption support
 
-Status: research record; this document does not claim that every format is implemented.
+Status: the protection pipeline is integrated into the Windows application. Support is verified for specific formats and samples; this does not claim compatibility with every Lineage II private-server protector.
 
-## What the current application actually does
+## Active application architecture
 
-The current `xdat_core.py` starts by parsing the supplied bytes as a raw `ct0.XDAT` structure. The GUI passes the file bytes directly to `decompile_to_folder()` and `compile_from_folder()`. There is no encryption/header detection or decrypt/encrypt adapter in the current application source. Its successful byte-identical round-trip test covers the supplied known-good Interlude fixture only.
+The Windows application uses the C# protection pipeline before handing plaintext data to the format-specific parser:
 
-## Documented Lineage II file encryption families
+1. Program.cs calls ProtectionPipelinePlanner.InspectFullPipeline on the original .u or .xdat bytes.
+2. ProtectionCodecRuntime decodes the recognized protection layers in order and retains the original per-file profiles.
+3. U packages are processed by the Unreal package engine/UCC path. XDAT plaintext is passed to XdatBridge and tools/xdat/xdat_core.py for structural parsing, decompilation and recompilation.
+4. When compiling, Methos reuses the detected original profile. It encodes the compiled payload, decodes the result again, and verifies that the produced payload is the one intended.
+5. Unknown formats, unavailable keys, and unverified encoders fail closed. Methos must not guess a key or silently strip an unknown header.
 
-The open-source `acmi/L2crypt` project documents these file header families:
+The Python xdat_core.py module is the XDAT schema layer, not the encryption layer. The older tools/xdat/encryption_detection.py and auto_pipeline.py files are research/test utilities; they are not the active GUI protection path.
 
-| Header/version | Family / layer | Notes |
+## Implemented protection layers
+
+| Format/layer | Active C# support | Verification and limits |
 |---|---|---|
-| 111 | XOR | Standard L2 file encryption |
-| 120 | XOR variant | Separate stream format |
-| 121 | XOR variant | Filename-dependent key; correct filename matters |
-| 211, 212 | Blowfish | Block/stream handling differs by version |
-| 411–414 (41x) | RSA family | Key/profile and exact variant matter |
-| 811, 821 | LameCrypt wrapper over XOR variants | Wrapper is applied before the underlying cipher |
-| 820 | LameCrypt wrapper over 120 | Wrapper is applied before the underlying cipher |
-| 911, 912, 61x | LameCrypt family | Must be matched to the precise documented variant |
+| SmartCrypt 1.5.2.2 (FF ED FA CE) | Detection and decode; profile reconstruction from the embedded 24-byte seed when the external-key flag is clear; encode when the full round-trip is verified | Real nested SmartCrypt + Lineage2Ver111 samples are tested. If the file requires an external key that is not available, Methos stops safely. |
+| Lineage2Ver111 with custom terminal bytes | Decode and encode while retaining the original per-file trailer profile | Real .u and .xdat layered samples have byte-identical round-trip coverage. Trailer bytes are preserved, not invented. |
+| Lineage2Ver413 | Standard codec implemented for decode/encode | Codec-level tests are present. Do not infer that every private-server 413 variant has been verified against a real client file. |
+| ActiveAntiCheatCrypt | Engine codec and key-profile support implemented | Synthetic RSA-2048/PKCS#1 v1.5 + RC4 tests pass. The GUI does not guess or automatically supply a matching private-key profile; without it, the file remains unavailable for decoding. |
 
-Independent tools such as `l2encdec` and `open-l2encdec` also document support for standard headers 111, 120, 121, 211, 212 and 41x (including 413). Their supported lists are not proof that every private server build or custom wrapper is compatible.
+## Recognized but not implemented in the active pipeline
 
-## Custom protection
+The planner can identify Lineage2 version headers, but the following variants do not currently have an enabled decoder in the active application:
 
-SmartCrypt and other private/custom protectors can use a custom key or an additional header-obfuscation layer. They cannot be made universally decryptable by adding a fixed list of public algorithms: the matching key, wrapper, filename rules, and client-side format must be known. Methos should support explicit user-supplied profiles where technically and legally appropriate, but must not guess keys or silently strip unknown bytes.
+- Lineage2Ver120 and 121
+- Lineage2Ver211 and 212
+- Lineage2Ver411, 412 and 414
+- LameCrypt wrapper families such as 611/612, 811/821, 820, 911 and 912
 
-## Required architecture before claiming broad support
+Recognition is not decryption support. These files must remain unchanged until the exact algorithm, key material, filename rules, wrapper order, and a real-file round-trip are verified.
 
-1. Preserve the original input and calculate its hash.
-2. Identify plain files and recognized headers without modifying the source.
-3. Route each recognized format through a separate decoder adapter.
-4. Validate the decoded payload structurally as the expected XDAT schema before accepting it.
-5. Run the existing parse/export/compile pipeline on the decoded payload.
-6. Re-encode with the original detected profile (or an explicitly selected output profile).
-7. Decode the produced output again and compare the payload; for unmodified files, require byte-identical round-trip where the format permits it.
-8. For unknown formats or missing custom keys, stop safely and report diagnostics.
+## Real-file verification
 
-## Current user test file
+tests/ProtectionPipelineSmoke and .github/workflows/protection-pipeline-smoke.yml exercise the active C# planner/runtime. The real Dunk3l samples validate the nested SmartCrypt 1.5.2.2 + custom Lineage2Ver111 path for both interface.u and interface.xdat, including exact byte-for-byte reconstruction of the original protected files.
 
-The repository's `interface.xdat` begins with bytes `FF ED FA CE`, not the documented UTF-16LE `Lineage2Ver###` header. It is therefore not identified as one of the standard public header formats by this signature alone. This is not enough evidence to label it SmartCrypt or to choose a decryption algorithm. Do not strip the first bytes or try arbitrary transformations against the user's only copy.
+tools/xdat/validate_dunk3l_smartcrypt.py is an additional XDAT validation utility. Its results do not replace the C# application-path tests.
 
-## Scope separation
+## Safety and compatibility rules
 
-This audit concerns offline client-file encryption for files such as XDAT and U packages. Network packet encryption is a different protocol and is not a file decoder. Likewise, decoding an XDAT encryption wrapper does not imply that the internal XDAT schema is supported; the schema parser remains a separate compatibility layer.
-
-
-## Implemented detection layer (research branch)
-
-The research branch now includes `encryption_detection.py`, which recognizes all 18 documented header values listed above, identifies their cipher family/wrapper, flags the filename-dependent 121/821 variants, distinguishes malformed and unknown numeric headers, and reports short/unrecognized input without changing bytes.
-
-The Windows build overlay connects this detector to the GUI. A recognized encrypted file is reported and the operation stops safely because the decryptor/encoder adapters have not yet been implemented. Compilation against an encrypted original is also blocked rather than silently emitting an incompatible plaintext file.
-
-Local verification performed:
-- Python syntax compilation passed for the app and detector.
-- 7 detector tests passed, covering every listed version, filename-dependent variants, malformed/unknown headers, truncated data, and the user's `FF ED FA CE` signature.
-- 2 existing XDAT fixture round-trip tests passed byte-for-byte.
-
-This is a tested **detection** milestone, not yet a claim that Methos can decrypt or encrypt these 18 formats. The custom `FF ED FA CE` file remains unidentified.
+- Preserve the original input and its SHA-256 before processing.
+- Never infer a key from a header alone.
+- Never remove terminal bytes unless the detected profile proves how they belong to the payload.
+- Validate decoded U package tables or XDAT structure before accepting the intermediate.
+- Re-encode with the original detected profile and verify by decoding the output again.
+- Keep detection, decryption, schema parsing, compilation and re-encryption as separate stages.
+- A successful round-trip for one client/server sample is evidence for that sample and profile only, not universal compatibility.
