@@ -15,6 +15,9 @@ public sealed record UnrealPackageDecompileResult(
     IReadOnlyList<string> Errors)
 {
     public int SanitizedNameCount { get; init; }
+    public int TotalClassObjectCount { get; init; }
+    public IReadOnlyList<string> NonExportedClassNames { get; init; } = Array.Empty<string>();
+    public int RemovedSwitchDiagnosticCount { get; init; }
 }
 
 public sealed record UnrealNameReplacement(int Index, string SafeName, string OriginalName);
@@ -49,11 +52,17 @@ public static class UnrealPackageDecompiler
 
         package.InitializePackage();
 
-        var classes = package.Objects.OfType<UClass>()
+        var allClassObjects = package.Objects.OfType<UClass>().ToList();
+        var classes = allClassObjects
             .Where(item => (int)item > 0)
             .ToList();
+        string[] nonExportedClassNames = allClassObjects
+            .Where(item => (int)item <= 0)
+            .Select(item => $"{item.Name} (object index {(int)item})")
+            .ToArray();
         var errors = new List<string>();
         int exported = 0;
+        int removedSwitchDiagnosticCount = 0;
 
         foreach (var item in classes)
         {
@@ -108,6 +117,10 @@ public static class UnrealPackageDecompiler
                 source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeEqualityOperators(source, out _);
                 source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeUnaryOperators(source, out _);
 
+                source = UnrealScriptDecompilerDiagnosticCleaner.RemoveOrphanedSwitchDiagnostics(
+                    source, out int removedDiagnostics);
+                removedSwitchDiagnosticCount += removedDiagnostics;
+
                 string destination = Path.Combine(output, safeName + ".uc");
                 File.WriteAllText(destination, source, new UTF8Encoding(false));
                 exported++;
@@ -130,7 +143,10 @@ public static class UnrealPackageDecompiler
             errors.Count,
             errors)
         {
-            SanitizedNameCount = replacements.Count
+            SanitizedNameCount = replacements.Count,
+            TotalClassObjectCount = allClassObjects.Count,
+            NonExportedClassNames = nonExportedClassNames,
+            RemovedSwitchDiagnosticCount = removedSwitchDiagnosticCount
         };
     }
 
