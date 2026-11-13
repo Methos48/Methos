@@ -58,14 +58,43 @@ public static class UnrealScriptKnownNativeOperatorRepair
         int i = 0;
         while (i < source.Length)
         {
+            char c = source[i];
+            char next = i + 1 < source.Length ? source[i + 1] : '\0';
+            if (c == '/' && next == '/')
+            {
+                int lineEnd = source.IndexOf('\n', i);
+                if (lineEnd < 0) lineEnd = source.Length;
+                output.Append(source, i, lineEnd - i);
+                i = lineEnd;
+                continue;
+            }
+            if (c == '/' && next == '*')
+            {
+                int commentEnd = source.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                int end = commentEnd < 0 ? source.Length : commentEnd + 2;
+                output.Append(source, i, end - i);
+                i = end;
+                continue;
+            }
+            if (c is '"' or '\'')
+            {
+                char quote = c;
+                int literalStart = i++;
+                while (i < source.Length)
+                {
+                    if (source[i] == '\\') { i += Math.Min(2, source.Length - i); continue; }
+                    if (source[i++] == quote) break;
+                }
+                output.Append(source, literalStart, i - literalStart);
+                continue;
+            }
+
             if (source.AsSpan(i).StartsWith(marker, StringComparison.Ordinal) &&
                 i + marker.Length < source.Length && source[i + marker.Length] == '(' &&
                 TryFindUnaryCallEnd(source, i + marker.Length, out int close, out int comma))
             {
-                if (!comma.Equals(-1))
-                {
+                if (comma >= 0)
                     output.Append(source, i, close - i + 1);
-                }
                 else
                 {
                     string operand = source.Substring(i + marker.Length + 1,
@@ -88,15 +117,15 @@ public static class UnrealScriptKnownNativeOperatorRepair
         close = -1;
         topLevelComma = -1;
         int depth = 0;
-        char quote = '\\0';
+        char quote = '\0';
         bool inString = false, inLineComment = false, inBlockComment = false;
         for (int i = open; i < source.Length; i++)
         {
             char c = source[i];
-            char next = i + 1 < source.Length ? source[i + 1] : '\\0';
+            char next = i + 1 < source.Length ? source[i + 1] : '\0';
             if (inLineComment)
             {
-                if (c == '\\n') inLineComment = false;
+                if (c == '\n') inLineComment = false;
                 continue;
             }
             if (inBlockComment)
@@ -106,13 +135,13 @@ public static class UnrealScriptKnownNativeOperatorRepair
             }
             if (inString)
             {
-                if (c == '\\\\') { i++; continue; }
+                if (c == '\\') { i++; continue; }
                 if (c == quote) inString = false;
                 continue;
             }
             if (c == '/' && next == '/') { inLineComment = true; i++; continue; }
             if (c == '/' && next == '*') { inBlockComment = true; i++; continue; }
-            if (c is '"' or '\\'') { inString = true; quote = c; continue; }
+            if (c is '"' or '\'') { inString = true; quote = c; continue; }
             if (c == '(') depth++;
             else if (c == ')')
             {
