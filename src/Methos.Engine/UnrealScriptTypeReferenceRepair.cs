@@ -604,7 +604,8 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("MethosRecoveredName_31()", StringComparison.Ordinal) &&
-            !source.Contains("function int getMaxWidth()", StringComparison.Ordinal))
+            !source.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
+            !source.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal))
         {
             source += "\n\nfunction int getMaxWidth()\n{\n\tif(m_Tooltip.MinimumWidth > 0)\n\t{\n\t\treturn m_Tooltip.MinimumWidth;\n\t}\n\treturn TOOLTIP_MINIMUM_WIDTH;\n}";
             applied.Add("ToolTip missing max-width helper restored from its draw-list contents");
