@@ -595,11 +595,11 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("UISublimityCommonAPI", StringComparison.OrdinalIgnoreCase) &&
-            Regex.IsMatch(source, @"Class'Methos-Dunk3l-[0-9a-fA-F]+\\.SublimityTimerActor'", RegexOptions.CultureInvariant))
+            Regex.IsMatch(source, @"Class'Methos-Dunk3l-[0-9a-fA-F]+\.SublimityTimerActor'", RegexOptions.CultureInvariant))
         {
             source = Regex.Replace(
                 source,
-                @"Class'Methos-Dunk3l-[0-9a-fA-F]+\\.SublimityTimerActor'",
+                @"Class'Methos-Dunk3l-[0-9a-fA-F]+\.SublimityTimerActor'",
                 "Class'Interface.SublimityTimerActor'",
                 RegexOptions.CultureInvariant);
             applied.Add("Dunk3l timer actor package reference restored to the Interface package");
