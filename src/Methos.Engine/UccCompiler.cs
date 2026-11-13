@@ -953,8 +953,6 @@ function HandleHideLogo()
                 repairedIdentifiers += restoredOptionWndHandlers;
                 source = RestoreToolTipItemIcon(className, source, out bool restoredToolTipItemIcon);
                 if (restoredToolTipItemIcon) repairedIdentifiers++;
-                source = RestoreToolTipOptionHelpers(className, source, out int restoredToolTipOptionHelpers);
-                repairedIdentifiers += restoredToolTipOptionHelpers;
                 if (restoredOptionWndHandlers > 0)
                 {
                     var allAvailableClassNames = sourceFiles
