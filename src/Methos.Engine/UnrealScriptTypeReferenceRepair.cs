@@ -510,7 +510,7 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("bLoginInitialized", StringComparison.Ordinal) &&
-            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+bool\\s+bLoginInitialized\\s*;"))
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\s*var\s+bool\s+bLoginInitialized\s*;"))
         {
             const string fieldAnchor = "var bool Log;";
             if (source.Contains(fieldAnchor, StringComparison.Ordinal))
