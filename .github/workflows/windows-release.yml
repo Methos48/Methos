@@ -6,6 +6,8 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "tools/xdat/tests/**"
+      - "tools/xdat/README.md"
       - "installer/**"
       - "README-ES.txt"
       - "THIRD-PARTY-NOTICES.txt"
