@@ -574,7 +574,8 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
         string referenceSource, out bool restored)
     {
         restored = false;
-        if (string.IsNullOrWhiteSpace(referenceSource))
+        if (string.IsNullOrWhiteSpace(referenceSource) ||
+            className.Equals("OnScreenMessageWnd", StringComparison.OrdinalIgnoreCase))
             return source;
         Match referenceClass = Regex.Match(referenceSource,
             @"(?im)^\s*class\s+" + Regex.Escape(className) + @"\s+extends\s+(?<parent>[A-Za-z_]\w*)");
