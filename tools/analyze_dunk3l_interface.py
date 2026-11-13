@@ -4,7 +4,7 @@ from collections import Counter
 from pathlib import Path
 
 ENGINE = Path(sys.argv[1])
-FILES = [Path("interface.u"), Path("interface.xdat"), Path("Dunk3lFX_ByBALENCIAGA.u")]
+FILES = [Path("reference-data/client/lineage2/interface.u"), Path("reference-data/client/lineage2/interface.xdat"), Path("reference-data/packages/dunk3l/Dunk3lFX_ByBALENCIAGA.u")]
 PROTOCOLS = [0, 111, 121, 413]
 UNREAL_MAGIC = bytes.fromhex("C1 83 2A 9E")
 
