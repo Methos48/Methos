@@ -200,6 +200,7 @@ jobs:
                           File.WriteAllText(rawDamagePath, rawDamage.Decompile());
                   }
                   NativeFunctionRegistryBuilder.Build(cli[1], registryPath);
+                  File.Copy(registryPath, Path.Combine(Path.GetDirectoryName(cli[3])!, "SilentDark-native-function-registry.json"), overwrite: true);
                   var result = UnrealPackageDecompiler.DecompileToFolder(
                       plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
                   if (File.Exists(rawDamagePath))
@@ -261,6 +262,23 @@ jobs:
             Copy-Item -LiteralPath $referenceParty -Destination (Join-Path $diagnostics "PartyMatchOutWaitListWnd-reference.uc") -Force
           } else {
             Write-Host "PartyMatchOutWaitListWnd.uc is not present in the extracted reference source archive"
+          }
+          $uiCommon = Join-Path $generated "UICommonAPI.uc"
+          $referenceUiCommon = Join-Path $env:SILENT_U_REFERENCE_SOURCES "UICommonAPI.uc"
+          if (Test-Path $uiCommon) {
+            Copy-Item -LiteralPath $uiCommon -Destination (Join-Path $diagnostics "UICommonAPI-generated.uc") -Force
+            Write-Host "=== GENERATED UICOMMONAPI UNKNOWN NATIVE CALLS ==="
+            Select-String -LiteralPath $uiCommon -Pattern "curAscii|UnknownFunction237" | ForEach-Object { Write-Host "$($_.LineNumber): $($_.Line.Trim())" }
+          }
+          if (Test-Path $referenceUiCommon) {
+            Copy-Item -LiteralPath $referenceUiCommon -Destination (Join-Path $diagnostics "UICommonAPI-reference.uc") -Force
+            Write-Host "=== REFERENCE UICOMMONAPI CHARACTER CONVERSION ==="
+            Select-String -LiteralPath $referenceUiCommon -Pattern "curAscii|Asc\\(|Chr\\(" | ForEach-Object { Write-Host "$($_.LineNumber): $($_.Line.Trim())" }
+          }
+          $registry = Join-Path $env:RUNNER_TEMP "SilentDark-native-function-registry.json"
+          if (Test-Path $registry) {
+            Copy-Item -LiteralPath $registry -Destination (Join-Path $diagnostics "native-function-registry.json") -Force
+            Select-String -LiteralPath $registry -Pattern '"237"|UnknownFunction237|Asc' | ForEach-Object { Write-Host $_.Line }
           }
           $partyWait = Join-Path $generated "PartyMatchWaitListWnd.uc"
           $referencePartyWait = Join-Path $env:SILENT_U_REFERENCE_SOURCES "PartyMatchWaitListWnd.uc"
