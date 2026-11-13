@@ -171,6 +171,26 @@ jobs:
               string registryPath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-Natives-" + Guid.NewGuid().ToString("N") + ".json");
               try {
                   File.WriteAllBytes(plainPath, inspection.DecodedPayload);
+                  using (var metadataPackage = UnrealLoader.LoadPackage(plainPath, FileAccess.Read)) {
+                      metadataPackage.InitializePackage();
+                      var damageClass = metadataPackage.Objects.OfType<UClass>()
+                          .FirstOrDefault(item => string.Equals(item.Name?.ToString(), "DamageLiteAni", StringComparison.OrdinalIgnoreCase));
+                      if (damageClass != null) {
+                          Console.WriteLine("DAMAGE_CLASS_SUPER=" + (damageClass.Super?.Name?.ToString() ?? "<none>"));
+                          foreach (var property in damageClass.EnumerateFields<UProperty>()) {
+                              string propertyName = property.Name?.ToString() ?? "";
+                              if (propertyName.StartsWith("RecoveredName_", StringComparison.OrdinalIgnoreCase))
+                                  Console.WriteLine($"DAMAGE_PROPERTY scope=class object={(int)property} name={propertyName} type={property.GetType().Name} arrayDim={property.ArrayDim}");
+                          }
+                          if (damageClass.Super is UStruct parent) {
+                              foreach (var property in parent.EnumerateFields<UProperty>()) {
+                                  string propertyName = property.Name?.ToString() ?? "";
+                                  if (propertyName.StartsWith("RecoveredName_", StringComparison.OrdinalIgnoreCase))
+                                      Console.WriteLine($"DAMAGE_PROPERTY scope=parent object={(int)property} name={propertyName} type={property.GetType().Name} arrayDim={property.ArrayDim}");
+                              }
+                          }
+                      } else Console.WriteLine("DAMAGE_CLASS_METADATA_NOT_FOUND");
+                  }
                   NativeFunctionRegistryBuilder.Build(cli[1], registryPath);
                   var result = UnrealPackageDecompiler.DecompileToFolder(
                       plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
@@ -200,9 +220,22 @@ jobs:
           "SILENT_U_GENERATED_SOURCES=$generated" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "METHOS_GENERATED_SILENT_DARK_CLASSES=$classes"
           $inventory = Join-Path $generated "InventoryWnd.uc"
+          $diagnostics = Join-Path $env:RUNNER_TEMP "SilentDark-Diagnostics"
+          $damage = Join-Path $generated "DamageLiteAni.uc"
+          if (Test-Path $damage) {
+            Copy-Item -LiteralPath $damage -Destination (Join-Path $diagnostics "DamageLiteAni-generated.uc") -Force
+            Write-Host "=== GENERATED DAMAGE LITE ARRAY DECLARATIONS ==="
+            Select-String -LiteralPath $damage -Pattern "RecoveredName_2070" | ForEach-Object { Write-Host $_.Line }
+          }
+          $referenceDamage = Join-Path $env:SILENT_U_REFERENCE_SOURCES "DamageLiteAni.uc"
+          if (Test-Path $referenceDamage) {
+            Copy-Item -LiteralPath $referenceDamage -Destination (Join-Path $diagnostics "DamageLiteAni-reference.uc") -Force
+          } else {
+            Write-Host "DamageLiteAni.uc is not present in the extracted reference source archive"
+          }
           if (Test-Path $inventory) {
             Select-String -LiteralPath $inventory -Pattern "function MethosRecoveredName_|function !" | ForEach-Object { Write-Host $_.Line }
-            Get-Content -LiteralPath $inventory | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP "SilentDark-InventoryWnd-Generated.uc")
+            Get-Content -LiteralPath $inventory | Set-Content -LiteralPath (Join-Path $diagnostics "SilentDark-InventoryWnd-Generated.uc")
           }
 
       - name: Compile Silent Dark Interface.u using Methos UCC pipeline
