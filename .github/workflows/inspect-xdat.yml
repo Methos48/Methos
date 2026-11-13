@@ -7,6 +7,7 @@ on:
       - ".github/workflows/inspect-xdat.yml"
       - "reference-data/client/lineage2/interface.u"
       - "reference-data/client/lineage2/interface.xdat"
+      - "reference-data/packages/animal/interface.xdat"
       - "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip"
       - "tools/xdat/**"
       - "tests/**"
@@ -70,6 +71,31 @@ jobs:
         run: |
           python tools/xdat/tests/test_roundtrip.py
 
+      - name: Decompile Animal interface.xdat into XML
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, sys, os
+          sys.path.insert(0, "tools/xdat")
+          from xdat_core import decompile_to_folder, parse_xdat
+
+          source = Path("reference-data/packages/animal/interface.xdat")
+          data = source.read_bytes()
+          parse_xdat(data)
+          out = Path(os.environ["RUNNER_TEMP"]) / "animal-xdat-xml"
+          windows, shortcuts = decompile_to_folder(data, out)
+          print(f"ANIMAL_XDAT_OK bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()} windows={windows} shortcuts={shortcuts}")
+          print(f"XML_OUTPUT={out}")
+          PY
+
+      - name: Publish Animal XDAT decoded XML
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-interface-XDAT-XML
+          path: ${{ runner.temp }}/animal-xdat-xml
+          if-no-files-found: error
+          retention-days: 30
       - name: Preserve validated XDAT fixtures
         if: always()
         uses: actions/upload-artifact@v4
