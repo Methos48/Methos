@@ -604,15 +604,25 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("ChatFilterWnd", StringComparison.OrdinalIgnoreCase))
         {
-            string normalized = source
-                .Replace(
+            string normalized = source;
+            if (!normalized.Contains(
+                    "Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    StringComparison.Ordinal))
+            {
+                normalized = normalized.Replace(
                     "ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
                     "Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
-                    StringComparison.Ordinal)
-                .Replace(
+                    StringComparison.Ordinal);
+            }
+            if (!normalized.Contains(
+                    "Class'NWindow.UIAPI_WINDOW'.static.HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    StringComparison.Ordinal))
+            {
+                normalized = normalized.Replace(
                     "HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
                     "Class'NWindow.UIAPI_WINDOW'.static.HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
                     StringComparison.Ordinal);
+            }
             if (!string.Equals(normalized, source, StringComparison.Ordinal))
             {
                 source = normalized;
