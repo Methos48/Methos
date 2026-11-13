@@ -357,6 +357,35 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
+        {
+            var lowerFunction = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(item => item.Name.Equals("StrToLower", StringComparison.OrdinalIgnoreCase));
+            if (lowerFunction is not null)
+            {
+                string body = source.Substring(lowerFunction.BodyOffset, lowerFunction.BodyLength);
+                if (body.Contains("goto JL000F;", StringComparison.Ordinal) &&
+                    !System.Text.RegularExpressions.Regex.IsMatch(
+                        body, @"(?m)^[ \t]*JL000F\s*:"))
+                {
+                    const string loopConditionPattern =
+                        @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*<\s*Len\s*\(\s*Source\s*\)\s*\)\s*\)";
+                    var loopCondition = System.Text.RegularExpressions.Regex.Match(body, loopConditionPattern);
+                    if (loopCondition.Success)
+                    {
+                        string newline = source.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+                        string label = loopCondition.Groups["indent"].Value + "JL000F:" + newline +
+                            loopCondition.Value;
+                        string updatedBody = body.Remove(loopCondition.Index, loopCondition.Length)
+                            .Insert(loopCondition.Index, label);
+                        source = source.Remove(lowerFunction.BodyOffset, lowerFunction.BodyLength)
+                            .Insert(lowerFunction.BodyOffset, updatedBody);
+                        applied.Add("UICommonAPI.StrToLower restored missing JL000F loop label");
+                    }
+                }
+            }
+        }
+
         if (className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("m_PlayerName[idx].SetName(\"\", 0, 2);", StringComparison.Ordinal))
         {
