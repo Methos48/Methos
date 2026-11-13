@@ -30,6 +30,15 @@ public static class UnrealScriptSourceIndex
         return source;
     }
 
+    public static string CommentDecompilerStackTraceLines(string source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return System.Text.RegularExpressions.Regex.Replace(
+            source,
+            @"(?m)^([ \t]*)at\s+(.+)$",
+            "$1// at $2");
+    }
+
     public static IReadOnlyList<UnrealFunctionSource> ParseFunctions(string source)
     {
         ArgumentNullException.ThrowIfNull(source);
