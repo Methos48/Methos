@@ -16,13 +16,14 @@ public sealed class UnrealPackageIndex
     private readonly byte[] _data;
 
     private UnrealPackageIndex(byte[] data, PackageSummary summary,
-        List<string> names, List<ImportEntry> imports, List<ExportEntry> exports,
+        List<string> names, List<uint> nameFlags, List<ImportEntry> imports, List<ExportEntry> exports,
         int nameEnd, int importEnd, int exportEnd, int generationCountOffset,
         int generationRecordsOffset)
     {
         _data = data;
         Summary = summary;
         Names = names;
+        NameFlags = nameFlags;
         Imports = imports;
         Exports = exports;
         NameTableEnd = nameEnd;
@@ -34,6 +35,7 @@ public sealed class UnrealPackageIndex
 
     public PackageSummary Summary { get; }
     public IReadOnlyList<string> Names { get; }
+    public IReadOnlyList<uint> NameFlags { get; }
     public IReadOnlyList<ImportEntry> Imports { get; }
     public IReadOnlyList<ExportEntry> Exports { get; }
     internal int NameTableEnd { get; }
@@ -74,6 +76,7 @@ public sealed class UnrealPackageIndex
         // Tables are parsed independently at their absolute offsets. This is intentional:
         // Unreal permits table order to vary within a package.
         var names = new List<string>(nameCount);
+        var nameFlags = new List<uint>(nameCount);
         int p = nameOffset;
         for (int i = 0; i < nameCount; i++)
         {
@@ -96,6 +99,7 @@ public sealed class UnrealPackageIndex
                 p += bytes;
             }
             RequireRange(data, p, 4, $"flags del nombre {i}");
+            nameFlags.Add(U32(data, p));
             p += 4;
         }
         int nameEnd = p;
@@ -140,7 +144,7 @@ public sealed class UnrealPackageIndex
 
         return new UnrealPackageIndex(data, new PackageSummary(version, licensee, flags,
             nameCount, nameOffset, exportCount, exportOffset, importCount, importOffset,
-            generationCount, data.Length), names, imports, exports, nameEnd, importEnd,
+            generationCount, data.Length), names, nameFlags, imports, exports, nameEnd, importEnd,
             exportEnd, generationCountOffset, generationRecordsOffset);
     }
 
@@ -173,6 +177,100 @@ public sealed class UnrealPackageIndex
             W32(result, last + 4, checked((uint)Summary.NameCount));
         }
         return result;
+    }
+
+    /// <summary>
+    /// Rebuilds the name table with reversible source-identifier replacements.
+    /// Name indices, object references, payload offsets and original name flags remain unchanged.
+    /// </summary>
+    public byte[] CreateWithReplacedNames(IReadOnlyDictionary<string, string> replacements)
+    {
+        ArgumentNullException.ThrowIfNull(replacements);
+        using var output = new MemoryStream(_data.Length + (NameTableEnd - Summary.NameOffset)
+            + (ImportTableEnd - Summary.ImportOffset) + (ExportTableEnd - Summary.ExportOffset) + 4096);
+        output.Write(_data, 0, _data.Length);
+
+        int newNameOffset = checked((int)output.Position);
+        for (int i = 0; i < Names.Count; i++)
+        {
+            string name = replacements.TryGetValue(Names[i], out string? restored) ? restored : Names[i];
+            WriteName(output, name);
+            Span<byte> flags = stackalloc byte[4];
+            BinaryPrimitives.WriteUInt32LittleEndian(flags, NameFlags[i]);
+            output.Write(flags);
+        }
+
+        int newImportOffset = checked((int)output.Position);
+        output.Write(_data, Summary.ImportOffset, ImportTableEnd - Summary.ImportOffset);
+        int newExportOffset = checked((int)output.Position);
+        output.Write(_data, Summary.ExportOffset, ExportTableEnd - Summary.ExportOffset);
+
+        byte[] result = output.ToArray();
+        W32(result, 16, checked((uint)newNameOffset));
+        W32(result, 24, checked((uint)newExportOffset));
+        W32(result, 32, checked((uint)newImportOffset));
+        if (Summary.GenerationCount > 0)
+        {
+            int last = checked(GenerationRecordsOffset + (Summary.GenerationCount - 1) * 8);
+            W32(result, last, checked((uint)Summary.ExportCount));
+            W32(result, last + 4, checked((uint)Summary.NameCount));
+        }
+
+        var verified = Parse(result);
+        if (verified.Summary.NameCount != Summary.NameCount ||
+            verified.Summary.ImportCount != Summary.ImportCount ||
+            verified.Summary.ExportCount != Summary.ExportCount ||
+            !verified.Imports.SequenceEqual(Imports) ||
+            !verified.Exports.SequenceEqual(Exports))
+            throw new InvalidDataException("La restauración de nombres modificó índices o referencias del paquete.");
+        for (int i = 0; i < Names.Count; i++)
+        {
+            string expected = replacements.TryGetValue(Names[i], out string? restored) ? restored : Names[i];
+            if (!string.Equals(verified.Names[i], expected, StringComparison.Ordinal))
+                throw new InvalidDataException($"No se pudo restaurar el nombre de paquete en el índice {i}.");
+        }
+        return result;
+    }
+
+    private static void WriteName(Stream output, string name)
+    {
+        if (name.Length == 0)
+        {
+            WriteCompact(output, 0);
+            return;
+        }
+        if (name.All(character => character <= 0xFF))
+        {
+            byte[] bytes = Encoding.Latin1.GetBytes(name + "\0");
+            WriteCompact(output, bytes.Length);
+            output.Write(bytes);
+        }
+        else
+        {
+            byte[] bytes = Encoding.Unicode.GetBytes(name + "\0");
+            WriteCompact(output, -(bytes.Length / 2));
+            output.Write(bytes);
+        }
+    }
+
+    private static void WriteCompact(Stream output, int value)
+    {
+        bool negative = value < 0;
+        ulong magnitude = (ulong)Math.Abs((long)value);
+        byte first = (byte)(magnitude & 0x3F);
+        magnitude >>= 6;
+        if (negative) first |= 0x80;
+        if (magnitude != 0) first |= 0x40;
+        output.WriteByte(first);
+        int count = 1;
+        while (magnitude != 0)
+        {
+            byte next = (byte)(magnitude & 0x7F);
+            magnitude >>= 7;
+            if (magnitude != 0) next |= 0x80;
+            output.WriteByte(next);
+            if (++count > 5) throw new InvalidDataException("Nombre demasiado largo para un índice compacto Unreal.");
+        }
     }
 
     public static void WriteLosslessRoundTrip(string source, string destination)
