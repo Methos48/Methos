@@ -582,14 +582,13 @@ function HandleHideLogo()
 
     // Recover two OptionWnd handlers directly from the exact Interlude reference class.
     // These routines control only client-side logo visibility and shortcut keycap textures.
-    // Restore only missing OptionWnd functions that are actually called by the recovered
-    // source, copying their complete implementations from the matching Interlude reference.
-    private static string RestoreOptionWndReferenceHandlers(string className, string source,
+    // Restore missing class functions only when the recovered source calls them,
+    // copying complete implementations from the matching Interlude reference class.
+    private static string RestoreReferencedMissingFunctions(string source,
         string referenceSource, out int restoredCount)
     {
         restoredCount = 0;
-        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) ||
-            string.IsNullOrWhiteSpace(referenceSource))
+        if (string.IsNullOrWhiteSpace(referenceSource))
             return source;
 
         var recovered = new List<string>();
@@ -870,7 +869,7 @@ function HandleHideLogo()
                 source = RestoreToolTipItemIcon(className, source,
                     out bool restoredToolTipItemIcon);
                 if (restoredToolTipItemIcon) repairedIdentifiers++;
-                source = RestoreOptionWndReferenceHandlers(className, source, referenceSource,
+                source = RestoreReferencedMissingFunctions(source, referenceSource,
                     out int restoredOptionWndHandlers);
                 repairedIdentifiers += restoredOptionWndHandlers;
                 if (restoredOptionWndHandlers > 0)
