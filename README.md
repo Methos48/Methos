@@ -11,7 +11,7 @@ Ambos módulos forman parte de la misma aplicación y del mismo instalador: `Met
 
 Todo el desarrollo activo se mantiene en:
 
-https://github.com/Methos
+https://github.com/Methos48/Methos
 
 El código de la aplicación de Windows está en `src/MethosUEditor`, el motor Unreal y UCC en `src/MethosUEngine`, y el motor XDAT y sus herramientas en la raíz y `tools/xdat`.
 
