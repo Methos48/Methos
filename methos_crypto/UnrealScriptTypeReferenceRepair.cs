@@ -272,20 +272,33 @@ public static class UnrealScriptTypeReferenceRepair
                 applied.Add("InventoryWnd.OnDropItemSource malformed drag-source predicate normalized");
             }
 
-            const string malformedSlotCondition = "if((RecoveredName_2883.SlotBitType == (RecoveredName_1455())) || RecoveredName_2883.SlotBitType == (RecoveredName_1467()))";
-            const string repairedSlotCondition = "if (RecoveredName_2883.SlotBitType == 1048576 || RecoveredName_2883.SlotBitType == 2097152)";
-            if (source.Contains(malformedSlotCondition, StringComparison.Ordinal))
+            // This branch belongs to High Five bracelet/talisman UI, not the Interlude client.
+            // Remove the recovered, unresolved callback as a unit; the normal Interlude equipment
+            // slots and all supported item-update logic below remain intact.
+            int braceletCondition = source.IndexOf(
+                "if(!Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(", StringComparison.Ordinal);
+            if (braceletCondition >= 0 &&
+                source.Contains("RecoveredName_1266(RecoveredName_2883);", StringComparison.Ordinal))
             {
-                source = source.Replace(malformedSlotCondition, repairedSlotCondition, StringComparison.Ordinal);
-                applied.Add("InventoryWnd bracelet SlotBitType identifiers restored to Interlude bitmasks");
-            }
-
-            const string malformedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435())";
-            const string repairedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(\"InventoryWnd\")";
-            if (source.Contains(malformedCheckbox, StringComparison.Ordinal))
-            {
-                source = source.Replace(malformedCheckbox, repairedCheckbox, StringComparison.Ordinal);
-                applied.Add("InventoryWnd unresolved checkbox-name call replaced with safe non-checkbox window key");
+                int openBrace = source.IndexOf('{', braceletCondition);
+                int depth = 0;
+                int closeBrace = -1;
+                for (int i = openBrace; i >= 0 && i < source.Length; i++)
+                {
+                    if (source[i] == '{') depth++;
+                    else if (source[i] == '}' && --depth == 0)
+                    {
+                        closeBrace = i;
+                        break;
+                    }
+                }
+                if (closeBrace > openBrace)
+                {
+                    int lineStart = source.LastIndexOf('\n', braceletCondition);
+                    lineStart = lineStart < 0 ? 0 : lineStart + 1;
+                    source = source.Remove(lineStart, closeBrace + 1 - lineStart);
+                    applied.Add("InventoryWnd removed unsupported High Five bracelet/talisman callback for Interlude");
+                }
             }
 
             var missingFields = new (string Type, string Name)[]
