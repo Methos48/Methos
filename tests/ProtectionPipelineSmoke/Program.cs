@@ -283,6 +283,29 @@ Check(boolSwitchRepair.Repairs.Any(repair => repair.FunctionName == "NoblesseCel
     "Recovered bool switch functions must replace UELib's invalid bare trailing return with a false fallback.");
 Console.WriteLine("PASS: recovered bool switch trailing returns are normalized to a valid false fallback.");
 
+var recoveredIntSwitchSample = """
+class IntSwitchSample extends Object;
+function int UnkFuncSomeID_1(int SkillID)
+{
+    switch(SkillID)
+    {
+        case 357:
+            return 3;
+            break;
+        default:
+            return -1;
+            break;
+    }
+    return;
+}
+""";
+var intSwitchRepair = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(recoveredIntSwitchSample);
+Check(intSwitchRepair.Repairs.Any(repair => repair.FunctionName == "UnkFuncSomeID_1") &&
+      !intSwitchRepair.Source.Contains("    return;\n}", StringComparison.Ordinal),
+    "Recovered int switch functions with exhaustive return branches must drop the invalid trailing bare return.");
+Console.WriteLine("PASS: exhaustive int switch trailing bare returns are removed.");
+
+
 
 static void Check(bool value, string message)
 {
