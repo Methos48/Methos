@@ -46,6 +46,24 @@ jobs:
           } else {
             $signatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
           }
+          $system = Join-Path $env:KIT "Interlude\System"
+          foreach ($packageName in @("NWindow.u", "Engine.u", "Core.u")) {
+            $packagePath = Join-Path $system $packageName
+            if (!(Test-Path $packagePath)) { continue }
+            $output = Join-Path $env:RUNNER_TEMP ("SetName-" + [IO.Path]::GetFileNameWithoutExtension($packageName))
+            try {
+              dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $packagePath $output
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning ("Could not decompile API package " + $packageName)
+                continue
+              }
+              $packageSignatures = @(Get-ChildItem -LiteralPath $output -Filter "*.uc" -File |
+                Select-String -Pattern '^\s*(?:native(?:\s*\([^)]*\))?\s+)?function\s+.*\bSetName\s*\(')
+              $packageSignatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+            } catch {
+              Write-Warning ("SetName signature inspection failed for " + $packageName + ": " + $_.Exception.Message)
+            }
+          }
 
       - name: Compile the full Interface.u source set using Methos UccCompiler
         shell: pwsh
