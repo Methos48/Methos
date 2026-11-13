@@ -39,6 +39,20 @@ public static class UnrealScriptTypeReferenceRepair
 
 
         if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("ChatFilterBtn = ButtonHandle(", StringComparison.Ordinal) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+ButtonHandle\\s+ChatFilterBtn\\s*;"))
+        {
+            const string handleAnchor = "var EditBoxHandle ChatEditBox;";
+            if (source.Contains(handleAnchor, StringComparison.Ordinal))
+            {
+                source = source.Replace(handleAnchor,
+                    handleAnchor + Environment.NewLine + "var ButtonHandle ChatFilterBtn;",
+                    StringComparison.Ordinal);
+                applied.Add("ChatWnd.ChatFilterBtn missing ButtonHandle field restored");
+            }
+        }
+
+        if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("function UIEventManager.EChatType GetChatTypeByTabIndex", StringComparison.Ordinal) &&
             source.Contains("local UIEventManager.EChatType Type;", StringComparison.Ordinal))
         {
