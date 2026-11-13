@@ -444,6 +444,18 @@ function onActiveTex(bool bActive, int nIndex)
             }, RegexOptions.IgnoreCase);
     }
 
+    // Interlude's UIAPI_TEXTBOX.SetAlign expects the ETextAlign enum rather
+    // than its serialized integer ordinal. The recovered value 2 maps to TXTA_Right.
+    private static string NormalizeTextBoxAlignEnum(string className, string source)
+    {
+        if (!className.Equals("InterfaceOptionsWnd", StringComparison.OrdinalIgnoreCase) &&
+            !className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source,
+            @"(UIAPI_TEXTBOX'\.static\.SetAlign\([^,]+,\s*)2(\s*\))",
+            "$1TXTA_Right$2", RegexOptions.IgnoreCase);
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -603,6 +615,7 @@ function onActiveTex(bool bActive, int nIndex)
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
+                source = NormalizeTextBoxAlignEnum(className, source);
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
