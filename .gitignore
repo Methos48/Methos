@@ -17,9 +17,6 @@ venv/
 /publish/
 /release/
 /artifacts/
-*.msi
-*.exe
-*.pdb
 
 # Methos user workspace (never commit user working files)
 /Compilados/
