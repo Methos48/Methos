@@ -112,6 +112,7 @@ public static class UnrealPackageDecompiler
 
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
                         source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(safeName, source, out _);
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDrawItemTypeAssignments(safeName, source, out _);
                 source = UnrealScriptKnownNativeOperatorRepair.RepairKnownSilentInterfaceAddressCheck(source, out _);
 
