@@ -712,7 +712,7 @@ function HandleHideLogo()
             return source;
 
         var declarations = Regex.Matches(referenceSource,
-            @"(?ims)^\s*(?:(?:native|final|static|simulated|event)\s+)*function\s+(?:[A-Za-z_]\w*\s+)?(?<name>[A-Za-z_]\w*)\s*\([^)]*\)[^{]*\{.*?^\}");
+            @"(?ims)^\s*(?:simulated\s+)*function\s+(?:[A-Za-z_]\w*\s+)?(?<name>[A-Za-z_]\w*)\s*\([^)]*\)[^{]*\{.*?^\}");
         while (true)
         {
             var recovered = new List<string>();
