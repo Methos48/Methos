@@ -90,13 +90,42 @@ public static class UnrealScriptTypeReferenceRepair
                 ("int", "RecoveredName_2104")
             };
             var declarations = new List<string>();
+            int repairedFieldCount = 0;
             foreach (var field in missingFields)
             {
+                var arrayName = System.Text.RegularExpressions.Regex.Match(
+                    field.Name, @"^(?<name>[A-Za-z_]\w*)\[(?<size>\d+)\]$");
+                if (arrayName.Success)
+                {
+                    string baseName = arrayName.Groups["name"].Value;
+                    string targetSize = arrayName.Groups["size"].Value;
+                    string arrayPattern = @"(?m)^(?<prefix>\s*var\s+(?:private\s+)?" +
+                        System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\s+" +
+                        System.Text.RegularExpressions.Regex.Escape(baseName) +
+                        @")\s*\[\s*(?<size>\d+)\s*\](?<suffix>\s*;)";
+                    var existingArray = System.Text.RegularExpressions.Regex.Match(source, arrayPattern);
+                    if (existingArray.Success)
+                    {
+                        if (!string.Equals(existingArray.Groups["size"].Value, targetSize, StringComparison.Ordinal))
+                        {
+                            string replacement = existingArray.Groups["prefix"].Value +
+                                "[" + targetSize + "]" + existingArray.Groups["suffix"].Value;
+                            source = source.Remove(existingArray.Index, existingArray.Length)
+                                .Insert(existingArray.Index, replacement);
+                            repairedFieldCount++;
+                        }
+                        continue;
+                    }
+                }
+
                 if (!System.Text.RegularExpressions.Regex.IsMatch(
                     source, @"(?m)^\s*var\s+(?:private\s+)?" +
                     System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\s+" +
                     System.Text.RegularExpressions.Regex.Escape(field.Name) + @"\s*;"))
+                {
                     declarations.Add("var private " + field.Type + " " + field.Name + ";");
+                    repairedFieldCount++;
+                }
             }
             if (declarations.Count > 0)
             {
@@ -104,8 +133,9 @@ public static class UnrealScriptTypeReferenceRepair
                 source = source.Replace(classAnchor,
                     classAnchor + Environment.NewLine + string.Join(Environment.NewLine, declarations),
                     StringComparison.Ordinal);
-                applied.Add("DamageLiteAni restored " + declarations.Count + " missing typed state fields");
             }
+            if (repairedFieldCount > 0)
+                applied.Add("DamageLiteAni restored/resized " + repairedFieldCount + " typed state fields");
         }
 
         if (className.Equals("DamageLite", StringComparison.OrdinalIgnoreCase) &&
