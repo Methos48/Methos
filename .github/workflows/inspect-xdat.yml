@@ -78,14 +78,18 @@ jobs:
           from pathlib import Path
           import hashlib, sys, os
           sys.path.insert(0, "tools/xdat")
-          from xdat_core import decompile_to_folder, parse_xdat
+          from xdat_core import decompile_to_folder, parse_xdat, compile_from_folder
 
           source = Path("reference-data/packages/animal/interface.xdat")
           data = source.read_bytes()
           parse_xdat(data)
           out = Path(os.environ["RUNNER_TEMP"]) / "animal-xdat-xml"
           windows, shortcuts = decompile_to_folder(data, out)
+          rebuilt, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(out, original_data=data)
+          if rebuilt != data:
+              raise SystemExit(f"Animal XDAT round-trip mismatch: original={len(data)} rebuilt={len(rebuilt)}")
           print(f"ANIMAL_XDAT_OK bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()} windows={windows} shortcuts={shortcuts}")
+          print(f"ANIMAL_XDAT_ROUNDTRIP_OK bytes={len(rebuilt)} windows={rebuilt_windows} shortcuts={rebuilt_shortcuts} exact_binary_match=True")
           print(f"XML_OUTPUT={out}")
           PY
 
