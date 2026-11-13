@@ -14,6 +14,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--archive", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--zip-out")
     args = parser.parse_args()
 
     archive = Path(args.archive)
@@ -64,7 +65,17 @@ def main() -> int:
     if parts_count == 0:
         raise SystemExit("No se encontraron fixtures XML dentro de 'xdat por partes'.")
 
+    if args.zip_out:
+        fixture_zip = Path(args.zip_out)
+        fixture_zip.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(fixture_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for item in sorted(output.rglob("*")):
+                if item.is_file():
+                    zf.write(item, item.relative_to(output).as_posix())
+
     print(f"Fixtures XDAT extraídos: interface.xdat=1, XML={parts_count}")
+    if args.zip_out:
+        print(f"Archivo autónomo de fixtures creado: {fixture_zip}")
     print("No se extrajeron app.py, ejecutables, DLL, instaladores ni scripts del kit.")
     return 0
 
