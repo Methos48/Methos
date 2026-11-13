@@ -90,6 +90,11 @@ jobs:
               raise SystemExit(f"Animal XDAT round-trip mismatch: original={len(data)} rebuilt={len(rebuilt)}")
           print(f"ANIMAL_XDAT_OK bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()} windows={windows} shortcuts={shortcuts}")
           print(f"ANIMAL_XDAT_ROUNDTRIP_OK bytes={len(rebuilt)} windows={rebuilt_windows} shortcuts={rebuilt_shortcuts} exact_binary_match=True")
+          rebuilt_standalone, standalone_windows, standalone_shortcuts = compile_from_folder(out)
+          if rebuilt_standalone != data:
+              print(f"ANIMAL_XDAT_STANDALONE_REBUILD_DIFF original={len(data)} rebuilt={len(rebuilt_standalone)}")
+              raise SystemExit("El XML y sus metadatos no reconstruyen por sí solos el XDAT original sin usar el binario fuente.")
+          print(f"ANIMAL_XDAT_STANDALONE_OK bytes={len(rebuilt_standalone)} windows={standalone_windows} shortcuts={standalone_shortcuts} exact_binary_match=True original_binary_not_required=True")
           print(f"XML_OUTPUT={out}")
           PY
 
