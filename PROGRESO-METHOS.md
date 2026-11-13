@@ -130,3 +130,6 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - **Compatibilidad de datos:** se mantienen rutas antiguas de caché y respaldos bajo `%LOCALAPPDATA%` para no romper datos existentes; sus nombres históricos no representan programas separados.
 
 - Se retiró también el workflow temporal `.github/workflows/migrate-unified.yml`: la migración del repositorio ya está completada y no debe repetirse como tarea activa.
+
+- Se amplió `README-ES.txt` con el enlace al repositorio oficial y la explicación de que las rutas locales heredadas de caché/respaldo no son una segunda aplicación.
+- Se añadió `.gitignore` para excluir salidas de compilación, cachés temporales y el espacio de trabajo local `Compilados/`, sin ignorar de forma global ejecutables o DLL que puedan ser referencias legítimas.
