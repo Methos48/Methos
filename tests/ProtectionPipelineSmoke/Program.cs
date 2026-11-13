@@ -19,6 +19,34 @@ if (args.Length > 0 && args[0] == "--inspect-protection")
     return;
 }
 
+if (args.Length > 0 && args[0] == "--inspect-decompile")
+{
+    if (args.Length is < 3 or > 4)
+        throw new ArgumentException("Usage: --inspect-decompile <package.u> <outputDirectory> [referenceSourceDirectory]");
+    string inputPath = Path.GetFullPath(args[1]);
+    string outputDirectory = Path.GetFullPath(args[2]);
+    byte[] original = File.ReadAllBytes(inputPath);
+    var inspection = ProtectionPipelinePlanner.InspectFullPipeline(original, inputPath);
+    if (!inspection.IsPlaintextCandidate || !inspection.Plan.CanDecode)
+        throw new InvalidDataException($"U package cannot be decoded safely: {inspection.Plan.Status}; {inspection.Plan.Explanation}");
+    string temporaryPackage = Path.Combine(Path.GetTempPath(), "Methos-U-" + Guid.NewGuid().ToString("N") + ".u");
+    try
+    {
+        File.WriteAllBytes(temporaryPackage, inspection.DecodedPayload);
+        UnrealPackageDecompileResult result = UnrealPackageDecompiler.DecompileToFolder(
+            temporaryPackage, outputDirectory, args.Length == 4 ? args[3] : null);
+        Console.WriteLine($"PACKAGE={Path.GetFileName(inputPath)}; PROTECTION={inspection.Plan.Status}; DECOMPILED={result.ExportedCount}/{result.ClassCount}; OBJECTS={result.ObjectCount}; FAILED={result.FailedCount}; VERSION={result.PackageVersion}/{result.LicenseeVersion}");
+        foreach (string error in result.Errors.Take(30)) Console.WriteLine("EXPORT_ERROR " + error);
+        if (result.FailedCount != 0 || result.ExportedCount != result.ClassCount)
+            throw new InvalidDataException("UnrealScript source export did not complete without errors.");
+    }
+    finally
+    {
+        try { if (File.Exists(temporaryPackage)) File.Delete(temporaryPackage); } catch { }
+    }
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
     if (args.Length is < 3 or > 4)
