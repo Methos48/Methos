@@ -212,15 +212,12 @@ jobs:
         run: |
           $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude"
           $sourceFile = Join-Path $env:ANIMAL_SOURCES "InterfaceOptionsWnd.uc"
-          Write-Host "===== DECOMPILED CALL SITE ====="
-          $src = Get-Content -LiteralPath $sourceFile
-          for ($n=25; $n -lt [Math]::Min(42,$src.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$src[$n]) }
-          Write-Host "===== REFERENCE CALL SITE ====="
-          $refFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/InterfaceOptionsWnd.uc"
-          $ref = Get-Content -LiteralPath $refFile
-          for ($n=25; $n -lt [Math]::Min(42,$ref.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$ref[$n]) }
+          Write-Host "===== SETALIGN CALLS IN DECOMPILED CLASS ====="
+          Select-String -LiteralPath $sourceFile -Pattern 'SetAlign' -Context 2,2
           Write-Host "===== SETALIGN DECLARATIONS IN INTERLUDE REFERENCES ====="
-          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)function\s+.*\bSetAlign\s*\(' -Context 0,3
+          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)function\s+.*\bSetAlign\s*\(' -Context 0,4
+          Write-Host "===== ALL SETALIGN REFERENCES IN UI CLASSES ====="
+          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -SimpleMatch -Pattern "SetAlign(" -Context 0,1 | Select-Object -First 40
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
