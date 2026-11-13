@@ -245,3 +245,15 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - **Resultado de unificación:** Methos queda consolidado en un solo repositorio activo, una sola aplicación y un único ejecutable principal `Methos.exe`, con los módulos ARCHIVOS U y ARCHIVOS XDAT internos. Se retiraron del build y del repositorio las capas de adaptación del antiguo editor XDAT; el antiguo paquete de referencia fue sustituido por datos de prueba limpios.
 - **Límite de funcionalidad que sigue abierto para la siguiente etapa:** el pipeline de protocolos cifrados está versionado y probado como módulo, pero todavía no está conectado al puente de interfaz de XDAT. No se declara soporte completo para todas las variantes cifradas.
 - **Otra prueba independiente pendiente:** la ejecución `43401463922` de Silent Dark U/XDAT pasó el round-trip XDAT, pero el compilador UCC se detuvo en `InventoryWnd.uc(1529)` con `Missing function name`. Es un problema de recuperación/compilación de esa interfaz específica, separado de la unificación y del instalador; conservarlo como siguiente tarea funcional.
+
+
+### 13-11-2026 — Limpieza documental y consolidación de la fuente oficial
+
+- Se revisaron los archivos raíz y la documentación de arquitectura, referencias, workflows, ramas y contribución.
+- Se corrigieron referencias obsoletas que describían el antiguo ZIP de compilación XDAT como dependencia de runtime. El archivo actual `Methos-XDAT-Reference-Fixtures.zip` es exclusivamente un conjunto de fixtures de prueba; no contiene aplicación, código Python, DLL ni ejecutables.
+- Se actualizó el inventario de `reference-data/` para distinguir claramente el código activo, los datos de referencia y las dependencias UCC que aún requieren las pruebas.
+- Se consolidó en README y documentación que `Methos48/Methos`, rama `main`, es la única fuente oficial y activa. U y XDAT son módulos de la misma aplicación.
+- Se eliminaron instrucciones contradictorias que sugerían que la integración XDAT todavía dependía de extraer una aplicación Python externa o de overlays de mantenimiento.
+- **Pendiente administrativo externo:** `Methos48/Methos-Interface` permanece como repositorio vacío en GitHub y todavía existen ramas históricas inactivas en el repositorio oficial. No contienen el producto activo, pero no se han eliminado ni archivado porque las acciones disponibles en esta sesión no permiten administrar/eliminar repositorios o ramas.
+- **Criterio de conservación:** se mantienen el historial Git, los archivos de referencia y las ubicaciones locales heredadas que protegen datos de usuario. No se borran datos útiles ni respaldos solo para ocultar nombres antiguos.
+- Esta limpieza no modifica la aplicación ni sus funciones; prepara la documentación para que el desarrollo futuro continúe exclusivamente en Methos.
