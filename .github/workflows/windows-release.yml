@@ -17,6 +17,7 @@ on:
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
       - "tools/xdat/xdat_core.py"
+      - "tools/xdat/compare_build_kit.py"
       - ".github/workflows/windows-release.yml"
   pull_request:
     branches: [main]
@@ -207,6 +208,20 @@ jobs:
         with:
           python-version: '3.12'
           architecture: x64
+
+      - name: Comparar el kit XDAT histórico con las fuentes mantenidas
+        shell: pwsh
+        run: |
+          python tools/xdat/compare_build_kit.py --archive "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip" --repo . --json-out xdat-kit-comparison.json --markdown-out xdat-kit-comparison.md
+
+      - name: Guardar informe de comparación de fuentes XDAT
+        uses: actions/upload-artifact@v4
+        with:
+          name: methos-xdat-source-comparison
+          path: |
+            xdat-kit-comparison.json
+            xdat-kit-comparison.md
+          if-no-files-found: error
 
       - name: Extraer y preparar el código fuente XDAT
         shell: pwsh
