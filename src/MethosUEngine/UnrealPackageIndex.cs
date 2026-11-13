@@ -191,11 +191,11 @@ public sealed class UnrealPackageIndex
         output.Write(_data, 0, _data.Length);
 
         int newNameOffset = checked((int)output.Position);
+        Span<byte> flags = stackalloc byte[4];
         for (int i = 0; i < Names.Count; i++)
         {
             string name = replacements.TryGetValue(Names[i], out string? restored) ? restored : Names[i];
             WriteName(output, name);
-            Span<byte> flags = stackalloc byte[4];
             BinaryPrimitives.WriteUInt32LittleEndian(flags, NameFlags[i]);
             output.Write(flags);
         }
