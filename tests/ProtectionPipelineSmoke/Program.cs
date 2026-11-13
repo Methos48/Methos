@@ -244,6 +244,25 @@ Check(autoBuffItemCountRepairs.Count == 1 &&
     "AutoBuffWnd.getItemCount did not use its declared ItemID parameter.");
 Console.WriteLine("PASS: AutoBuffWnd.getItemCount references its declared ItemID parameter.");
 
+string autoBuffSkillListSample = """
+class AutoBuffWnd extends UICommonAPI;
+function HandleSkillList(string param)
+{
+    local int SkillID, ClassID;
+    if(UnknownFunction154(SkillID, ClassID))
+    {
+        return;
+    }
+}
+""";
+string autoBuffSkillListRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "AutoBuffWnd", autoBuffSkillListSample, out IReadOnlyList<string> autoBuffSkillListRepairs);
+Check(autoBuffSkillListRepairs.Count == 1 &&
+      autoBuffSkillListRepaired.Contains("UnknownFunction154(SkillID, 1323)", StringComparison.Ordinal) &&
+      !autoBuffSkillListRepaired.Contains("UnknownFunction154(SkillID, ClassID)", StringComparison.Ordinal),
+    "AutoBuffWnd.HandleSkillList did not restore the verified 1323 class ID constant.");
+Console.WriteLine("PASS: AutoBuffWnd.HandleSkillList restores Dunk3l's verified 1323 class ID constant.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
