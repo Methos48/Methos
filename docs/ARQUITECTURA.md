@@ -27,7 +27,9 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 | `src/MethosUEngine/` | Motor de paquetes Unreal, UCC y herramientas de UnrealScript utilizadas por el módulo U. |
 | `tools/xdat/` | Motor XDAT Python y pruebas/utilidades relacionadas. |
 | `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
-| `methos_crypto/` | Fuentes de análisis y protección. Antes de mover o eliminar cualquier archivo, comprobar referencias y duplicados con los proyectos y workflows. |
+| `tools/xdat/xdat_core.py` | Código XDAT mantenido en el repositorio. Debe ser la fuente canónica una vez completada la migración del kit histórico. |
+| `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` (raíz) | Insumo heredado que el workflow Windows todavía extrae para copiar el motor XDAT y ejecutar sus pruebas. No es una segunda app, pero sí una duplicación pendiente de retirar después de migrar y validar todo su contenido en `tools/xdat/`. |
+| `methos_crypto/` | Copias históricas/experimentales de componentes del motor. No es el proyecto que compila la aplicación; el motor compilado por la app está en `src/MethosUEngine/`. No borrar ni sincronizar automáticamente sin comparar versiones y revisar workflows. |
 | `tests/` | Pruebas automatizadas de los componentes. |
 | `tools/` | Herramientas de diagnóstico, inspección y validación; no todas forman parte del producto distribuido. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
@@ -37,7 +39,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 ## Archivos de entrada de compilación y referencias
 
-Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflows actuales todavía los consumen como insumos de compilación o pruebas. No moverlos ni eliminarlos hasta migrar sus consumidores a rutas canónicas y comprobar la compilación resultante.
+Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflows actuales todavía los consumen como insumos de compilación o pruebas. No moverlos ni eliminarlos hasta migrar sus consumidores a rutas canónicas y comprobar la compilación resultante. En particular, el ZIP histórico del kit XDAT todavía alimenta la compilación de lanzamiento; editar únicamente `tools/xdat/xdat_core.py` no garantiza que el instalador use esa versión hasta completar la migración.
 
 Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
@@ -51,6 +53,10 @@ El workflow de distribución oficial es `.github/workflows/windows-release.yml`.
 4. Las cuatro carpetas de trabajo bajo `Compilados/U` y `Compilados/XDAT`.
 
 No debe publicar un segundo ejecutable de producto para XDAT ni un instalador XDAT independiente.
+
+## Compatibilidad de datos locales
+
+Algunas carpetas antiguas bajo `%LOCALAPPDATA%` conservan nombres históricos como `Methos U Editor`. Se mantienen temporalmente para no perder cachés ni respaldos de instalaciones anteriores. Son ubicaciones de datos, no aplicaciones independientes. No renombrarlas sin implementar una migración que copie o detecte los datos existentes.
 
 ## Organización de archivos de usuario
 
@@ -81,4 +87,4 @@ Los originales seleccionados por el usuario deben conservarse sin cambios. Las o
 
 ## Estado de limpieza
 
-La primera pasada elimina la automatización obsoleta que intentaba construir una distribución XDAT independiente y normaliza el nombre del script del instalador. Los insumos ZIP históricos permanecen temporalmente en la raíz porque el workflow oficial todavía depende de ellos. Su migración es una tarea separada y debe validarse antes de retirar esos archivos.
+La primera pasada elimina la automatización obsoleta que intentaba construir una distribución XDAT independiente y normaliza el nombre del script del instalador. Los insumos ZIP históricos permanecen temporalmente en la raíz porque el workflow oficial todavía depende de ellos. La duplicación entre `tools/xdat/` y el kit ZIP debe resolverse como una tarea de migración con pruebas, no mediante borrado.
