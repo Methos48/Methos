@@ -327,6 +327,40 @@ Check(shortcutSkillTitleRepairs.Count == 1 &&
     "Shortcut.Skilltitle WindowHandle declaration was not restored.");
 Console.WriteLine("PASS: Shortcut.Skilltitle WindowHandle declaration is restored.");
 
+string missingCalledFunctionCurrent = """
+class Shortcut extends UICommonAPI;
+function HandleShortcutCommand(string Command)
+{
+    if(Command == "ShowQuestWnd")
+    {
+        ToggleOpenQuestTreeWnd();
+    }
+}
+""";
+string missingCalledFunctionReference = """
+class Shortcut extends UICommonAPI;
+function HandleShortcutCommand(string Command)
+{
+    if(Command == "ShowQuestWnd")
+    {
+        ToggleOpenQuestTreeWnd();
+    }
+}
+function ToggleOpenQuestTreeWnd()
+{
+    ShowWindowWithFocus("QuestTreeWnd");
+}
+""";
+string missingCalledFunctionRepaired = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
+    missingCalledFunctionCurrent, missingCalledFunctionReference,
+    out IReadOnlyList<string> missingCalledFunctionRepairs);
+Check(missingCalledFunctionRepairs.Count == 1 &&
+      missingCalledFunctionRepairs[0].StartsWith("ToggleOpenQuestTreeWnd", StringComparison.Ordinal) &&
+      missingCalledFunctionRepaired.Contains("function ToggleOpenQuestTreeWnd()", StringComparison.Ordinal) &&
+      missingCalledFunctionRepaired.Contains("ShowWindowWithFocus(\"QuestTreeWnd\")", StringComparison.Ordinal),
+    "A missing called UnrealScript function was not restored from its exact reference.");
+Console.WriteLine("PASS: Missing called UnrealScript functions are restored from their matching reference class.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
