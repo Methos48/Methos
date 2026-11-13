@@ -14,6 +14,7 @@ on:
       - "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip"
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
+      - "tools/xdat/package_origin_metadata.py"
       - "tools/xdat/xdat_core.py"
       - "tools/xdat/prepare_reference_fixtures.py"
       - ".github/workflows/windows-release.yml"
