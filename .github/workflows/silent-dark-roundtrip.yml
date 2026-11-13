@@ -56,6 +56,7 @@ jobs:
           New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\ucc-kit\Interlude\System" | Out-Null
           Copy-Item "reference-data\ucc-runtime\System\*" "$env:RUNNER_TEMP\ucc-kit\Interlude\System" -Recurse -Force
           $referenceSources = Join-Path $env:RUNNER_TEMP "silent-u\Carpeta interface.u"
+          $src = $referenceSources
           $kit = Join-Path $env:RUNNER_TEMP "ucc-kit"
           $package = (Resolve-Path "reference-data\packages\silent-dark\Interface.u").Path
           if (!(Test-Path $referenceSources)) { throw "Silent Dark .uc reference folder missing" }
