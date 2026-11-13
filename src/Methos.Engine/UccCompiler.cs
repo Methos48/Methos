@@ -711,27 +711,30 @@ function HandleHideLogo()
         if (string.IsNullOrWhiteSpace(referenceSource))
             return source;
 
-        var recovered = new List<string>();
         var declarations = Regex.Matches(referenceSource,
             @"(?ims)^\s*(?:(?:native|final|static|simulated|event)\s+)*function\s+(?:[A-Za-z_]\w*\s+)?(?<name>[A-Za-z_]\w*)\s*\([^)]*\)[^{]*\{.*?^\}");
-        foreach (Match function in declarations)
+        while (true)
         {
-            string name = function.Groups["name"].Value;
-            if (Regex.IsMatch(source, @"(?im)^\s*function\s+(?:[A-Za-z_]\w*\s+)?" +
-                Regex.Escape(name) + @"\s*\("))
-                continue;
-            if (!Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\s*\("))
-                continue;
-            recovered.Add(function.Value.Trim());
-        }
+            var recovered = new List<string>();
+            foreach (Match function in declarations)
+            {
+                string name = function.Groups["name"].Value;
+                if (Regex.IsMatch(source, @"(?im)^\s*function\s+(?:[A-Za-z_]\w*\s+)?" +
+                    Regex.Escape(name) + @"\s*\("))
+                    continue;
+                if (!Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\s*\("))
+                    continue;
+                recovered.Add(function.Value.Trim());
+            }
 
-        if (recovered.Count == 0) return source;
-        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
-        if (!firstFunction.Success) return source;
-        source = source.Insert(firstFunction.Index,
-            string.Join(Environment.NewLine + Environment.NewLine, recovered) +
-            Environment.NewLine + Environment.NewLine);
-        restoredCount = recovered.Count;
+            if (recovered.Count == 0) break;
+            Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+            if (!firstFunction.Success) break;
+            source = source.Insert(firstFunction.Index,
+                string.Join(Environment.NewLine + Environment.NewLine, recovered) +
+                Environment.NewLine + Environment.NewLine);
+            restoredCount += recovered.Count;
+        }
         return source;
     }
 
