@@ -553,6 +553,26 @@ Check(tradeWndShadowRepairs.Count == 1 &&
     "TradeWnd local declaration order was not repaired without changing the original variable names or references.");
 Console.WriteLine("PASS: TradeWnd declares the same-named type variable after other ItemInfo locals.");
 
+string partyMatchQuoteSample = """"
+class PartyMatchOutWaitListWnd extends UICommonAPI;
+function HandleWaitList(string szData1)
+{
+    SetChatMessage(UnknownFunction112(UnknownFunction112(""",szData1)," "));
+}
+function HandleInvite(LVDataRecord Record)
+{
+    SetChatMessage(UnknownFunction112(UnknownFunction112(""",Record.LVDataList[0].szData)," "));
+}
+"""";
+string partyMatchQuoteRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PartyMatchOutWaitListWnd", partyMatchQuoteSample, out IReadOnlyList<string> partyMatchQuoteRepairs);
+int partyMatchQuoteCount = partyMatchQuoteRepaired.Split("Chr(34)", StringSplitOptions.None).Length - 1;
+Check(partyMatchQuoteRepairs.Count == 1 &&
+      partyMatchQuoteCount == 2 &&
+      !partyMatchQuoteRepaired.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal),
+    "PartyMatchOutWaitListWnd did not normalize both malformed quote literals.");
+Console.WriteLine("PASS: PartyMatchOutWaitListWnd quote literals are emitted as Chr(34) for UCC.");
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
