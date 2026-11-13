@@ -849,6 +849,7 @@ internal sealed class MainForm : Form
             try
             {
                 var source = obj.Decompile();
+                source = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
                 string nativeRegistryPath = Path.Combine(UccRuntimeRoot, "native-function-registry.json");
                 try
                 {
@@ -947,6 +948,35 @@ internal sealed class MainForm : Form
                     if (nativeDecoded > 0)
                         Log($"Descompilación nativa verificada: {safeName}.uc; funciones={nativeDecoded}.");
                 }
+
+                source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+                    safeName, source, out var typeRepairs);
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(
+                    source, out var interfaceSoundRepairs);
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
+                    safeName, source, out var dialogTypeRepairs);
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(
+                    safeName, source, out var dialogActionRepairs);
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDrawItemTypeAssignments(
+                    safeName, source, out var drawItemRepairs);
+                source = UnrealScriptKnownNativeOperatorRepair.RepairKnownSilentInterfaceAddressCheck(
+                    source, out var addressCheckRepairs);
+                source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeEqualityOperators(
+                    source, out var equalityRepairs);
+                source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeUnaryOperators(
+                    source, out var unaryOperatorRepairs);
+
+                var appliedSourceRepairs = typeRepairs
+                    .Concat(interfaceSoundRepairs)
+                    .Concat(dialogTypeRepairs)
+                    .Concat(dialogActionRepairs)
+                    .Concat(drawItemRepairs)
+                    .Concat(addressCheckRepairs)
+                    .Concat(equalityRepairs)
+                    .Concat(unaryOperatorRepairs)
+                    .ToList();
+                foreach (string repair in appliedSourceRepairs)
+                    Log($"Reparación de fuente aplicada en {safeName}.uc: {repair}");
 
                 SaveTextWithBackup(Path.Combine(output, safeName + ".uc"), source);
                 ok++;
