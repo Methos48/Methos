@@ -427,6 +427,40 @@ function onActiveTex(bool bActive, int nIndex)
             "GetClassIconCustom(", RegexOptions.IgnoreCase);
     }
 
+    // OptionWnd's Berserker-specific checkbox controls the two PvP/PK count
+    // text widgets exposed by DetailStatusWnd. Restore this missing UI handler.
+    private static string RestoreOptionWndDualCountHandler(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("HandleHideDualCount(", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+HandleHideDualCount\s*\("))
+            return source;
+
+        const string handler = @"
+function HandleHideDualCount()
+{
+    if(GetOptionBool(""Custom"", ""PVP""))
+    {
+        Class'NWindow.UIAPI_WINDOW'.static.HideWindow(""DetailStatusWnd.txtHeadPVP"");
+        Class'NWindow.UIAPI_WINDOW'.static.HideWindow(""DetailStatusWnd.txtPVP"");
+    }
+    else
+    {
+        Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(""DetailStatusWnd.txtHeadPVP"");
+        Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(""DetailStatusWnd.txtPVP"");
+    }
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // IsKeyDown consumes Interactions.EInputKey; restore the enum identifiers
     // for the Win32-compatible ordinal values emitted by the bytecode decompiler.
     private static string NormalizeInventoryKeyEnums(string className, string source)
@@ -675,6 +709,9 @@ function onActiveTex(bool bActive, int nIndex)
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
                 source = NormalizeInventoryKeyEnums(className, source);
+                source = RestoreOptionWndDualCountHandler(className, source,
+                    out bool restoredDualCountHandler);
+                if (restoredDualCountHandler) repairedIdentifiers++;
                 source = RestoreInventoryWndEarItemArray(className, source,
                     out bool restoredEarItemArray);
                 if (restoredEarItemArray) repairedIdentifiers++;
