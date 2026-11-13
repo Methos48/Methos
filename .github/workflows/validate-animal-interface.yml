@@ -493,17 +493,20 @@ jobs:
       - name: Diagnose Animal StatusCustomWnd SetName parameter types
         shell: pwsh
         run: |
-          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude"
           $sourceFile = Join-Path $env:ANIMAL_SOURCES "StatusCustomWnd.uc"
-          $referenceFile = Join-Path $referenceRoot "Interface/Classes/StatusCustomWnd.uc"
-          Write-Host "===== DECOMPILED STATUSCUSTOMWND SETNAME CONTEXT ====="
-          Select-String -LiteralPath $sourceFile -Pattern 'SetName' -Context 3,3
-          Write-Host "===== EXACT REFERENCE STATUSCUSTOMWND SETNAME CONTEXT ====="
-          Select-String -LiteralPath $referenceFile -Pattern 'SetName' -Context 3,3
-          Write-Host "===== SETNAME DECLARATIONS AND CALLS IN INTERLUDE SOURCE ====="
-          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)(function|static function).*\bSetName\s*\(|\.SetName\s*\(' -Context 1,2 | Select-Object -First 100
-          Write-Host "===== NAMECTRL API SOURCE FILES ====="
-          Get-ChildItem -LiteralPath $referenceRoot -Filter "*NAMECTRL*" -File -Recurse | Select-Object -ExpandProperty FullName
+          Write-Host "===== KIT DIRECTORY STRUCTURE ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Directory -Recurse | Select-Object -ExpandProperty FullName | Select-Object -First 120
+          Write-Host "===== ALL SETNAME DEFINITIONS IN KIT SOURCES ====="
+          $ucFiles = @(Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse)
+          Write-Host "ANIMAL_KIT_UC_SOURCE_COUNT=$($ucFiles.Count)"
+          $ucFiles | Select-String -Pattern '(?i)(function|static function).*\bSetName\s*\(|\.SetName\s*\(' -Context 1,3 | Select-Object -First 160
+          Write-Host "===== UIAPI_NAMECTRL REFERENCES ====="
+          $ucFiles | Select-String -Pattern '(?i)UIAPI_NAMECTRL|SetName\s*\(' -Context 1,3 | Select-Object -First 160
+          Write-Host "===== STATUSCUSTOMWND CALL SITE ====="
+          Select-String -LiteralPath $sourceFile -Pattern 'SetName' -Context 4,4
+          Write-Host "===== RELEVANT PACKAGE FILES ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*NWindow*" -File -Recurse | Select-Object -ExpandProperty FullName | Select-Object -First 80
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*Interface*" -File -Recurse | Select-Object -ExpandProperty FullName | Select-Object -First 80
 
       - name: Compile unmodified Animal sources
         shell: pwsh
