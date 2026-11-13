@@ -598,6 +598,17 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
         return source;
     }
 
+    // DetailStatusWnd's custom close handler must use the NWindow API; UIScript
+    // does not expose an instance HideWindow method in the Interlude runtime.
+    private static string NormalizeDetailStatusWndHideWindow(string className, string source)
+    {
+        if (!className.Equals("DetailStatusWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source, @"(?<![\w.])HideWindow\s*\(",
+            "Class'NWindow.UIAPI_WINDOW'.static.HideWindow(",
+            RegexOptions.IgnoreCase);
+    }
+
     // UIAPI_NAMECTRL.SetName takes ENameCtrlType and ETextAlign, not integers.
     private static string NormalizeNameControlEnumArguments(string className, string source)
     {
@@ -1027,6 +1038,7 @@ function HandleHideLogo()
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
+                source = NormalizeDetailStatusWndHideWindow(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeLoadingWndServerAgeEnum(className, source);
                 source = NormalizeNameControlEnumArguments(className, source);
