@@ -18,51 +18,85 @@ public static class UnrealScriptCallsiteArgumentRestorer
         ArgumentNullException.ThrowIfNull(referenceSource);
         restored = 0;
 
-        var currentCalls = ReadCalls(decompiledSource);
-        var referenceCalls = ReadCalls(referenceSource);
+        IReadOnlyList<UnrealFunctionSource> currentFunctions;
+        IReadOnlyList<UnrealFunctionSource> referenceFunctions;
+        try
+        {
+            currentFunctions = UnrealScriptSourceIndex.ParseFunctions(decompiledSource);
+            referenceFunctions = UnrealScriptSourceIndex.ParseFunctions(referenceSource);
+        }
+        catch (InvalidDataException)
+        {
+            return decompiledSource;
+        }
+
+        // Call occurrences are meaningful only inside their owning function. A class-wide
+        // occurrence counter can pair a call with an unrelated function when UELib emits
+        // functions in a different order or omits a damaged function.
+        var currentGroups = currentFunctions
+            .GroupBy(function => function.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
+        var referenceGroups = referenceFunctions
+            .GroupBy(function => function.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
         var edits = new List<(int Start, int Length, string Value)>();
 
-        foreach (var entry in currentCalls)
+        foreach (var currentFunction in currentFunctions)
         {
-            if (!referenceCalls.TryGetValue(entry.Key, out var referenceSites)) continue;
-            var currentSites = entry.Value;
-            int count = Math.Min(currentSites.Count, referenceSites.Count);
-            for (int occurrence = 0; occurrence < count; occurrence++)
+            if (!currentGroups.TryGetValue(currentFunction.Name, out var currentMatches) ||
+                currentMatches.Length != 1 ||
+                !referenceGroups.TryGetValue(currentFunction.Name, out var referenceMatches) ||
+                referenceMatches.Length != 1)
+                continue;
+
+            var currentCalls = ReadCalls(currentFunction.Body);
+            var referenceCalls = ReadCalls(referenceMatches[0].Body);
+            foreach (var entry in currentCalls)
             {
-                var currentArguments = currentSites[occurrence].Arguments;
-                var referenceArguments = referenceSites[occurrence].Arguments;
-                if (currentArguments.Count != referenceArguments.Count) continue;
+                if (!referenceCalls.TryGetValue(entry.Key, out var referenceSites))
+                    continue;
 
-                for (int argumentIndex = 0; argumentIndex < currentArguments.Count; argumentIndex++)
+                var currentSites = entry.Value;
+                int count = Math.Min(currentSites.Count, referenceSites.Count);
+                for (int occurrence = 0; occurrence < count; occurrence++)
                 {
-                    var currentArgument = currentArguments[argumentIndex];
-                    string currentValue = currentArgument.Text.Trim();
-                    string originalValue = referenceArguments[argumentIndex].Text.Trim();
-                    bool restore = false;
-                    if (int.TryParse(currentValue, out _))
-                    {
-                        restore = Regex.IsMatch(originalValue, @"^(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*$",
-                            RegexOptions.CultureInvariant);
-                    }
-                    else
-                    {
-                        Match currentCast = Regex.Match(currentValue,
-                            @"^(?<type>(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*)\s*\((?<args>[^;{}]*)\)$",
-                            RegexOptions.CultureInvariant);
-                        Match originalCast = Regex.Match(originalValue,
-                            @"^(?<type>(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*)\s*\((?<args>[^;{}]*)\)$",
-                            RegexOptions.CultureInvariant);
-                        restore = currentCast.Success && originalCast.Success &&
-                            IsPrimitiveCastType(currentCast.Groups["type"].Value) &&
-                            !IsPrimitiveCastType(originalCast.Groups["type"].Value) &&
-                            NormalizeExpression(currentCast.Groups["args"].Value) ==
-                            NormalizeExpression(originalCast.Groups["args"].Value);
-                    }
-                    if (!restore) continue;
+                    var currentArguments = currentSites[occurrence].Arguments;
+                    var referenceArguments = referenceSites[occurrence].Arguments;
+                    if (currentArguments.Count != referenceArguments.Count) continue;
 
-                    int start = currentArgument.Start;
-                    while (start < currentArgument.End && char.IsWhiteSpace(decompiledSource[start])) start++;
-                    edits.Add((start, currentValue.Length, originalValue));
+                    for (int argumentIndex = 0; argumentIndex < currentArguments.Count; argumentIndex++)
+                    {
+                        var currentArgument = currentArguments[argumentIndex];
+                        string currentValue = currentArgument.Text.Trim();
+                        string originalValue = referenceArguments[argumentIndex].Text.Trim();
+                        bool restore = false;
+                        if (int.TryParse(currentValue, out _))
+                        {
+                            restore = Regex.IsMatch(originalValue, @"^(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*$",
+                                RegexOptions.CultureInvariant);
+                        }
+                        else
+                        {
+                            Match currentCast = Regex.Match(currentValue,
+                                @"^(?<type>(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*)\s*\((?<args>[^;{}]*)\)$",
+                                RegexOptions.CultureInvariant);
+                            Match originalCast = Regex.Match(originalValue,
+                                @"^(?<type>(?:[A-Za-z_]\w*\.)*[A-Za-z_]\w*)\s*\((?<args>[^;{}]*)\)$",
+                                RegexOptions.CultureInvariant);
+                            restore = currentCast.Success && originalCast.Success &&
+                                IsPrimitiveCastType(currentCast.Groups["type"].Value) &&
+                                !IsPrimitiveCastType(originalCast.Groups["type"].Value) &&
+                                NormalizeExpression(currentCast.Groups["args"].Value) ==
+                                NormalizeExpression(originalCast.Groups["args"].Value);
+                        }
+                        if (!restore) continue;
+
+                        int start = currentFunction.BodyOffset + currentArgument.Start;
+                        while (start < currentFunction.BodyOffset + currentArgument.End &&
+                               char.IsWhiteSpace(decompiledSource[start]))
+                            start++;
+                        edits.Add((start, currentValue.Length, originalValue));
+                    }
                 }
             }
         }
