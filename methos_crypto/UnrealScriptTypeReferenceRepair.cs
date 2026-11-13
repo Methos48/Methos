@@ -48,7 +48,7 @@ public static class UnrealScriptTypeReferenceRepair
             {
                 string repairedBody = System.Text.RegularExpressions.Regex.Replace(
                     function.Body,
-                    @"(?m)(\\bType\\s*=\\s*)([0-9]+)(\\s*;)",
+                    @"(?m)(\bType\s*=\s*)([0-9]+)(\s*;)",
                     "$1EChatType($2)$3");
                 if (!string.Equals(repairedBody, function.Body, StringComparison.Ordinal))
                 {
