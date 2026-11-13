@@ -602,6 +602,24 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Dunk3l target aggro filter rebound to its existing IgnoreAggr option");
         }
 
+        if (className.Equals("ChatFilterWnd", StringComparison.OrdinalIgnoreCase))
+        {
+            string normalized = source
+                .Replace(
+                    "ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    "Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    "Class'NWindow.UIAPI_WINDOW'.static.HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\");",
+                    StringComparison.Ordinal);
+            if (!string.Equals(normalized, source, StringComparison.Ordinal))
+            {
+                source = normalized;
+                applied.Add("ChatFilterWnd tab visibility calls bound to the explicit NWindow window API");
+            }
+        }
+
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("local UIEventManager.EItemType EItemType;", StringComparison.Ordinal) &&
             source.Contains("EItemType = byte(item.ItemType);", StringComparison.Ordinal))
