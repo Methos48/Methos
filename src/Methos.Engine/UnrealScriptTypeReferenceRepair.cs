@@ -613,6 +613,14 @@ public static class UnrealScriptTypeReferenceRepair
             };
             for (int i = 0; i < fieldMappings.GetLength(0); i++)
                 source = Regex.Replace(source, @"\b" + fieldMappings[i, 0] + @"\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
+            if (source.Contains("txt_ExpBarPercentValue = TextBoxHandle(GetHandle(\"SystemBarWnd.ExpText\"))", StringComparison.Ordinal) &&
+                !source.Contains("var private TextBoxHandle txt_ExpBarPercentValue;", StringComparison.Ordinal))
+            {
+                source = source.Replace(
+                    "var string m_WindowName;",
+                    "var string m_WindowName;\nvar private TextBoxHandle txt_ExpBarPercentValue;",
+                    StringComparison.Ordinal);
+            }
             applied.Add("Dunk3l SystemBarWnd recovered fields reconciled with their declared handles and state");
         }
 
