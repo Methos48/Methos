@@ -241,8 +241,8 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Artefacto final: `Methos-Windows-Installer-x64`, ID `14024748596`, tamaño 77.768.945 bytes. Ejecución de origen: `43401463785`.
 - El ZIP de referencia ya está depurado y determinista. Su fuente actual es únicamente el archivo binario XDAT y los XML de pruebas; los cambios de empaquetado no generan commits nuevos si el contenido no cambia.
 - **Resultado de unificación:** Methos queda consolidado en un solo repositorio activo, una sola aplicación y un único ejecutable principal `Methos.exe`, con los módulos ARCHIVOS U y ARCHIVOS XDAT internos. Se retiraron del build y del repositorio las capas de adaptación del antiguo editor XDAT; el antiguo paquete de referencia fue sustituido por datos de prueba limpios.
-- **Límite de funcionalidad que sigue abierto para la siguiente etapa:** el pipeline de protocolos cifrados está versionado y probado como módulo, pero todavía no está conectado al puente de interfaz de XDAT. No se declara soporte completo para todas las variantes cifradas.
-- **Otra prueba independiente pendiente:** la ejecución `43401463922` de Silent Dark U/XDAT pasó el round-trip XDAT, pero el compilador UCC se detuvo en `InventoryWnd.uc(1529)` con `Missing function name`. Es un problema de recuperación/compilación de esa interfaz específica, separado de la unificación y del instalador; conservarlo como siguiente tarea funcional.
+- **Pipeline de protección XDAT/U:** ya está conectado al flujo de la aplicación Windows mediante ProtectionPipelinePlanner y ProtectionCodecRuntime. La integración cubre los perfiles implementados y verificados (SmartCrypt 1.5.2.2, Lineage2Ver111 con trailer personalizado y Lineage2Ver413 estándar); no se declara soporte universal para todas las variantes.
+- **Prueba funcional Silent Dark:** el round-trip XDAT pasa. La prueba U actual se está ejecutando desde el paquete original usando el propio descompilador de Methos. Ya exportó 169/169 clases sin fallos; UCC se detiene en DamageLiteAni.uc por una declaración duplicada de RecoveredName_2070 ([29] y [28]). La metadata del paquete muestra una sola propiedad de clase con ArrayDim=28 y no encuentra esa propiedad en el padre; se está comparando la salida UELib cruda con la fuente reparada para ubicar el origen exacto.
 
 
 ### 13-11-2026 — Limpieza documental y consolidación de la fuente oficial
@@ -252,7 +252,7 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Se actualizó el inventario de `reference-data/` para distinguir claramente el código activo, los datos de referencia y las dependencias UCC que aún requieren las pruebas.
 - Se consolidó en README y documentación que `Methos48/Methos`, rama `main`, es la única fuente oficial y activa. U y XDAT son módulos de la misma aplicación.
 - Se eliminaron instrucciones contradictorias que sugerían que la integración XDAT todavía dependía de extraer una aplicación Python externa o de overlays de mantenimiento.
-- **Pendiente administrativo de Methos:** permanecen ramas históricas inactivas en este repositorio. No se consideran líneas de desarrollo activas; antes de retirarlas hay que auditar sus commits únicos y conservar cualquier material técnico útil.
+- **Administración de ramas:** el usuario eliminó las cinco ramas históricas después de la auditoría. La consulta posterior a GitHub confirmó que main es la única rama restante.
 - **Criterio de conservación:** se mantienen el historial Git, los archivos de referencia y las ubicaciones locales heredadas que protegen datos de usuario. No se borran datos útiles ni respaldos solo para ocultar nombres antiguos.
 - Esta limpieza no modifica la aplicación ni sus funciones; prepara la documentación para que el desarrollo futuro continúe exclusivamente en Methos.
 
@@ -269,3 +269,16 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - `migration/methos-unified` y `research/xdat-format-probe` apuntan a árboles vacíos tras sus commits de retiro.
 - Las tres branches `work/*` conservan instantáneas anteriores, documentación duplicada, el kit XDAT antiguo y herramientas temporales/overlays ya sustituidos. No se encontró una segunda aplicación ni código activo necesario que falte en `main`.
 - Se registró el resultado en `docs/BRANCHES.md`. Las cinco branches pueden eliminarse manualmente cuando se confirme la validación final de `main`; no eliminar `main`.
+
+### 13-11-2026 — Inicio del desarrollo funcional tras la unificación
+
+- Se creó UnrealNameSanitizer como mecanismo compartido para sustituir temporalmente FNames que no son identificadores válidos de UnrealScript y restaurarlos en el paquete compilado.
+- Se integró el sanitizador en el recorrido principal de Methos: exportación de fuentes, mapa methos_name_map.json, restauración después de UCC y conservación del mapa en la caché de fuentes.
+- UnrealPackageDecompiler y la interfaz principal comparten ahora el mismo mecanismo reversible; las cachés antiguas sin mapa se regeneran para evitar perder nombres originales.
+- Se mejoró el diagnóstico de UCC: cuando falla, el log incluye el contexto de líneas del archivo fuente compilado, con caracteres de control escapados.
+- La validación Windows Release del commit 085126db72136fc1390f3dbedc42fad6993615cb terminó correctamente. La validación UCC de ese commit también terminó correctamente.
+- Se corrigió la prueba Silent Dark para que descompile el paquete original con Methos, en vez de compilar directamente una carpeta de fuentes antigua que no representa el flujo actual.
+- Resultado comprobado de esa prueba: 169 clases exportadas, 0 errores de descompilación. El siguiente bloqueo UCC está en DamageLiteAni.uc, donde el código generado declara dos veces RecoveredName_2070 con dimensiones distintas. La metadata del paquete muestra una sola propiedad en la clase; falta determinar si el duplicado nace en UELib o en una transformación posterior.
+- Se corrigió la auditoría de cifrado para distinguir soporte real de detección: el sample real Dunk3l interface.xdat pasa round-trip exacto SmartCrypt 1.5.2.2 + Lineage2Ver111; el workflow no dispone de un fixture real protegido .u, por lo que no se afirma esa misma cobertura para .u.
+- Estado: la integración de protección y el recorrido reversible de nombres están implementados; la compilación completa de Silent Dark sigue abierta y no se declara finalizada hasta resolver y validar el caso DamageLiteAni.
+
