@@ -133,10 +133,13 @@ public static class UnrealScriptFailedFunctionRepair
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
             if (!trailingReturn.Success) continue;
 
-            string precedingBody = function.Body[..trailingReturn.Index].TrimEnd();
-            if (!Regex.IsMatch(precedingBody, @"\breturn\s+(?!;)\S[\s\S]*;\s*$",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-                continue;
+            string precedingBody = function.Body[..trailingReturn.Index];
+            // UELib may place the spurious bare return after a completed nested
+            // if/else tree, so the preceding text can end in closing braces rather
+            // than a return statement. For non-void functions, any value-return in
+            // the body proves that this final bare return is the invalid extra one.
+            if (!Regex.IsMatch(precedingBody, @"\breturn\s+(?!;)\S[\s\S]*?;",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) continue;
 
             edits.Add((function.BodyOffset + trailingReturn.Groups["statement"].Index,
                 trailingReturn.Groups["statement"].Length));
