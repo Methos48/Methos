@@ -233,3 +233,14 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Por tanto, ya no queda almacenado en el repositorio el código fuente ni el ejecutable del antiguo programa XDAT dentro de ese paquete. El archivo conserva solo datos de prueba.
 - La ejecución Windows Release `43400821601` finalizó en **SUCCESS**: compilación, pruebas canónicas XDAT, preparación del runtime, creación del instalador e instalación/arranque silenciosos. Artefacto generado: `Methos-Windows-Installer-x64`, ID `14024169547`, 77.766.886 bytes.
 - **Verificación final pendiente:** ejecutar el mismo workflow desde el commit que ya contiene el ZIP limpio para confirmar que las pruebas y el instalador funcionan sin el paquete histórico original. No declarar el cierre completo hasta que esa ejecución termine en SUCCESS.
+
+### 13-11-2026 — Validación final sobre el repositorio unificado y fixtures limpios
+
+- **GitHub Actions Windows Release:** [ejecución 43401463785](https://github.com/Methos48/Methos/actions/runs/43401463785) — **SUCCESS** sobre la rama `main`, con el ZIP limpio y determinista de fixtures XDAT.
+- Pasaron las pruebas del motor UE2/UCC, la extracción de fixtures, la sintaxis y pruebas Python XDAT, el round-trip binario de 168 ventanas y 8 accesos directos, la preparación del runtime Python interno, la creación del instalador, la instalación silenciosa y el arranque de `Methos.exe`.
+- El instalador comprobó que no se distribuye un segundo ejecutable XDAT ni `l2encdec.exe`; la instalación contiene un único ejecutable de producto.
+- Artefacto final: `Methos-Windows-Installer-x64`, ID `14024748596`, tamaño 77.768.945 bytes. Ejecución de origen: `43401463785`.
+- El ZIP de referencia ya está depurado y determinista. Su fuente actual es únicamente el archivo binario XDAT y los XML de pruebas; los cambios de empaquetado no generan commits nuevos si el contenido no cambia.
+- **Resultado de unificación:** Methos queda consolidado en un solo repositorio activo, una sola aplicación y un único ejecutable principal `Methos.exe`, con los módulos ARCHIVOS U y ARCHIVOS XDAT internos. Se retiraron del build y del repositorio las capas de adaptación del antiguo editor XDAT; el antiguo paquete de referencia fue sustituido por datos de prueba limpios.
+- **Límite de funcionalidad que sigue abierto para la siguiente etapa:** el pipeline de protocolos cifrados está versionado y probado como módulo, pero todavía no está conectado al puente de interfaz de XDAT. No se declara soporte completo para todas las variantes cifradas.
+- **Otra prueba independiente pendiente:** la ejecución `43401463922` de Silent Dark U/XDAT pasó el round-trip XDAT, pero el compilador UCC se detuvo en `InventoryWnd.uc(1529)` con `Missing function name`. Es un problema de recuperación/compilación de esa interfaz específica, separado de la unificación y del instalador; conservarlo como siguiente tarea funcional.
