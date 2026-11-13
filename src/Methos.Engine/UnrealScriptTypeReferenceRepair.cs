@@ -543,6 +543,32 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("ManorCropInfoChangeWnd redundant int literal casts removed for UCC");
         }
 
+        // RecoveredName_255 is a real UICommonAPI helper, not the native AddSystemMessage
+        // token that happens to share its numeric suffix. Give the helper a collision-free
+        // source name and preserve its custom notification styling.
+        if (className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function RecoveredName_255(string MessageText)", StringComparison.Ordinal))
+        {
+            source = source.Replace("function RecoveredName_255(string MessageText)",
+                "function MethosRecoveredName_255(string MessageText)", StringComparison.Ordinal);
+            applied.Add("UICommonAPI custom message helper renamed to avoid native token collision");
+        }
+        if ((className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("HoldIgnoreTargetWnd", StringComparison.OrdinalIgnoreCase)) &&
+            source.Contains("RecoveredName_255(", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_255(", "MethosRecoveredName_255(", StringComparison.Ordinal);
+            applied.Add(className + " custom message calls preserved through UICommonAPI helper");
+        }
+
+        if ((className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("LoginCharSelectWnd", StringComparison.OrdinalIgnoreCase)) &&
+            source.Contains("RecoveredName_98(", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_98(", "MethosRecoveredName_85(", StringComparison.Ordinal);
+            applied.Add(className + " color-name helper mapped to Silent Dark inherited Color API");
+        }
+
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("GetHandle(\"LogoWnd\")", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
@@ -550,13 +576,7 @@ public static class UnrealScriptTypeReferenceRepair
         {
             source = source.Replace("RecoveredName_2057", "MethosRecoveredName_2124", StringComparison.Ordinal);
             source = source.Replace("RecoveredName_2108", "MethosRecoveredName_2188", StringComparison.Ordinal);
-            source = source.Replace("RecoveredName_255(\"Logo Locked\")",
-                "AddSystemMessage(\"Logo Locked\", MethosRecoveredName_85(\"white\"))", StringComparison.Ordinal);
-            source = source.Replace("RecoveredName_255(\"Logo Unlocked\")",
-                "AddSystemMessage(\"Logo Unlocked\", MethosRecoveredName_85(\"white\"))", StringComparison.Ordinal);
             applied.Add("LogoWnd recovered handle/state references mapped to their declared fields");
-            if (source.Contains("AddSystemMessage(\"Logo Locked\"", StringComparison.Ordinal))
-                applied.Add("LogoWnd lock notifications mapped to inherited AddSystemMessage API");
         }
 
         if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
