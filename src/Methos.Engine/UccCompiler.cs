@@ -461,6 +461,38 @@ function HandleHideDualCount()
         return source;
     }
 
+    // The Berserker XDAT contains the separate aglogo window. Its matching
+    // OptionWnd checkbox stores Custom/Logo and labels it "Hide Logo".
+    private static string RestoreOptionWndLogoHandler(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("HandleHideLogo(", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+HandleHideLogo\s*\("))
+            return source;
+
+        const string handler = @"
+function HandleHideLogo()
+{
+    if(GetOptionBool(""Custom"", ""Logo""))
+    {
+        Class'NWindow.UIAPI_WINDOW'.static.HideWindow(""aglogo"");
+    }
+    else
+    {
+        Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(""aglogo"");
+    }
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // IsKeyDown consumes Interactions.EInputKey; restore the enum identifiers
     // for the Win32-compatible ordinal values emitted by the bytecode decompiler.
     private static string NormalizeInventoryKeyEnums(string className, string source)
@@ -712,6 +744,9 @@ function HandleHideDualCount()
                 source = RestoreOptionWndDualCountHandler(className, source,
                     out bool restoredDualCountHandler);
                 if (restoredDualCountHandler) repairedIdentifiers++;
+                source = RestoreOptionWndLogoHandler(className, source,
+                    out bool restoredLogoHandler);
+                if (restoredLogoHandler) repairedIdentifiers++;
                 source = RestoreInventoryWndEarItemArray(className, source,
                     out bool restoredEarItemArray);
                 if (restoredEarItemArray) repairedIdentifiers++;
