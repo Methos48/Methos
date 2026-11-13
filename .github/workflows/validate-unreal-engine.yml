@@ -23,7 +23,7 @@ jobs:
       - name: Extract the verified Interlude UCC runtime and 169 source classes
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $archive = Join-Path $PWD "Compilador  U.zip"
           $root = Join-Path $PWD "ucc-validation"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $kit = Join-Path $root "Compilador  U"
@@ -46,7 +46,7 @@ jobs:
       - name: Decompile the reference Interface.u and the newly compiled package
         shell: pwsh
         run: |
-          $original = Join-Path $PWD "u-editor\Interface.u"
+          $original = Join-Path $PWD "reference-data\Interface-UEditor.u"
           $originalOut = Join-Path $env:RUNNER_TEMP "Methos-U-Original-Decompiled"
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $original $originalOut
           if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile the reference Interface.u" }
