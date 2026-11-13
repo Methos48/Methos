@@ -1,17 +1,18 @@
-# Estado de las ramas de Methos
+# Organización de ramas de Methos
 
-## Única rama activa
+## Rama oficial
 
-- `main`: fuente oficial y única rama para cambios del producto, validaciones y lanzamientos.
+- `main`: única rama activa para desarrollo, integración, validación y distribución de Methos.
 
-## Ramas históricas o experimentales
+## Ramas históricas
 
-Estas ramas no son fuentes activas de Methos y no deben usarse para compilar ni publicar el producto:
+Las ramas `migration/*`, `research/*` y `work/*` que puedan seguir visibles en GitHub son ramas de trabajos anteriores. No son líneas de producto, no contienen versiones oficiales y no deben utilizarse para continuar el desarrollo.
 
-- `migration/methos-unified`: rama temporal de migración; su último commit indica que la migración quedó retirada.
-- `research/xdat-format-probe`: investigación XDAT integrada; su último commit indica que las fuentes unificadas ya están en `main`.
-- `work/unification-audit`: propuesta experimental para renombrar proyectos/carpetas a `Methos.App` y `Methos.Engine`. No está integrada ni validada en el flujo oficial; no continuar allí sin una decisión explícita y una migración completa de proyectos, workflows, instalador y pruebas.
+La existencia de esas referencias Git no cambia la regla: Methos tiene una sola fuente activa, el repositorio `Methos48/Methos`, rama `main`.
 
-## Regla
+## Regla de mantenimiento
 
-Todo cambio futuro debe partir de `main`. Antes de reactivar una rama histórica, comparar sus cambios con `main`, revisar si reintroduce rutas antiguas y ejecutar la validación Windows completa. La presencia de una rama histórica no significa que haya otro producto o repositorio.
+1. Todo cambio nuevo debe partir de `main`.
+2. No crear ramas permanentes para separar U y XDAT: son módulos de la misma aplicación.
+3. Antes de eliminar una rama histórica, comprobar que sus cambios estén integrados o que no contenga trabajo único que deba conservarse.
+4. La distribución oficial se genera exclusivamente desde `main` mediante `windows-release.yml`.
