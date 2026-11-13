@@ -157,20 +157,20 @@ public static class UnrealPackageDecompiler
 
         const string referenceMethod = "RecoveredName_389";
         const string sanitizedMethod = "MethosRecoveredName_408";
-        const string parameters = @"\\s*\\(\\s*string\\s+[A-Za-z_]\\w*\\s*,\\s*Color\\s+[A-Za-z_]\\w*\\s*\\)";
+        const string parameters = @"\s*\(\s*string\s+[A-Za-z_]\w*\s*,\s*Color\s+[A-Za-z_]\w*\s*\)";
         if (!Regex.IsMatch(referenceParent,
-                @"\\bfunction\\s+" + referenceMethod + parameters,
+                @"\bfunction\s+" + referenceMethod + parameters,
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) ||
             !Regex.IsMatch(parent,
-                @"\\bfunction\\s+" + sanitizedMethod + parameters,
+                @"\bfunction\s+" + sanitizedMethod + parameters,
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) ||
             !Regex.IsMatch(child,
-                @"\\b" + referenceMethod + @"\\s*\\(",
+                @"\b" + referenceMethod + @"\s*\(",
                 RegexOptions.CultureInvariant))
             return;
 
         string repaired = Regex.Replace(child,
-            @"\\b" + referenceMethod + @"(?=\\s*\\()",
+            @"\b" + referenceMethod + @"(?=\s*\()",
             sanitizedMethod,
             RegexOptions.CultureInvariant);
         if (!string.Equals(repaired, child, StringComparison.Ordinal))
