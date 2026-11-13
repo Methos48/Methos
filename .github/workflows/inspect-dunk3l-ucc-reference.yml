@@ -22,29 +22,41 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dunk3l-u-decompiled-source-diagnostic
-          run-id: 43226478867
+          run-id: 43355990851
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: target-source
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - name: Extract exact Interlude reference source
+      - name: Extract exact Interlude reference source and inspect sound API
         shell: pwsh
         run: |
           $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
           $root = Join-Path $PWD "Dunk3l-UCC-Reference"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
-          $reference = Join-Path $root "Compilador  U\Interlude\Interface\Classes\UICommonAPI.uc"
-          if (!(Test-Path $reference)) { throw "UICommonAPI.uc missing from exact Interlude source kit" }
+          $classes = Join-Path $root "Compilador  U\Interlude\Interface\Classes"
+          $reference = Join-Path $classes "UICommonAPI.uc"
           $target = Join-Path $PWD "target-source\UICommonAPI.uc"
+          if (!(Test-Path $reference)) { throw "UICommonAPI.uc missing from exact Interlude source kit" }
           if (!(Test-Path $target)) { throw "Dunk3l decompiled UICommonAPI.uc missing from diagnostic artifact" }
+          Copy-Item $reference (Join-Path $root "UICommonAPI-reference.uc") -Force
+          $dialogReference = Join-Path $classes "DialogBox.uc"
+          if (Test-Path $dialogReference) { Copy-Item $dialogReference (Join-Path $root "DialogBox-reference.uc") -Force }
+          $uiscript = Get-ChildItem -LiteralPath $root -Recurse -Filter "UIScript.uc" -File | Select-Object -First 1
+          if (!$uiscript) { throw "UIScript.uc missing from exact Interlude UCC kit" }
+          Copy-Item $uiscript.FullName (Join-Path $root "UIScript-reference.uc") -Force
           Write-Host "REFERENCE_BYTES=$((Get-Item $reference).Length)"
           Write-Host "TARGET_BYTES=$((Get-Item $target).Length)"
-          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --repair-diagnostic $target $reference (Join-Path $PWD "Dunk3l-UCC-Reference\UICommonAPI-repaired.uc")
+          Write-Host "UISCRIPT_SOURCE=$($uiscript.FullName)"
+          Write-Host "PLAY_CONSOLE_SOUND_SIGNATURE:"
+          Select-String -Path $uiscript.FullName -Pattern "PlayConsoleSound" -Context 0,4 | Select-Object -First 10 | ForEach-Object { Write-Host $_.ToString() }
+          Write-Host "TARGET_PLAY_CONSOLE_SOUND_CALLS:"
+          Select-String -Path $target -Pattern "PlayConsoleSound" | ForEach-Object { Write-Host $_.ToString() }
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --repair-diagnostic $target $reference (Join-Path $root "UICommonAPI-repaired.uc")
           if ($LASTEXITCODE -ne 0) { throw "Repair diagnostic failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: Dunk3l-UCC-Reference-Source
-          path: Dunk3l-UCC-Reference/UICommonAPI*.uc
+          path: Dunk3l-UCC-Reference/*.uc
           if-no-files-found: error
           retention-days: 7
