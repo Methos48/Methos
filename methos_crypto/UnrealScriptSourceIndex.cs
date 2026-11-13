@@ -1,6 +1,6 @@
 namespace MethosUEngine;
 
-public sealed record UnrealFunctionSource(string Name, string Body, int DeclarationOffset,
+public sealed record UnrealFunctionSource(string Name, string ReturnType, string Body, int DeclarationOffset,
     int BodyOffset, int BodyLength, int Line);
 
 /// <summary>
@@ -86,7 +86,8 @@ public static class UnrealScriptSourceIndex
             Token close = tokens[bodyClose];
             int bodyStart = open.End;
             int bodyEnd = close.Start;
-            functions.Add(new UnrealFunctionSource(nameToken.Text,
+            string returnType = openParen >= i + 2 ? tokens[openParen - 2].Text : string.Empty;
+            functions.Add(new UnrealFunctionSource(nameToken.Text, returnType,
                 source.Substring(bodyStart, bodyEnd - bodyStart),
                 keyword.Start, bodyStart, bodyEnd - bodyStart, keyword.Line));
             i = bodyClose;
@@ -327,7 +328,7 @@ public static class UnrealScriptSourceIndex
     public static ReturnNormalizationResult RemoveRedundantTrailingReturns(string source)
     {
         ArgumentNullException.ThrowIfNull(source);
-        var edits = new List<(int Start, int Length, string Name, int Line)>();
+        var edits = new List<(int Start, int Length, string Name, int Line, string Replacement)>();
         foreach (var function in ParseFunctions(source))
         {
             string body = source.Substring(function.BodyOffset, function.BodyLength);
@@ -339,6 +340,17 @@ public static class UnrealScriptSourceIndex
                 !tokens[lastReturn].Text.Equals("return", StringComparison.OrdinalIgnoreCase) ||
                 tokens[lastReturn + 1].Text != ";")
                 continue;
+
+            // UELib sometimes emits a bare Return at the end of a bool function
+            // after a switch whose default branch already returns false. UCC rejects
+            // the valueless return; preserve the intended boolean fallback explicitly.
+            if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase))
+            {
+                int start = function.BodyOffset + tokens[lastReturn].Start;
+                int end = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((start, end - start, function.Name, function.Line, "return false;"));
+                continue;
+            }
 
             int[] depths = new int[tokens.Count];
             int depth = 0;
@@ -386,14 +398,14 @@ public static class UnrealScriptSourceIndex
 
             int start = function.BodyOffset + tokens[lastReturn].Start;
             int end = function.BodyOffset + tokens[lastReturn + 1].End;
-            edits.Add((start, end - start, function.Name, function.Line));
+            edits.Add((start, end - start, function.Name, function.Line, string.Empty));
         }
 
         string normalized = source;
         var repairs = new List<RedundantReturnRepair>(edits.Count);
         foreach (var edit in edits.OrderByDescending(item => item.Start))
         {
-            normalized = normalized.Remove(edit.Start, edit.Length);
+            normalized = normalized.Remove(edit.Start, edit.Length).Insert(edit.Start, edit.Replacement);
             repairs.Add(new RedundantReturnRepair(edit.Name, edit.Line));
         }
         repairs.Reverse();
