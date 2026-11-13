@@ -23,8 +23,8 @@ public static class UccCompiler
     private static readonly IReadOnlyDictionary<char, string> RecoveredIdentifiers =
         new Dictionary<char, string>
         {
-            ['\u0011'] = "MethosRecoveredFunction_17",
-            ['\u001D'] = "MethosRecoveredFunction_29"
+            ['\u0011'] = "RecoveredFunction17",
+            ['\u001D'] = "RecoveredFunction29"
         };
 
     // UELib can emit a class-scope prototype for a function whose actual implementation
@@ -274,15 +274,6 @@ public static class UccCompiler
                 int genericControlRepairs = Math.Max(0, controlCharactersBefore - controlCharactersAfter);
                 repairedIdentifiers += genericControlRepairs;
                 recoveredControlIdentifiers += genericControlRepairs;
-                int recoveredFunctionHeaders = Regex.Matches(source,
-                    @"(?m)^[ \t]*function[ \t]+MethosRecoveredFunction_\d+[ \t]*\(").Count;
-                if (recoveredFunctionHeaders > 0)
-                {
-                    source = Regex.Replace(source,
-                        @"(?m)^([ \t]*function)[ \t]+(MethosRecoveredFunction_\d+)[ \t]*\(",
-                        "$1 void $2(");
-                    repairedIdentifiers += recoveredFunctionHeaders;
-                }
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
