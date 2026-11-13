@@ -274,6 +274,12 @@ jobs:
           } else {
             throw "Could not uniquely locate the incomplete return in InventoryWnd.GetCurrentTab."
           }
+      - name: Diagnose next Animal InventoryWnd return
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          for ($n=3050; $n -lt [Math]::Min(3092,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
