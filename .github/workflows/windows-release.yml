@@ -208,57 +208,51 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - name: Extraer y preparar el código fuente XDAT
+      - name: Preparar runtime Python embebido desde el motor XDAT canónico de Methos
         shell: pwsh
         run: |
-          $xdatRepo = $env:GITHUB_WORKSPACE
-          $zip = Join-Path $xdatRepo "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
-          if (!(Test-Path $zip)) { throw "No se encontró el kit fuente XDAT." }
-          $extract = Join-Path $env:RUNNER_TEMP "methos-xdat-kit"
-          Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-          $xdatProject = Get-ChildItem $extract -Directory | Select-Object -First 1
-          if (!$xdatProject) { throw "El kit XDAT no contiene la carpeta del proyecto." }
-          python "$xdatRepo\\tools\\xdat\\maintenance\\apply_detection_layer.py" "$($xdatProject.FullName)"
-          if ($LASTEXITCODE -ne 0) { throw "Falló la capa de detección XDAT." }
-          python "$xdatRepo\\tools\\xdat\\maintenance\\auto_pipeline_overlay.py" "$($xdatProject.FullName)"
-          if ($LASTEXITCODE -ne 0) { throw "Falló la integración del pipeline XDAT." }
-
-      - name: Preparar runtime Python embebido para XDAT (sin segundo ejecutable)
-        shell: pwsh
-        run: |
+          $xdatRoot = Join-Path $PWD "tools\\xdat"
           $runtimeRoot = Join-Path $PWD "publish\\XdatRuntime"
           $pythonRoot = Join-Path $runtimeRoot "Python"
           New-Item -ItemType Directory -Force $pythonRoot | Out-Null
+
           $pythonZip = Join-Path $env:RUNNER_TEMP "python-3.12.10-embed-amd64.zip"
           Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip" -OutFile $pythonZip
           Expand-Archive -LiteralPath $pythonZip -DestinationPath $pythonRoot -Force
+
           $pth = Join-Path $pythonRoot "python312._pth"
           if (!(Test-Path $pth)) { throw "El runtime embebido no contiene python312._pth." }
           @("python312.zip", ".", "import site") | Set-Content -Encoding ascii $pth
-          $xdatProject = Get-ChildItem (Join-Path $env:RUNNER_TEMP "methos-xdat-kit") -Directory | Select-Object -First 1
-          if (!$xdatProject) { throw "No se encuentra el código fuente XDAT extraído." }
-          Copy-Item (Join-Path $xdatProject.FullName "xdat_core.py") (Join-Path $runtimeRoot "xdat_core.py") -Force
-          Copy-Item "src/MethosUEditor/XdatBridge.py" (Join-Path $runtimeRoot "xdat_bridge.py") -Force
-          foreach ($required in @("python312.dll", "python312.zip", "vcruntime140.dll", "xdat_core.py", "xdat_bridge.py")) {
-            if (!(Test-Path (Join-Path $pythonRoot $required)) -and !(Test-Path (Join-Path $runtimeRoot $required))) {
-              throw "Falta el componente Python embebido: $required."
-            }
-          }
-          Write-Host "Runtime Python embebido preparado para cargar el motor XDAT dentro de Methos.exe."
 
-      - name: Verificar motor XDAT y pruebas de reconstrucción
+          Copy-Item (Join-Path $xdatRoot "xdat_core.py") (Join-Path $runtimeRoot "xdat_core.py") -Force
+          Copy-Item "src/MethosUEditor/XdatBridge.py" (Join-Path $runtimeRoot "xdat_bridge.py") -Force
+
+          foreach ($required in @("python312.dll", "python312.zip")) {
+            if (!(Test-Path (Join-Path $pythonRoot $required))) { throw "Falta el runtime Python embebido: $required." }
+          }
+          foreach ($required in @("xdat_core.py", "xdat_bridge.py")) {
+            if (!(Test-Path (Join-Path $runtimeRoot $required))) { throw "Falta el componente XDAT canónico: $required." }
+          }
+          Write-Host "Runtime XDAT preparado desde tools/xdat/xdat_core.py; no se copia código de aplicación desde el kit histórico."
+
+      - name: Validar motor XDAT canónico y pruebas de Methos
         shell: pwsh
         run: |
-          $xdatRepo = $env:GITHUB_WORKSPACE
-          $xdatProject = Get-ChildItem (Join-Path $env:RUNNER_TEMP "methos-xdat-kit") -Directory | Select-Object -First 1
-          Push-Location $xdatProject.FullName
-          try {
-            python -m py_compile xdat_core.py encryption_detection.py auto_pipeline.py
-            if ($LASTEXITCODE -ne 0) { throw "Falló la verificación de sintaxis del motor XDAT." }
-            python -m unittest discover -s tests -v
-            if ($LASTEXITCODE -ne 0) { throw "Fallaron las pruebas del motor XDAT." }
+          $env:PYTHONPATH = (Join-Path $PWD "tools\\xdat")
+          python -m py_compile tools/xdat/xdat_core.py tools/xdat/encryption_detection.py tools/xdat/auto_pipeline.py tools/xdat/package_origin_metadata.py
+          if ($LASTEXITCODE -ne 0) { throw "Falló la verificación de sintaxis del motor XDAT canónico." }
+
+          $tests = @(
+            "test_encryption_detection.py",
+            "test_auto_pipeline.py",
+            "test_package_origin_metadata.py",
+            "test_xdat_edit_roundtrip.py",
+            "test_publish_transaction.py"
+          )
+          foreach ($test in $tests) {
+            python -m unittest discover -s tests -p $test -v
+            if ($LASTEXITCODE -ne 0) { throw "Fallaron las pruebas XDAT de Methos: $test" }
           }
-          finally { Pop-Location }
 
       - name: Instalar Inno Setup
         shell: pwsh
