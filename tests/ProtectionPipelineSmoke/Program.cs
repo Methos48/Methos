@@ -180,6 +180,10 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
     if(!Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435()))
     {
     }
+    if((RecoveredName_2883.SlotBitType == (RecoveredName_1455())) || RecoveredName_2883.SlotBitType == (RecoveredName_1467()))
+    {
+        RecoveredName_1266(RecoveredName_2883);
+    }
     if((!((((((((Info.DragSrcName == "InventoryItem") || Info.DragSrcName == "QuestItem")) || Info.DragSrcName == InventoryItem_1)) || -1 != InStr(Info.DragSrcName, "EquipItem"))) || Info.DragSrcName == "PetInvenWnd")))
     {
         return;
@@ -188,13 +192,14 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
 """;
 string inventoryHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "InventoryWnd", inventoryHandleSample, out IReadOnlyList<string> inventoryHandleRepairs);
-Check(inventoryHandleRepairs.Count == 3 &&
+Check(inventoryHandleRepairs.Count == 4 &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2802;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("IsChecked(\"InventoryWnd\")", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("SlotBitType == 1048576 || RecoveredName_2883.SlotBitType == 2097152", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("if((!((((((((Info.DragSrcName", StringComparison.Ordinal),
     "InventoryWnd missing state fields or malformed drag-source predicate were not repaired.");
 Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
