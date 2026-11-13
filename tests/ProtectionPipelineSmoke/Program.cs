@@ -292,7 +292,7 @@ Check(dialogBoxEnumSwitchRepairs.Count == 2 &&
       dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(1):", StringComparison.Ordinal) &&
       dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(2):", StringComparison.Ordinal) &&
       dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(0):", StringComparison.Ordinal) &&
-      dialogBoxEnumSwitchRepaired.Contains("SetDefaultAction(UICommonAPI.DialogDefaultAction(0))", StringComparison.Ordinal),
+      dialogBoxEnumSwitchRepaired.Contains("SetDefaultAction(DialogDefaultAction(0))", StringComparison.Ordinal),
     "DialogBox numeric switch labels were not cast to DialogDefaultAction.");
 Console.WriteLine("PASS: DialogBox enum switch labels are restored for UCC.");
 
