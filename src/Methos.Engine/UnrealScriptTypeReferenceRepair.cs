@@ -380,6 +380,28 @@ public static class UnrealScriptTypeReferenceRepair
                     applied.Add($"UICommonAPI.{missingLabel.FunctionName} restored missing {missingLabel.Label} loop label");
                 }
             }
+
+            var splitFunction = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(item => item.Name.Equals("Split", StringComparison.OrdinalIgnoreCase));
+            if (splitFunction is not null)
+            {
+                string body = source.Substring(splitFunction.BodyOffset, splitFunction.BodyLength);
+                const string arrayAppendPattern =
+                    @"(?m)^(?<indent>[ \t]*)byte\s*\(\s*arrToken\s*\)[ \t]*\r?\n\k<indent>arrToken\.Length[ \t]*\r?\n\k<indent>1\s*;?[ \t]*(?=\r?$)";
+                int appendCount = System.Text.RegularExpressions.Regex.Matches(
+                    body, arrayAppendPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
+                if (appendCount > 0)
+                {
+                    string updatedBody = System.Text.RegularExpressions.Regex.Replace(
+                        body,
+                        arrayAppendPattern,
+                        match => match.Groups["indent"].Value + "arrToken.Length = arrToken.Length + 1;",
+                        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    source = source.Remove(splitFunction.BodyOffset, splitFunction.BodyLength)
+                        .Insert(splitFunction.BodyOffset, updatedBody);
+                    applied.Add("UICommonAPI.Split normalized " + appendCount + " dynamic-array append operations");
+                }
+            }
         }
 
         if (className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase))
