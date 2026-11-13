@@ -84,18 +84,45 @@ public static class UnrealScriptNativeFunctionNormalizer
     {
         token = 0;
         openParen = closeParen = -1;
-        const string prefix = "__NFUN_";
-        if (!source.AsSpan(start).StartsWith(prefix, StringComparison.Ordinal)) return false;
+        if (start > 0 && (char.IsLetterOrDigit(source[start - 1]) || source[start - 1] == '_'))
+            return false;
 
-        int cursor = start + prefix.Length;
+        const string syntheticPrefix = "__NFUN_";
+        const string recoveredPrefix = "UnknownFunction";
+        bool isRecoveredName;
+        int cursor;
+        if (source.AsSpan(start).StartsWith(syntheticPrefix, StringComparison.Ordinal))
+        {
+            isRecoveredName = false;
+            cursor = start + syntheticPrefix.Length;
+        }
+        else if (source.AsSpan(start).StartsWith(recoveredPrefix, StringComparison.Ordinal))
+        {
+            isRecoveredName = true;
+            cursor = start + recoveredPrefix.Length;
+        }
+        else return false;
+
         int digitsStart = cursor;
         while (cursor < source.Length && char.IsAsciiDigit(source[cursor])) cursor++;
-        if (cursor == digitsStart || cursor + 2 >= source.Length ||
-            source[cursor] != '_' || source[cursor + 1] != '_' || source[cursor + 2] != '(')
+        if (cursor == digitsStart ||
+            !int.TryParse(source.AsSpan(digitsStart, cursor - digitsStart), out token))
             return false;
-        if (!int.TryParse(source.AsSpan(digitsStart, cursor - digitsStart), out token)) return false;
 
-        openParen = cursor + 2;
+        if (isRecoveredName)
+        {
+            while (cursor < source.Length && char.IsWhiteSpace(source[cursor])) cursor++;
+            if (cursor >= source.Length || source[cursor] != '(') return false;
+            openParen = cursor;
+        }
+        else
+        {
+            if (cursor + 2 >= source.Length ||
+                source[cursor] != '_' || source[cursor + 1] != '_' || source[cursor + 2] != '(')
+                return false;
+            openParen = cursor + 2;
+        }
+
         closeParen = FindMatchingParen(source, openParen);
         return closeParen >= 0;
     }
