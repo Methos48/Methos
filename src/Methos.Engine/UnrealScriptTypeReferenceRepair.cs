@@ -244,6 +244,22 @@ public static class UnrealScriptTypeReferenceRepair
                 }
             }
         }
+        if (className.Equals("PrivateShopWnd", StringComparison.OrdinalIgnoreCase) &&
+            System.Text.RegularExpressions.Regex.IsMatch(
+                source, @"(?m)^\s*var\s+PrivateShopWnd\.PrivateShopType\s+m_type\s*;") &&
+            System.Text.RegularExpressions.Regex.IsMatch(
+                source, @"(?ms)\benum\s+PrivateShopType\s*\{[^}]*\bPT_None\b[^}]*\}"))
+        {
+            string repaired = System.Text.RegularExpressions.Regex.Replace(
+                source, @"(?m)^(?<indent>[ \t]*m_type\s*=\s*)0(?<suffix>\s*;)",
+                match => match.Groups["indent"].Value + "PT_None" + match.Groups["suffix"].Value);
+            if (!string.Equals(source, repaired, StringComparison.Ordinal))
+            {
+                source = repaired;
+                applied.Add("PrivateShopWnd.m_type numeric zero -> PT_None enum value");
+            }
+        }
+
         // UELib emits numeric switch labels for enum locals. Interlude UCC
         // requires labels to carry the same enum type as the switched value.
         foreach (System.Text.RegularExpressions.Match declaration in
