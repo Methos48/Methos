@@ -47,7 +47,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import zipfile
-          for archive in sorted(Path(".").glob("*.zip")):
+          for archive in sorted(Path("reference-data/kits").glob("*.zip")) + sorted(Path("reference-data/packages/silent-dark").glob("*.zip")):
               print(f"\\nARCHIVE: {archive.name} SIZE: {archive.stat().st_size}")
               try:
                   with zipfile.ZipFile(archive) as z:
