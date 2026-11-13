@@ -525,6 +525,24 @@ jobs:
             throw "Expected StatusCustomWnd SetName call was not found; refusing a broad replacement."
           }
 
+      - name: Diagnose Animal StatusWnd name color argument against exact reference
+        shell: pwsh
+        run: |
+          $reference = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/StatusWnd.uc"
+          $staged = Join-Path $env:ANIMAL_SOURCES "StatusWnd.uc"
+          Write-Host "===== EXACT REFERENCE STATUSWND CALLS ====="
+          if (Test-Path -LiteralPath $reference) {
+            Select-String -LiteralPath $reference -Pattern 'SetNameWithColor|RecoveredName|UserNameColor|NameColor' -Context 3,3
+          } else {
+            Write-Host "REFERENCE_STATUSWND_SOURCE_NOT_FOUND"
+          }
+          Write-Host "===== RECOVEREDNAME_98 DEFINITIONS AND COLOR DECLARATIONS ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse |
+            Select-String -Pattern '(?i)RecoveredName_98|var\s+.*\bColor\b|\bColor\s+.*;' |
+            Select-Object -First 100
+          Write-Host "===== STAGED STATUSWND CALL ====="
+          Select-String -LiteralPath $staged -Pattern 'SetNameWithColor' -Context 3,3
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
