@@ -369,13 +369,10 @@ public static class UnrealScriptTypeReferenceRepair
 
         if ((className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) ||
              className.Equals("PartyMatchWaitListWnd", StringComparison.OrdinalIgnoreCase)) &&
-            source.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal))
+            source.Contains("\"\"\"", StringComparison.Ordinal))
         {
-            source = source.Replace(
-                "UnknownFunction112(UnknownFunction112(\"\"\",",
-                "UnknownFunction112(UnknownFunction112(Chr(34),",
-                StringComparison.Ordinal);
-            applied.Add("PartyMatchOutWaitListWnd quote literal normalized to Chr(34) for UCC");
+            source = source.Replace("\"\"\"", "Chr(34)", StringComparison.Ordinal);
+            applied.Add(className + " quote literal normalized to Chr(34) for UCC");
         }
 
         if (className.Equals("TradeWnd", StringComparison.OrdinalIgnoreCase))
