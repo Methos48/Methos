@@ -768,6 +768,23 @@ Check(dunk3lToolTipRestoredCallsiteRepairs.Count == 1 &&
     "Dunk3l ToolTip restored AddCrossLine call site still references the old helper name.");
 Console.WriteLine("PASS: ToolTip repair renames AddCrossLine call sites restored after decompilation.");
 
+string dunk3lToolTipIntegerCastSample = """
+class ToolTip extends UICommonAPI;
+function IsTooltipType(int Type)
+{
+    return (((int(Type) == int(0)) || (int(Type) == int(1))) || (int(Type) == int(3)));
+}
+""";
+string dunk3lToolTipIntegerCastRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipIntegerCastSample, out IReadOnlyList<string> dunk3lToolTipIntegerCastRepairs);
+Check(dunk3lToolTipIntegerCastRepairs.Count == 1 &&
+      dunk3lToolTipIntegerCastRepaired.Contains("int(Type) == 0", StringComparison.Ordinal) &&
+      dunk3lToolTipIntegerCastRepaired.Contains("int(Type) == 1", StringComparison.Ordinal) &&
+      !dunk3lToolTipIntegerCastRepaired.Contains("int(0)", StringComparison.Ordinal) &&
+      !dunk3lToolTipIntegerCastRepaired.Contains("int(1)", StringComparison.Ordinal),
+    "Dunk3l ToolTip redundant integer literal casts were not normalized for UCC.");
+Console.WriteLine("PASS: ToolTip redundant integer literal casts are normalized without altering typed variables.");
+
 
 
 
