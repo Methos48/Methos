@@ -323,7 +323,7 @@ public static class UccCompiler
     {
         if (!className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase))
             return source;
-        return Regex.Replace(source, @"\\bIsKeyDown\\s*\\(\\s*(18|17|162|16)\\s*\\)", match =>
+        return Regex.Replace(source, @"\bIsKeyDown\s*\(\s*(18|17|162|16)\s*\)", match =>
         {
             string key = match.Groups[1].Value;
             string enumName = key switch
