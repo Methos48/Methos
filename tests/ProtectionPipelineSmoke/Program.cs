@@ -189,8 +189,8 @@ function TestDrawItem()
 string drawItemTypeRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownDrawItemTypeAssignments(
     "UICommonAPI", drawItemTypeSample, out IReadOnlyList<string> drawItemTypeRepairs);
 Check(drawItemTypeRepairs.Count == 2 &&
-      drawItemTypeRepaired.Contains("Info.eType = UIEventManager.DIT_TEXT", StringComparison.Ordinal) &&
-      drawItemTypeRepaired.Contains("custom_1.DrawList[0].eType = UIEventManager.DIT_TEXTURE", StringComparison.Ordinal),
+      drawItemTypeRepaired.Contains("Info.eType = DIT_TEXT", StringComparison.Ordinal) &&
+      drawItemTypeRepaired.Contains("custom_1.DrawList[0].eType = DIT_TEXTURE", StringComparison.Ordinal),
     "DrawItemInfo EDrawItemType assignments were not restored to verified enum identifiers.");
 Console.WriteLine("PASS: UICommonAPI DrawItemInfo assignments use verified EDrawItemType identifiers.");
 
