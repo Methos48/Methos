@@ -143,6 +143,27 @@ Check(dialogTypeRepairs.Count == 2 &&
     "Dunk3l DialogBox enum type references were not reconciled with its declared fields.");
 Console.WriteLine("PASS: Dunk3l DialogBox enum references are reconciled to the declared UICommonAPI types.");
 
+var inventoryCountSample = """
+class InventoryWnd extends UICommonAPI;
+var ItemWindowHandle RecoveredName_2802;
+var ItemWindowHandle RecoveredName_2803;
+function int EquipItemGetItemNum()
+{
+    return 0;
+}
+function SetItemCount()
+{
+    Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + (EquipItemGetItemNum());
+}
+""";
+string inventoryCountRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "InventoryWnd", inventoryCountSample, out IReadOnlyList<string> inventoryCountRepairs);
+Check(inventoryCountRepairs.Count == 1 &&
+      inventoryCountRepaired.Contains(" + EquipItemGetItemNum();", StringComparison.Ordinal) &&
+      !inventoryCountRepaired.Contains("(EquipItemGetItemNum())", StringComparison.Ordinal),
+    "InventoryWnd SetItemCount redundant function-call parentheses were not normalized.");
+Console.WriteLine("PASS: InventoryWnd equipment count expression is normalized for UCC.");
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
