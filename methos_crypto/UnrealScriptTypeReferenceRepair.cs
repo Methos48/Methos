@@ -256,7 +256,8 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("function OnDropItemSource(string strTarget, ItemInfo Info)", StringComparison.Ordinal))
+            source.Contains("PetInvenWnd", StringComparison.Ordinal) &&
+            source.Contains("Info.DragSrcName", StringComparison.Ordinal))
         {
             // UELib can emit unbalanced parentheses for this recovered drag-source predicate.
             const string correctedPredicate = "if (Info.DragSrcName != \"InventoryItem\" && Info.DragSrcName != \"QuestItem\" && Info.DragSrcName != InventoryItem_1 && InStr(Info.DragSrcName, \"EquipItem\") == -1 && Info.DragSrcName != \"PetInvenWnd\")";
