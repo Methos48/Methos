@@ -98,6 +98,20 @@ jobs:
           print(f"XML_OUTPUT={out}")
           PY
 
+
+      - name: Generate Animal XDAT structural inventory
+        shell: bash
+        run: |
+          python tools/xdat/report_animal_interface.py "$RUNNER_TEMP/animal-xdat-inventory"
+
+      - name: Publish Animal XDAT structural inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-interface-XDAT-Inventory
+          path: ${{ runner.temp }}/animal-xdat-inventory
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Prove a controlled Animal XDAT XML edit survives recompilation
         shell: bash
         run: |
