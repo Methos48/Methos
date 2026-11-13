@@ -58,10 +58,10 @@ jobs:
         run: |
           @'
           import hashlib, json, pathlib, re, struct, zipfile
-          candidates = [p for p in pathlib.Path(".").glob("*.zip")
-                        if "compilador" in p.name.lower() and "u" in p.name.lower()]
+          candidates = [pathlib.Path("reference-data/kits/Compilador-U.zip")]
+          candidates = [p for p in candidates if p.is_file()]
           if not candidates:
-              raise SystemExit("No se encontró el ZIP Compilador U en la raíz del repositorio.")
+              raise SystemExit("No se encontró reference-data/kits/Compilador-U.zip.")
           report = {"archive": candidates[0].name, "archive_size": candidates[0].stat().st_size,
                     "archive_sha256": hashlib.sha256(candidates[0].read_bytes()).hexdigest(),
                     "entries": [], "readme_text": [], "findings": []}
@@ -107,8 +107,8 @@ jobs:
         run: |
           @'
           import pathlib, zipfile
-          archive = next(p for p in pathlib.Path(".").glob("*.zip")
-                         if "compilador" in p.name.lower() and "u" in p.name.lower())
+          archive = pathlib.Path("reference-data/kits/Compilador-U.zip")
+          if not archive.is_file(): raise SystemExit("No se encontró reference-data/kits/Compilador-U.zip.")
           out = pathlib.Path("interlude-fixtures")
           with zipfile.ZipFile(archive) as z:
               for info in z.infolist():
@@ -162,10 +162,9 @@ jobs:
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = Get-ChildItem -LiteralPath $PWD -File -Filter "*.zip" |
-            Where-Object { $_.Name -match "compilador.*u" } |
-            Select-Object -First 1
-          if (!$archive) { throw "No se encontró Compilador U.zip para empaquetar el runtime." }
+          $archivePath = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
+          if (!(Test-Path -LiteralPath $archivePath)) { throw "No se encontró reference-data/kits/Compilador-U.zip para empaquetar el runtime." }
+          $archive = Get-Item -LiteralPath $archivePath
           $zip = [System.IO.Compression.ZipFile]::OpenRead($archive.FullName)
           try {
             $prefix = "Compilador  U/"
