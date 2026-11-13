@@ -95,4 +95,4 @@ Los originales seleccionados por el usuario deben conservarse sin cambios. Las o
 
 La estructura activa del producto está unificada: una aplicación, un ejecutable principal y un instalador. El antiguo paquete XDAT de compilación fue reemplazado por fixtures puros; el código del antiguo editor no se extrae ni se ejecuta en Windows Release.
 
-Quedan referencias administrativas fuera del código activo: el repositorio vacío `Methos-Interface` y ramas históricas. También se conserva el historial Git y los datos de referencia necesarios. Esos elementos no son programas que se ejecuten ni forman parte del instalador.
+Se conserva el historial Git y los datos de referencia necesarios. Las ramas antiguas se mantienen fuera del flujo activo hasta completar una auditoría de sus commits y comprobar que no contienen material único.
