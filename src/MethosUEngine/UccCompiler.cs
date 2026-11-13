@@ -264,10 +264,10 @@ public static class UccCompiler
                         repairedIdentifiers += count;
                     }
                 }
-                string controlCharacterNormalized = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
-                if (!string.Equals(controlCharacterNormalized, source, StringComparison.Ordinal))
-                    repairedIdentifiers += 1;
-                source = controlCharacterNormalized;
+                int controlCharactersBefore = source.Count(char.IsControl);
+                source = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
+                int controlCharactersAfter = source.Count(char.IsControl);
+                repairedIdentifiers += Math.Max(0, controlCharactersBefore - controlCharactersAfter);
                 source = NormalizeRecoveredStructOrder(source, out bool movedStruct);
                 if (movedStruct) repairedIdentifiers++;
                 source = NormalizeRecoveredStateFunctionPrototypes(source, out int removedStatePrototypes);
