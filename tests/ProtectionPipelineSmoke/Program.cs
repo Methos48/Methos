@@ -259,6 +259,25 @@ Check(optionLoginFieldRepairs.Count == 1 &&
 Console.WriteLine("PASS: OptionWnd missing login initialization field is restored.");
 
 
+string silentOverlayColorSample = """
+class Interface_by_SILENT extends UICommonAPI;
+function OnLoad()
+{
+    local OptionWnd script;
+    Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor("OKTUBRE INTERFACE", RecoveredName_98("white"));
+}
+""";
+string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
+Check(silentOverlayColorRepairs.Count == 1 &&
+      silentOverlayColorRepaired.Contains("local Color whiteColor;", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("whiteColor.R = 255;", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("whiteColor.A = 255;", StringComparison.Ordinal) &&
+      silentOverlayColorRepaired.Contains("SetTextColor(\"OKTUBRE INTERFACE\", whiteColor)", StringComparison.Ordinal),
+    "Silent interface overlay white color was not restored as RGBA.");
+Console.WriteLine("PASS: Silent interface overlay uses a valid explicit white RGBA color.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
