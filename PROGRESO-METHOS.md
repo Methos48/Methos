@@ -141,3 +141,13 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 
 - **Unificación del motor C#:** se incorporaron a `src/MethosUEngine/` las cuatro clases que solo existían en `methos_crypto/`: `UnrealPackageDecompiler`, `UnrealScriptKnownNativeOperatorRepair`, `UnrealScriptNativeEnumArgumentRepair` y `UnrealScriptTypeReferenceRepair`. `tests/ProtectionPipelineSmoke` ahora referencia el proyecto real `src/MethosUEngine/MethosUEngine.csproj`, no la copia antigua. Los workflows afectados vigilan la ruta canónica.
 - La carpeta `methos_crypto/` se conserva temporalmente hasta que la nueva referencia compile y pasen las pruebas; después podrá retirarse como duplicado.
+
+
+### 13-11-2026 — Runtime XDAT conectado a la fuente canónica del repositorio
+
+- Se modificó `.github/workflows/windows-release.yml` para que el runtime interno de Methos copie `xdat_core.py` directamente desde `tools/xdat/`; dejó de extraer el motor de aplicación desde el kit ZIP histórico.
+- El workflow ahora valida sintaxis y ejecuta las cinco suites XDAT versionadas en `tests/`: detección de cifrado, pipeline, metadatos de origen, round-trip de edición y publicación transaccional.
+- Se actualizaron `README.md` y `docs/ARQUITECTURA.md` para reflejar que `tools/xdat/` es la fuente canónica del motor distribuido.
+- El kit ZIP histórico todavía se conserva temporalmente como fuente de un fixture de prueba. No se eliminó porque antes debe migrarse ese fixture a `reference-data/` y comprobarse que ningún otro workflow lo consuma.
+- Commits publicados en `main`: `02d50d4` (workflow), `2728880` (arquitectura), `f04c84b` (README).
+- **Estado de validación:** cambio publicado; pendiente comprobar el resultado de GitHub Actions para esta nueva versión. No se declara todavía que el runtime migrado esté validado.
