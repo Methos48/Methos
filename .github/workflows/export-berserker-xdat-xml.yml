@@ -1,4 +1,4 @@
-# Re-run trigger: export the Berserker XDAT XML source package.
+# Re-run trigger: export and verify the Berserker XDAT XML source package.
 name: Export Berserker decompiled XDAT XML
 
 on:
@@ -30,9 +30,23 @@ jobs:
           from xdat_core import decompile_to_folder
           source = Path('reference-data/packages/berserker/interface.xdat').read_bytes()
           windows, shortcuts = decompile_to_folder(source, Path('Berserker-XDAT'))
-          if windows < 1:
-              raise RuntimeError('No se exportaron ventanas XML de Berserker')
+          if windows != 168 or shortcuts != 8:
+              raise RuntimeError(f'Cantidad inesperada: windows={windows}; shortcuts={shortcuts}')
           print(f'PASS: Berserker XDAT XML exported; windows={windows}; shortcuts={shortcuts}')
+          PY
+      - name: Rebuild XDAT from exported XML and verify exact match
+        shell: bash
+        run: |
+          PYTHONPATH=tools/xdat python - <<'PY'
+          from pathlib import Path
+          from xdat_core import compile_from_folder
+          source = Path('reference-data/packages/berserker/interface.xdat').read_bytes()
+          rebuilt, windows, shortcuts = compile_from_folder(Path('Berserker-XDAT'), original_data=source)
+          if windows != 168 or shortcuts != 8:
+              raise RuntimeError(f'Cantidad inesperada al reconstruir: windows={windows}; shortcuts={shortcuts}')
+          if rebuilt != source:
+              raise RuntimeError(f'El XDAT reconstruido difiere del original: original={len(source)} bytes; reconstruido={len(rebuilt)} bytes')
+          print(f'PASS: XML -> XDAT -> parser; exact byte match; windows={windows}; shortcuts={shortcuts}; bytes={len(rebuilt)}')
           PY
       - uses: actions/upload-artifact@v4
         with:
