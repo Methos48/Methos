@@ -41,7 +41,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
@@ -225,6 +225,26 @@ jobs:
           name: Methos-XDAT-Reference-Fixtures-Clean
           path: ${{ runner.temp }}/Methos-XDAT-Reference-Fixtures-Clean.zip
           if-no-files-found: error
+
+      - name: Sustituir el archivo histórico por fixtures limpios en el repositorio
+        shell: pwsh
+        run: |
+          $remoteHead = (git ls-remote origin refs/heads/main).Split("`t")[0]
+          if ($remoteHead -ne $env:GITHUB_SHA) {
+            Write-Host "La rama main avanzó; se omite la actualización automática para no sobrescribir cambios."
+            exit 0
+          }
+          $fixtureZip = Join-Path $env:RUNNER_TEMP "Methos-XDAT-Reference-Fixtures-Clean.zip"
+          $targetZip = "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip"
+          if (!(Test-Path $fixtureZip)) { throw "No se generó el ZIP limpio de fixtures." }
+          Copy-Item $fixtureZip $targetZip -Force
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $targetZip
+          git commit -m "Reemplazar archivo XDAT histórico por fixtures limpios"
+          if ($LASTEXITCODE -ne 0) { throw "No se pudo crear el commit de fixtures limpios." }
+          git push origin "HEAD:main"
+          if ($LASTEXITCODE -ne 0) { throw "No se pudo publicar el archivo limpio en main." }
 
       - name: Verificar fuentes y pruebas XDAT canónicas del repositorio
         shell: pwsh
