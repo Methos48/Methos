@@ -1,3 +1,4 @@
+# Re-run trigger: export the Berserker XDAT XML source package.
 name: Export Berserker decompiled XDAT XML
 
 on:
