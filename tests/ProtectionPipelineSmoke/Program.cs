@@ -2,6 +2,35 @@ using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
 
+if (args.Length > 0 && args[0] == "--inspect-package-assets")
+{
+    if (args.Length != 2)
+        throw new ArgumentException("Usage: --inspect-package-assets <package.u>");
+    var packageIndex = UnrealPackageIndex.Open(args[1]);
+    string Name(int index) => index >= 0 && index < packageIndex.Names.Count
+        ? packageIndex.Names[index] : $"<invalid-name:{index}>";
+    string RefName(int reference)
+    {
+        if (reference == 0) return "<root>";
+        if (reference < 0)
+        {
+            int index = -reference - 1;
+            return index >= 0 && index < packageIndex.Imports.Count
+                ? Name(packageIndex.Imports[index].ObjectName) : $"<invalid-import:{index}>";
+        }
+        int exportIndex = reference - 1;
+        return exportIndex >= 0 && exportIndex < packageIndex.Exports.Count
+            ? Name(packageIndex.Exports[exportIndex].ObjectName) : $"<invalid-export:{exportIndex}>";
+    }
+    Console.WriteLine($"PACKAGE_PROFILE={packageIndex.Summary.Version}/{packageIndex.Summary.LicenseeVersion}");
+    Console.WriteLine($"PACKAGE_COUNTS names={packageIndex.Summary.NameCount} imports={packageIndex.Summary.ImportCount} exports={packageIndex.Summary.ExportCount}");
+    foreach (var item in packageIndex.Imports.Select((entry, index) => (entry, index)))
+        Console.WriteLine($"IMPORT[{item.index}] package={Name(item.entry.ClassPackage)} class={Name(item.entry.ClassName)} outer={RefName(item.entry.Outer)} object={Name(item.entry.ObjectName)}");
+    foreach (var item in packageIndex.Exports.Select((entry, index) => (entry, index)))
+        Console.WriteLine($"EXPORT[{item.index}] class={RefName(item.entry.ClassRef)} outer={RefName(item.entry.Outer)} object={Name(item.entry.ObjectName)} serialSize={item.entry.SerialSize}");
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--inspect-package-names")
 {
     if (args.Length != 2)
