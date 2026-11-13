@@ -361,6 +361,45 @@ Check(missingCalledFunctionRepairs.Count == 1 &&
     "A missing called UnrealScript function was not restored from its exact reference.");
 Console.WriteLine("PASS: Missing called UnrealScript functions are restored from their matching reference class.");
 
+string toolTipAliasCurrent = """
+class ToolTip extends UICommonAPI;
+function int MethosTooltipGetMaxWidth()
+{
+    return 174;
+}
+function AddCrossLine()
+{
+    m_Info.u_nTextureWidth = getMaxWidth();
+}
+function addTooltipID(ItemInfo item)
+{
+    AddCrossLine();
+}
+""";
+string toolTipAliasReference = """
+class ToolTip extends UICommonAPI;
+function AddCrossLine()
+{
+    m_Info.u_nTextureWidth = getMaxWidth();
+}
+function int getMaxWidth()
+{
+    return 174;
+}
+function addTooltipID(ItemInfo item)
+{
+    AddCrossLine();
+}
+""";
+string toolTipAliasRepaired = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
+    toolTipAliasCurrent, toolTipAliasReference,
+    out IReadOnlyList<string> toolTipAliasRepairs);
+Check(toolTipAliasRepairs.Count == 0 &&
+      toolTipAliasRepaired.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal) &&
+      !toolTipAliasRepaired.Contains("function int getMaxWidth()", StringComparison.Ordinal),
+    "ToolTip failed-function restoration duplicated the renamed max-width helper.");
+Console.WriteLine("PASS: ToolTip alias prevents duplicate restoration of the original max-width helper.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
