@@ -49,6 +49,12 @@ jobs:
           Write-Host "ANIMAL_ORIGINAL_HEADER=$([Convert]::ToHexString($bytes[0..([Math]::Min(31,$bytes.Length-1))]))"
           "ANIMAL_INPUT=$input" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Inspect Animal package name table for recovered color helper
+        shell: pwsh
+        run: |
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-package-names $env:ANIMAL_INPUT
+          if ($LASTEXITCODE -ne 0) { throw "Animal package name-table inspection failed." }
+
       - name: Decode original Animal Interface.u to UnrealScript
         shell: pwsh
         run: |
