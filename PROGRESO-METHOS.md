@@ -194,3 +194,13 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Commits: `82f55b233449a9010ecae7ecc03b2541b2a944f1` (motor canónico en build) y `17972c54233a42eeef3a468c3504e0300fa088c9` (filtro CI).
 - **Límite aún pendiente:** el kit histórico sigue proporcionando la aplicación base `app.py`, las pruebas/fixtures del paquete y `l2encdec.exe`. No se borró porque todavía contiene dependencias efectivas del runtime. El motor ct0 ya tiene fuente canónica; la migración de todo el paquete XDAT aún requiere trasladar esos componentes y validarlos.
 - Estado de CI de estos commits: todavía no hay ejecución visible asociada en GitHub Actions al momento de registrar esta nota. No se declara validación de Windows superada por estos cambios hasta que aparezca el resultado.
+
+### 13-11-2026 — Auditoría de unificación y validación final solicitada
+
+- Confirmado en `main`: la solución de producto está organizada como `Methos.App` + `Methos.Engine`; la salida de producto es un único `Methos.exe`. Los módulos U y XDAT son funciones internas, no aplicaciones instalables separadas.
+- Confirmado: `tools/xdat/xdat_core.py` es la fuente canónica del parser/compilador XDAT. El workflow Windows copia esa fuente al entorno de compilación y compara su SHA-256 antes de empaquetar.
+- Confirmado: el repositorio histórico auxiliar `Methos-Interface` quedó sin contenido activo; el repositorio de trabajo es `Methos`.
+- Límite que no se debe ocultar: la compilación XDAT todavía obtiene del archivo de referencia `Methos-XDAT-Windows-Build-Kit.zip` la aplicación base `app.py`, las pruebas/fixtures originales y `l2encdec.exe`. El ZIP se conserva como material de compatibilidad; no es otro producto ni un segundo instalador. Retirarlo sin portar y probar esos componentes rompería la compilación o perdería compatibilidad.
+- La carpeta `tools/xdat/tests` contiene una prueba de round-trip que requiere el conjunto de fixtures XDAT del kit. La comparación automatizada de fuentes queda en el workflow como auditoría de diferencias.
+- **Verificación de este bloque:** se ha revisado el workflow y la estructura actual del repositorio. Esta actualización activa una nueva ejecución Windows Release; hasta consultar su resultado no se declara aprobada la compilación de este commit.
+- **Criterio de cierre:** Methos está unificado como un solo producto y un solo ejecutable; la eliminación completa de la dependencia del kit XDAT queda abierta y explícitamente documentada, porque todavía faltan migración y validación funcional de sus componentes restantes.
