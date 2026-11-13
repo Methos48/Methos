@@ -103,8 +103,6 @@ public static class UnrealPackageDecompiler
                         // successfully decompiled function (and its edits) untouched.
                         source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                             source, referenceSource, out _);
-                        source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
-                            safeName, source, out _);
                     }
                 }
 
@@ -119,6 +117,10 @@ public static class UnrealPackageDecompiler
                 source = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source).Source;
                 if (!string.IsNullOrWhiteSpace(nativeRegistryPath))
                     source = UnrealScriptNativeFunctionNormalizer.Normalize(source, nativeRegistryPath, out _, out _);
+                // Apply narrowly fingerprinted recovered-source repairs in every decompile mode,
+                // including package-only round-trip validation without a reference source folder.
+                source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+                    safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
                         source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
