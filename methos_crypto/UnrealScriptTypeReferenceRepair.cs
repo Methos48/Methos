@@ -170,6 +170,19 @@ public static class UnrealScriptTypeReferenceRepair
 
 
         if (className.Equals("DialogBox", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function SetDefaultAction(UICommonAPI.DialogDefaultAction defaultAction)", StringComparison.Ordinal))
+        {
+            string repairedCalls = System.Text.RegularExpressions.Regex.Replace(
+                source, @"\bSetDefaultAction\s*\(\s*([0-9]+)\s*\)",
+                "SetDefaultAction(UICommonAPI.DialogDefaultAction($1))");
+            if (!string.Equals(source, repairedCalls, StringComparison.Ordinal))
+            {
+                source = repairedCalls;
+                applied.Add("DialogBox.SetDefaultAction numeric arguments -> DialogDefaultAction casts");
+            }
+        }
+
+        if (className.Equals("DialogBox", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("var UICommonAPI.DialogDefaultAction m_defaultAction;", StringComparison.Ordinal) &&
             source.Contains("switch(m_defaultAction)", StringComparison.Ordinal))
         {
