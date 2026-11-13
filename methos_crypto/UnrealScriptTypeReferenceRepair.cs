@@ -259,12 +259,24 @@ public static class UnrealScriptTypeReferenceRepair
             source.Contains("function OnDropItemSource(string strTarget, ItemInfo Info)", StringComparison.Ordinal))
         {
             // UELib can emit unbalanced parentheses for this recovered drag-source predicate.
-            const string malformedPredicate = "if((!((((((((Info.DragSrcName == \"InventoryItem\") || Info.DragSrcName == \"QuestItem\")) || Info.DragSrcName == InventoryItem_1)) || -1 != InStr(Info.DragSrcName, \"EquipItem\"))) || Info.DragSrcName == \"PetInvenWnd\")))";
             const string correctedPredicate = "if (Info.DragSrcName != \"InventoryItem\" && Info.DragSrcName != \"QuestItem\" && Info.DragSrcName != InventoryItem_1 && InStr(Info.DragSrcName, \"EquipItem\") == -1 && Info.DragSrcName != \"PetInvenWnd\")";
-            if (source.Contains(malformedPredicate, StringComparison.Ordinal))
+            string normalizedPredicate = System.Text.RegularExpressions.Regex.Replace(
+                source,
+                @"(?m)^(?<indent>[ \t]*)if\s*\(.*Info\.DragSrcName\s*==\s*""PetInvenWnd"".*\)\s*$",
+                "\${indent}" + correctedPredicate,
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            if (!string.Equals(source, normalizedPredicate, StringComparison.Ordinal))
             {
-                source = source.Replace(malformedPredicate, correctedPredicate, StringComparison.Ordinal);
+                source = normalizedPredicate;
                 applied.Add("InventoryWnd.OnDropItemSource malformed drag-source predicate normalized");
+            }
+
+            const string malformedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435())";
+            const string repairedCheckbox = "Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(\"InventoryWnd\")";
+            if (source.Contains(malformedCheckbox, StringComparison.Ordinal))
+            {
+                source = source.Replace(malformedCheckbox, repairedCheckbox, StringComparison.Ordinal);
+                applied.Add("InventoryWnd unresolved checkbox-name call replaced with safe non-checkbox window key");
             }
 
             var missingFields = new (string Type, string Name)[]
