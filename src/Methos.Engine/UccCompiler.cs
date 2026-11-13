@@ -624,6 +624,18 @@ function Color RecoveredName_98(string colorName)
         return source;
     }
 
+    // In the matching Interlude interface, scripts that call RecoveredName_98
+    // inherit UICommonAPI. Berserker's decompiler flattened those bases to UIScript.
+    private static string NormalizeRecoveredColorLookupBaseClass(string className, string source)
+    {
+        if (className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("RecoveredName_98(", StringComparison.Ordinal))
+            return source;
+        return Regex.Replace(source,
+            @"(?m)^(\s*class\s+" + Regex.Escape(className) + @"\s+extends\s+)UIScript(\s*;)",
+            "$1UICommonAPI$2", RegexOptions.IgnoreCase);
+    }
+
     // The LoadingWnd server-age local is an enum; UELib exposes its underlying
     // byte cast, which UCC correctly rejects when assigned back to the enum.
     private static string NormalizeLoadingWndServerAgeEnum(string className, string source)
@@ -1036,6 +1048,7 @@ function HandleHideLogo()
                 repairedIdentifiers += restoredToolTipOptionHelpers;
                 source = RestoreUICommonAPIColorLookup(className, source, out bool restoredColorLookup);
                 if (restoredColorLookup) repairedIdentifiers++;
+                source = NormalizeRecoveredColorLookupBaseClass(className, source);
                 if (restoredOptionWndHandlers > 0)
                 {
                     var allAvailableClassNames = sourceFiles
