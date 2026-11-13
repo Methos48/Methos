@@ -38,4 +38,90 @@ public static class UnrealScriptKnownNativeOperatorRepair
         replacements = replacementCount;
         return result;
     }
+
+    /// <summary>
+    /// Restores the verified UnrealScript native boolean-negation operator (native 129).
+    /// UELib emits it as __NFUN_129__(expression); Interlude UCC expects !expression.
+    /// Nested native calls are transformed recursively, while strings and comments are preserved.
+    /// </summary>
+    public static string RepairKnownNativeUnaryOperators(string source, out int replacements)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        replacements = 0;
+        return RepairUnarySegment(source, ref replacements);
+    }
+
+    private static string RepairUnarySegment(string source, ref int replacements)
+    {
+        const string marker = "__NFUN_129__";
+        var output = new System.Text.StringBuilder(source.Length);
+        int i = 0;
+        while (i < source.Length)
+        {
+            if (source.AsSpan(i).StartsWith(marker, StringComparison.Ordinal) &&
+                i + marker.Length < source.Length && source[i + marker.Length] == '(' &&
+                TryFindUnaryCallEnd(source, i + marker.Length, out int close, out int comma))
+            {
+                if (!comma.Equals(-1))
+                {
+                    output.Append(source, i, close - i + 1);
+                }
+                else
+                {
+                    string operand = source.Substring(i + marker.Length + 1,
+                        close - (i + marker.Length + 1));
+                    string repairedOperand = RepairUnarySegment(operand, ref replacements);
+                    output.Append("!(").Append(repairedOperand).Append(')');
+                    replacements++;
+                }
+                i = close + 1;
+                continue;
+            }
+            output.Append(source[i]);
+            i++;
+        }
+        return output.ToString();
+    }
+
+    private static bool TryFindUnaryCallEnd(string source, int open, out int close, out int topLevelComma)
+    {
+        close = -1;
+        topLevelComma = -1;
+        int depth = 0;
+        char quote = '\\0';
+        bool inString = false, inLineComment = false, inBlockComment = false;
+        for (int i = open; i < source.Length; i++)
+        {
+            char c = source[i];
+            char next = i + 1 < source.Length ? source[i + 1] : '\\0';
+            if (inLineComment)
+            {
+                if (c == '\\n') inLineComment = false;
+                continue;
+            }
+            if (inBlockComment)
+            {
+                if (c == '*' && next == '/') { inBlockComment = false; i++; }
+                continue;
+            }
+            if (inString)
+            {
+                if (c == '\\\\') { i++; continue; }
+                if (c == quote) inString = false;
+                continue;
+            }
+            if (c == '/' && next == '/') { inLineComment = true; i++; continue; }
+            if (c == '/' && next == '*') { inBlockComment = true; i++; continue; }
+            if (c is '"' or '\\'') { inString = true; quote = c; continue; }
+            if (c == '(') depth++;
+            else if (c == ')')
+            {
+                depth--;
+                if (depth == 0) { close = i; return true; }
+            }
+            else if (c == ',' && depth == 1 && topLevelComma < 0) topLevelComma = i;
+        }
+        return false;
+    }
+
 }
