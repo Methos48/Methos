@@ -158,7 +158,7 @@ def main() -> int:
         for match in item["matches"]:
             if match["status"] == "DIFFERENT" and PurePosixPath(item["kit_path"]).name.casefold() in {
                 "xdat_core.py", "encryption_detection.py", "auto_pipeline.py",
-                "package_origin_metadata.py", "xdat_bridge.py"
+                "package_origin_metadata.py", "xdat_bridge.py", "test_roundtrip.py"
             }:
                 markdown.extend([
                     "",
@@ -178,6 +178,12 @@ def main() -> int:
             f"{m['repository_path']}={m['status']}" for m in item["matches"]
         ) or "(sin equivalente)"
         print(f"{item['status']}: {item['kit_path']} -> {paths}")
+    for item in report["kit_python_files"]:
+        for match in item["matches"]:
+            if match["status"] == "DIFFERENT" and match.get("diff_preview"):
+                print(f"--- DIFF {item['kit_path']} <-> {match['repository_path']} ---")
+                for line in match["diff_preview"]:
+                    print(line)
     print(f"Informe: {args.markdown_out}")
     return 0
 
