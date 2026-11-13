@@ -566,9 +566,9 @@ public static class UnrealScriptTypeReferenceRepair
         {
             source = source.Replace(
                 "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
-                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", \"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
+                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))",
                 StringComparison.Ordinal);
-            applied.Add("Silent branding text color call restored with textbox handle, text, and color arguments");
+            applied.Add("Silent branding text color call restored with textbox handle and color arguments");
         }
 
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
