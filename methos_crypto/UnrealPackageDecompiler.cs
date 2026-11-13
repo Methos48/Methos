@@ -122,6 +122,7 @@ public static class UnrealPackageDecompiler
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDrawItemTypeAssignments(safeName, source, out _);
                 source = UnrealScriptKnownNativeOperatorRepair.RepairKnownSilentInterfaceAddressCheck(source, out _);
+                source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeEqualityOperators(source, out _);
                 source = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeUnaryOperators(source, out _);
 
                 string destination = Path.Combine(output, safeName + ".uc");
