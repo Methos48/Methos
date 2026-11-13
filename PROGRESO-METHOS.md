@@ -290,3 +290,11 @@ Comparar la salida UELib cruda y la fuente final de DamageLiteAni.uc para identi
 - Se corrigió la auditoría de cifrado para distinguir soporte real de detección: el sample real Dunk3l interface.xdat pasa round-trip exacto SmartCrypt 1.5.2.2 + Lineage2Ver111; el workflow no dispone de un fixture real protegido .u, por lo que no se afirma esa misma cobertura para .u.
 - Estado: la integración de protección y el recorrido reversible de nombres están implementados; la compilación completa de Silent Dark sigue abierta y no se declara finalizada hasta resolver y validar el caso DamageLiteAni.
 
+### 13-11-2026 — Corrección de validación XDAT y seguimiento de compilaciones
+
+- Se detectó que `.github/workflows/inspect-xdat.yml` todavía intentaba abrir el antiguo `Methos-XDAT-Windows-Build-Kit.zip`, archivo que ya no forma parte de la estructura limpia del repositorio.
+- Se actualizó el workflow para usar `Methos-XDAT-Reference-Fixtures.zip` y el extractor mantenido `tools/xdat/prepare_reference_fixtures.py`. Ahora extrae únicamente el paquete XDAT y los XML de prueba; no copia código de una aplicación histórica ni intenta modificar el repositorio desde el workflow.
+- La nueva ejecución `43414434723` terminó **SUCCESS**: inspección de originales, validación CRC de archivos ZIP, extracción controlada de fixtures, pruebas de estructura y round-trip XDAT, y publicación del artefacto de fixtures.
+- En paralelo siguen ejecutándose las validaciones UCC de Interlude, motor Unreal, Silent Dark, protección y Windows Release. No se declaran aprobadas hasta revisar sus conclusiones y pasos finales.
+- La falla anterior `43414298020` queda identificada como workflow obsoleto que apuntaba a una ruta eliminada; fue corregida y sustituida por la ejecución exitosa indicada arriba.
+
