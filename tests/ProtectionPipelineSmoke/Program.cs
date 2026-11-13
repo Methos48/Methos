@@ -242,6 +242,31 @@ Check(nativeOperatorRepairs == 1 &&
     "Verified native equality, OR and multiply operators were not restored.");
 Console.WriteLine("PASS: recovered Silent Interface native operators are restored from the matching Interlude reference.");
 
+var nativeUnarySample = """
+class UnaryOperatorSample extends Object;
+function bool ImMage()
+{
+    return __NFUN_129__(ImFighter());
+}
+function bool CheckFlags()
+{
+    return __NFUN_129__(__NFUN_129__(HasBuff));
+}
+function string KeepLiteral()
+{
+    return "__NFUN_129__(not code)";
+}
+""";
+string nativeUnaryRepaired = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeUnaryOperators(
+    nativeUnarySample, out int nativeUnaryRepairs);
+Check(nativeUnaryRepairs == 3 &&
+      nativeUnaryRepaired.Contains("return !(ImFighter());", StringComparison.Ordinal) &&
+      nativeUnaryRepaired.Contains("return !(!(HasBuff));", StringComparison.Ordinal) &&
+      nativeUnaryRepaired.Contains("\"__NFUN_129__(not code)\"", StringComparison.Ordinal),
+    "Verified native boolean-negation calls were not restored safely.");
+Console.WriteLine("PASS: native 129 boolean negation is restored, including nested calls.");
+
+
 
 var trailingReturnSample = """
 class ReturnSample extends Object;
