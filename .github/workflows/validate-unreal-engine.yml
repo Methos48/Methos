@@ -47,7 +47,8 @@ jobs:
             $signatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
           }
           $system = Join-Path $PWD "reference-data\ucc-runtime\System"
-          Write-Host "UCC_RUNTIME_PACKAGES=$((Get-ChildItem -LiteralPath $system -Filter \"*.u\" -File | Select-Object -ExpandProperty Name) -join \",\")"
+          $runtimePackages = @(Get-ChildItem -LiteralPath $system -Filter '*.u' -File | Select-Object -ExpandProperty Name)
+          Write-Host ('UCC_RUNTIME_PACKAGES=' + ($runtimePackages -join ','))
           foreach ($packageName in @("NWindow.u", "Engine.u", "Core.u")) {
             $packagePath = Join-Path $system $packageName
             if (!(Test-Path $packagePath)) { continue }
@@ -59,7 +60,7 @@ jobs:
                 continue
               }
               $packageSignatures = @(Get-ChildItem -LiteralPath $output -Filter "*.uc" -File |
-                Select-String -Pattern '^\s*(?:native(?:\s*\([^)]*\))?\s+)?function\s+.*\bSetName\s*\(')
+                Select-String -Pattern '^\s*(?:(?:native|final|static|simulated|iterator|exec)\s+)*function\s+.*\bSetName\s*\(')
               $packageSignatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
             } catch {
               Write-Warning ("SetName signature inspection failed for " + $packageName + ": " + $_.Exception.Message)
