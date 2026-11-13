@@ -191,6 +191,13 @@ jobs:
                           }
                       } else Console.WriteLine("DAMAGE_CLASS_METADATA_NOT_FOUND");
                   }
+                  using (var rawPackage = UnrealLoader.LoadPackage(plainPath, FileAccess.Read)) {
+                      rawPackage.InitializePackage();
+                      var rawDamage = rawPackage.Objects.OfType<UClass>()
+                          .FirstOrDefault(item => string.Equals(item.Name?.ToString(), "DamageLiteAni", StringComparison.OrdinalIgnoreCase));
+                      if (rawDamage != null)
+                          File.WriteAllText(Path.Combine(cli[3], "DamageLiteAni-raw.uc"), rawDamage.Decompile());
+                  }
                   NativeFunctionRegistryBuilder.Build(cli[1], registryPath);
                   var result = UnrealPackageDecompiler.DecompileToFolder(
                       plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
@@ -224,6 +231,12 @@ jobs:
           $damage = Join-Path $generated "DamageLiteAni.uc"
           if (Test-Path $damage) {
             Copy-Item -LiteralPath $damage -Destination (Join-Path $diagnostics "DamageLiteAni-generated.uc") -Force
+            $rawDamage = Join-Path $generated "DamageLiteAni-raw.uc"
+            if (Test-Path $rawDamage) {
+              Copy-Item -LiteralPath $rawDamage -Destination (Join-Path $diagnostics "DamageLiteAni-raw.uc") -Force
+              Write-Host "=== RAW UELIB DAMAGE LITE ARRAY DECLARATIONS ==="
+              Select-String -LiteralPath $rawDamage -Pattern "RecoveredName_2070" | ForEach-Object { Write-Host $_.Line }
+            }
             Write-Host "=== GENERATED DAMAGE LITE ARRAY DECLARATIONS ==="
             Select-String -LiteralPath $damage -Pattern "RecoveredName_2070" | ForEach-Object { Write-Host $_.Line }
           }
