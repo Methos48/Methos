@@ -293,6 +293,34 @@ Check(recoveredColorHelperRepairs.Count == 1 &&
 Console.WriteLine("PASS: Recovered color-name helper resolves to inherited Color API.");
 
 
+string logoWndFieldSample = """
+class LogoWnd extends UICommonAPI;
+var private WindowHandle MethosRecoveredName_2124;
+var private bool MethosRecoveredName_2188;
+function OnLoad()
+{
+    MethosRecoveredName_2124 = GetHandle("LogoWnd");
+}
+function OnRButtonDown(int X, int Y)
+{
+    if(RecoveredName_2108)
+    {
+        RecoveredName_2057.SetDraggable(false);
+        RecoveredName_2108 = false;
+    }
+}
+""";
+string logoWndFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "LogoWnd", logoWndFieldSample, out IReadOnlyList<string> logoWndFieldRepairs);
+Check(logoWndFieldRepairs.Count == 1 &&
+      logoWndFieldRepaired.Contains("MethosRecoveredName_2124.SetDraggable(false)", StringComparison.Ordinal) &&
+      logoWndFieldRepaired.Contains("if(MethosRecoveredName_2188)", StringComparison.Ordinal) &&
+      !logoWndFieldRepaired.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
+      !logoWndFieldRepaired.Contains("RecoveredName_2108", StringComparison.Ordinal),
+    "LogoWnd recovered handle/lock references were not mapped to declared fields.");
+Console.WriteLine("PASS: LogoWnd recovered references map to declared handle and lock fields.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
