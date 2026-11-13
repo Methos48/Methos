@@ -2,6 +2,27 @@ using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
 
+if (args.Length > 0 && args[0] == "--inspect-protection")
+{
+    if (args.Length != 2)
+        throw new ArgumentException("Usage: --inspect-protection <package.u>");
+    string inputPath = Path.GetFullPath(args[1]);
+    byte[] original = File.ReadAllBytes(inputPath);
+    var inspection = ProtectionPipelinePlanner.InspectFullPipeline(original, inputPath);
+    Console.WriteLine($"PACKAGE={Path.GetFileName(inputPath)}; BYTES={original.Length}; STATUS={inspection.Plan.Status}; CAN_DECODE={inspection.Plan.CanDecode}; CAN_ENCODE={inspection.Plan.CanEncode}; PLAINTEXT_CANDIDATE={inspection.IsPlaintextCandidate}; DECODED_BYTES={inspection.DecodedPayload.Length}");
+    Console.WriteLine("LAYERS=" + string.Join(" -> ", inspection.Plan.Layers.Select(layer => $"{layer.Id}:{layer.Status}:decode={layer.DecodeAvailable}:encode={layer.EncodeAvailable}")));
+    Console.WriteLine("ORIGINAL_HEADER=" + Convert.ToHexString(original.AsSpan(0, Math.Min(32, original.Length))));
+    Console.WriteLine("DECODED_HEADER=" + Convert.ToHexString(inspection.DecodedPayload.AsSpan(0, Math.Min(32, inspection.DecodedPayload.Length))));
+    if (inspection.IsPlaintextCandidate && inspection.DecodedPayload.Length >= 4 &&
+        BitConverter.ToUInt32(inspection.DecodedPayload, 0) == 0x9E2A83C1)
+    {
+        using var package = UELib.UnrealLoader.LoadPackage(inspection.DecodedPayload, FileAccess.Read);
+        package.InitializePackage();
+        Console.WriteLine($"UNREAL_PACKAGE={package.Version}/{package.LicenseeVersion}; OBJECTS={package.Objects.Count}");
+    }
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
     if (args.Length is < 3 or > 4)
