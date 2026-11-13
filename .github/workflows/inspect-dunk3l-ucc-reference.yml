@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - name: Extract exact Interlude reference source and inspect sound API
+      - name: Inspect reference API and Engine package
         shell: pwsh
         run: |
           $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
@@ -42,21 +42,27 @@ jobs:
           Copy-Item $reference (Join-Path $root "UICommonAPI-reference.uc") -Force
           $dialogReference = Join-Path $classes "DialogBox.uc"
           if (Test-Path $dialogReference) { Copy-Item $dialogReference (Join-Path $root "DialogBox-reference.uc") -Force }
-          $uiscript = Get-ChildItem -LiteralPath $root -Recurse -Filter "UIScript.uc" -File | Select-Object -First 1
-          if (!$uiscript) { throw "UIScript.uc missing from exact Interlude UCC kit" }
-          Copy-Item $uiscript.FullName (Join-Path $root "UIScript-reference.uc") -Force
-          Write-Host "REFERENCE_BYTES=$((Get-Item $reference).Length)"
-          Write-Host "TARGET_BYTES=$((Get-Item $target).Length)"
-          Write-Host "UISCRIPT_SOURCE=$($uiscript.FullName)"
-          Write-Host "PLAY_CONSOLE_SOUND_SIGNATURE:"
-          Select-String -Path $uiscript.FullName -Pattern "PlayConsoleSound" -Context 0,4 | Select-Object -First 10 | ForEach-Object { Write-Host $_.ToString() }
+          Write-Host "REFERENCE_PLAY_CONSOLE_SOUND_CALLS:"
+          Select-String -Path $reference -Pattern "PlayConsoleSound" | ForEach-Object { Write-Host $_.ToString() }
           Write-Host "TARGET_PLAY_CONSOLE_SOUND_CALLS:"
           Select-String -Path $target -Pattern "PlayConsoleSound" | ForEach-Object { Write-Host $_.ToString() }
+          $engine = Get-ChildItem -LiteralPath $root -Recurse -Filter "Engine.u" -File | Select-Object -First 1
+          if (!$engine) { throw "Engine.u missing from exact Interlude UCC kit" }
+          Write-Host "ENGINE_PACKAGE=$($engine.FullName)"
+          $engineOut = Join-Path $root "Engine-Classes"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $engine.FullName $engineOut
+          Write-Host "ENGINE_DECOMPILE_EXIT=$LASTEXITCODE"
+          $uiscript = Get-ChildItem -LiteralPath $engineOut -Recurse -Filter "UIScript.uc" -File | Select-Object -First 1
+          if ($uiscript) { Copy-Item $uiscript.FullName (Join-Path $root "UIScript-from-Engine.uc") -Force }
+          Write-Host "ENGINE_PLAY_CONSOLE_SOUND_MATCHES:"
+          Get-ChildItem -LiteralPath $engineOut -Recurse -Filter "*.uc" -File | Select-String -Pattern "PlayConsoleSound" | Select-Object -First 30 | ForEach-Object { Write-Host $_.ToString() }
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --repair-diagnostic $target $reference (Join-Path $root "UICommonAPI-repaired.uc")
           if ($LASTEXITCODE -ne 0) { throw "Repair diagnostic failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: Dunk3l-UCC-Reference-Source
-          path: Dunk3l-UCC-Reference/*.uc
+          path: |
+            Dunk3l-UCC-Reference/*.uc
+            Dunk3l-UCC-Reference/Engine-Classes/*.uc
           if-no-files-found: error
           retention-days: 7
