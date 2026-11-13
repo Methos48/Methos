@@ -217,10 +217,17 @@ jobs:
           Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
           $xdatProject = Get-ChildItem $extract -Directory | Select-Object -First 1
           if (!$xdatProject) { throw "El kit XDAT no contiene la carpeta del proyecto." }
-          python "$xdatRepo\\tools\\xdat\\maintenance\\apply_detection_layer.py" "$($xdatProject.FullName)"
+          # La fuente canónica del parser/compilador ct0 vive en tools/xdat.
+          # El kit histórico aporta la aplicación base y sus fixtures, no otra copia del motor.
+          Copy-Item (Join-Path $xdatRepo "tools\xdat\xdat_core.py") (Join-Path $xdatProject.FullName "xdat_core.py") -Force
+          python "$xdatRepo\tools\xdat\maintenance\apply_detection_layer.py" "$($xdatProject.FullName)"
           if ($LASTEXITCODE -ne 0) { throw "Falló la capa de detección XDAT." }
-          python "$xdatRepo\\tools\\xdat\\maintenance\\auto_pipeline_overlay.py" "$($xdatProject.FullName)"
+          python "$xdatRepo\tools\xdat\maintenance\auto_pipeline_overlay.py" "$($xdatProject.FullName)"
           if ($LASTEXITCODE -ne 0) { throw "Falló la integración del pipeline XDAT." }
+          $canonicalHash = (Get-FileHash (Join-Path $xdatProject.FullName "xdat_core.py") -Algorithm SHA256).Hash
+          $repoHash = (Get-FileHash (Join-Path $xdatRepo "tools\xdat\xdat_core.py") -Algorithm SHA256).Hash
+          if ($canonicalHash -ne $repoHash) { throw "El runtime XDAT no usa la fuente canónica versionada en Methos." }
+          Write-Host "XDAT_CORE_CANONICAL_SHA256=$canonicalHash"
 
       - name: Preparar runtime Python embebido para XDAT (sin segundo ejecutable)
         shell: pwsh
