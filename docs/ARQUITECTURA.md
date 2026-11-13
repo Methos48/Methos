@@ -36,7 +36,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 | `src/MethosUEngine/` | Proyecto C# canónico del motor Unreal/UCC y de los codecs/protecciones, referenciado por la aplicación y las pruebas. |
 | `tests/` | Pruebas automatizadas U y XDAT. Las pruebas Python añaden `tools/xdat/` al camino de importación para que la fuente canónica no dependa de archivos en la raíz. |
-| `tools/` | Herramientas de diagnóstico, inspección y validación; no todas forman parte del producto distribuido. |
+| `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
 | `docs/` | Documentación técnica, auditorías y resultados de investigación. |
 | `reference-data/` | Archivos de referencia para pruebas e investigación; no son archivos de trabajo del usuario ni necesariamente se instalan. |
