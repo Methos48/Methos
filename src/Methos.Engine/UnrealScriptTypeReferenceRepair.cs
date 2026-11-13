@@ -604,6 +604,7 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("SystemBarWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("var private TextBoxHandle MethosRecoveredName_4561;", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_4534 = TextBoxHandle(GetHandle(m_WindowName $ \".PVPInfo\"))", StringComparison.Ordinal))
         {
             source = new Regex(@"(?is)(function\s+OnLoad\s*\(\s*\)\s*\{)")
@@ -623,7 +624,7 @@ public static class UnrealScriptTypeReferenceRepair
             for (int i = 0; i < fieldMappings.GetLength(0); i++)
                 source = Regex.Replace(source, @"\b" + fieldMappings[i, 0] + @"\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
             if (source.Contains("txt_ExpBarPercentValue = TextBoxHandle(GetHandle(\"SystemBarWnd.ExpText\"))", StringComparison.Ordinal) &&
-                !source.Contains("var private TextBoxHandle txt_ExpBarPercentValue;", StringComparison.Ordinal))
+                !Regex.IsMatch(source, @"(?im)^\\s*var(?:\\s+private)?\\s+TextBoxHandle\\s+txt_ExpBarPercentValue\\s*;", RegexOptions.CultureInvariant))
             {
                 source = source.Replace(
                     "var string m_WindowName;",
