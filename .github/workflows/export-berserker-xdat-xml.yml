@@ -1,0 +1,41 @@
+name: Export Berserker decompiled XDAT XML
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - ".github/workflows/export-berserker-xdat-xml.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Decompile Berserker XDAT to XML
+        shell: bash
+        run: |
+          mkdir -p Berserker-XDAT
+          cp reference-data/packages/berserker/interface.xdat Berserker-XDAT/interface.xdat
+          PYTHONPATH=tools/xdat python - <<'PY'
+          from pathlib import Path
+          from xdat_core import decompile_to_folder
+          source = Path('reference-data/packages/berserker/interface.xdat').read_bytes()
+          windows, shortcuts = decompile_to_folder(source, Path('Berserker-XDAT'))
+          if windows < 1:
+              raise RuntimeError('No se exportaron ventanas XML de Berserker')
+          print(f'PASS: Berserker XDAT XML exported; windows={windows}; shortcuts={shortcuts}')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Berserker-XDAT-Decompiled-XML
+          path: Berserker-XDAT/
+          if-no-files-found: error
+          retention-days: 14
