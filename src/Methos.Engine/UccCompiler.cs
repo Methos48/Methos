@@ -574,8 +574,7 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
         string referenceSource, out bool restored)
     {
         restored = false;
-        if (string.IsNullOrWhiteSpace(referenceSource) ||
-            className.Equals("OnScreenMessageWnd", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(referenceSource))
             return source;
         Match referenceClass = Regex.Match(referenceSource,
             @"(?im)^\s*class\s+" + Regex.Escape(className) + @"\s+extends\s+(?<parent>[A-Za-z_]\w*)");
@@ -585,11 +584,8 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             return source;
         string referenceParent = referenceClass.Groups["parent"].Value;
         string sourceParent = sourceClass.Groups["parent"].Value;
-        if (referenceParent.Equals(sourceParent, StringComparison.OrdinalIgnoreCase) ||
-            !(referenceParent.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) ||
-              referenceParent.Equals("UIScript", StringComparison.OrdinalIgnoreCase)) ||
-            !(sourceParent.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) ||
-              sourceParent.Equals("UIScript", StringComparison.OrdinalIgnoreCase)))
+        if (!referenceParent.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) ||
+            !sourceParent.Equals("UIScript", StringComparison.OrdinalIgnoreCase))
             return source;
         source = Regex.Replace(source,
             @"(?im)^(\s*class\s+" + Regex.Escape(className) + @"\s+extends\s+)" +
@@ -597,17 +593,6 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             "$1" + referenceParent, RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
         restored = true;
         return source;
-    }
-
-    // DetailStatusWnd's custom close handler must use the NWindow API; UIScript
-    // does not expose an instance HideWindow method in the Interlude runtime.
-    private static string NormalizeDetailStatusWndHideWindow(string className, string source)
-    {
-        if (!className.Equals("DetailStatusWnd", StringComparison.OrdinalIgnoreCase))
-            return source;
-        return Regex.Replace(source, @"(?<![\w.])HideWindow\s*\(",
-            "Class'NWindow.UIAPI_WINDOW'.static.HideWindow(",
-            RegexOptions.IgnoreCase);
     }
 
     // UIAPI_NAMECTRL.SetName takes ENameCtrlType and ETextAlign, not integers.
@@ -1039,7 +1024,6 @@ function HandleHideLogo()
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
-                source = NormalizeDetailStatusWndHideWindow(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeLoadingWndServerAgeEnum(className, source);
                 source = NormalizeNameControlEnumArguments(className, source);
