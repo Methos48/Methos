@@ -157,6 +157,31 @@ Check(interfaceSoundRepairs.Count == 4 &&
     "Native Interlude interface sound enum arguments were not restored from their verified values.");
 Console.WriteLine("PASS: Interlude interface sound arguments are restored to their native enum identifiers.");
 
+var nativeOperatorSample = """
+class UICommonAPI extends UIScript;
+function TestAddress(string MethosRecoveredName_5448, string OtherAddress)
+{
+    if(__NFUN_132__(__NFUN_132__(__NFUN_122__(MethosRecoveredName_5448, OtherAddress), __NFUN_122__(MethosRecoveredName_5448, "192.168.10.121")), __NFUN_122__(MethosRecoveredName_5448, "127.0.0.1")))
+    {
+        if(__NFUN_122__(MethosRecoveredName_5448, "127.0.0.1"))
+        {
+            Log("SILENT INTERFACE - for local test server");
+        }
+    }
+    DialogSetParamInt(__NFUN_144__(15, 1000));
+}
+""";
+string nativeOperatorRepaired = UnrealScriptKnownNativeOperatorRepair.RepairKnownSilentInterfaceAddressCheck(
+    nativeOperatorSample, out int nativeOperatorRepairs);
+Check(nativeOperatorRepairs == 1 &&
+      nativeOperatorRepaired.Contains("((MethosRecoveredName_5448 == OtherAddress) || (MethosRecoveredName_5448 == \"192.168.10.121\") || (MethosRecoveredName_5448 == \"127.0.0.1\"))", StringComparison.Ordinal) &&
+      nativeOperatorRepaired.Contains("MethosRecoveredName_5448 == \"127.0.0.1\"", StringComparison.Ordinal) &&
+      nativeOperatorRepaired.Contains("(15 * 1000)", StringComparison.Ordinal) &&
+      !nativeOperatorRepaired.Contains("__NFUN_", StringComparison.Ordinal),
+    "Verified native equality, OR and multiply operators were not restored.");
+Console.WriteLine("PASS: recovered Silent Interface native operators are restored from the matching Interlude reference.");
+
+
 var trailingReturnSample = """
 class ReturnSample extends Object;
 function int GetValue()
