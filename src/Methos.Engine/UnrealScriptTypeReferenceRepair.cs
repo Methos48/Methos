@@ -602,6 +602,32 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Dunk3l target aggro filter rebound to its existing IgnoreAggr option");
         }
 
+        if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("local UIEventManager.EItemType EItemType;", StringComparison.Ordinal) &&
+            source.Contains("EItemType = byte(item.ItemType);", StringComparison.Ordinal))
+        {
+            // The reference method declares EItemType as a byte; UELib incorrectly
+            // resolves the local as the UIEventManager enum, making the assignment invalid.
+            source = source.Replace(
+                "local UIEventManager.EItemType EItemType;",
+                "local byte EItemType;",
+                StringComparison.Ordinal);
+            applied.Add("ToolTip recovered local EItemType restored to the reference byte type");
+        }
+
+        if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("local UIEventManager.EEtcItemType EEtcItemType;", StringComparison.Ordinal) &&
+            source.Contains("EEtcItemType = byte(item.ItemSubType);", StringComparison.Ordinal))
+        {
+            // The second local is genuinely the enum, so restore its typed cast rather
+            // than assigning a byte to an enum property.
+            source = source.Replace(
+                "EEtcItemType = byte(item.ItemSubType);",
+                "EEtcItemType = UIEventManager.EEtcItemType(item.ItemSubType);",
+                StringComparison.Ordinal);
+            applied.Add("ToolTip EEtcItemType assignment restored to its declared enum type");
+        }
+
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase))
         {
             // UELib emits redundant int(<integer literal>) casts in this class.
