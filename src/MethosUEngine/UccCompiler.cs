@@ -274,7 +274,7 @@ public static class UccCompiler
                 repairedIdentifiers += removedStatePrototypes;
                 source = NormalizeRecoveredFunctionBlocks(source, out int insertedClosures);
                 repairedIdentifiers += insertedClosures;
-                ReturnNormalizationResult trailingReturns = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source);
+                var trailingReturns = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source);
                 source = trailingReturns.Source;
                 repairedIdentifiers += trailingReturns.Repairs.Count;
                 File.WriteAllText(Path.Combine(stagedClasses, Path.GetFileName(file)), source, new UTF8Encoding(false));
