@@ -133,3 +133,5 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 
 - Se amplió `README-ES.txt` con el enlace al repositorio oficial y la explicación de que las rutas locales heredadas de caché/respaldo no son una segunda aplicación.
 - Se añadió `.gitignore` para excluir salidas de compilación, cachés temporales y el espacio de trabajo local `Compilados/`, sin ignorar de forma global ejecutables o DLL que puedan ser referencias legítimas.
+
+- **Corrección de workflows heredados:** se eliminaron las referencias de checkout a `Methos48/Methos-U-Editor` en los workflows de inspección Dunk3l y validación Unreal. Ahora usan el kit UCC del repositorio único y el paquete de referencia ubicado en `reference-data/Interface-UEditor.u`. Se actualizaron también sus filtros de rutas.
