@@ -257,14 +257,14 @@ public static class UccCompiler
     {
         restored = false;
         if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase) ||
-            Regex.IsMatch(source, @"(?im)^\\s*var\\s+\\w+\\s+Potion\\s*\\["))
+            Regex.IsMatch(source, @"(?im)^\s*var\s+\w+\s+Potion\s*\["))
             return source;
 
         Match declaration = Regex.Match(referenceSource,
-            @"(?im)^\\s*var\\s+ItemInfo\\s+Potion\\s*\\[\\s*\\d+\\s*\\]\\s*;");
+            @"(?im)^\s*var\s+ItemInfo\s+Potion\s*\[\s*\d+\s*\]\s*;");
         if (!declaration.Success) return source;
 
-        Match classLine = Regex.Match(source, @"(?m)^\\s*class\\s+\\w+\\b[^;]*;[\\t ]*\\r?\\n?");
+        Match classLine = Regex.Match(source, @"(?m)^\s*class\s+\w+\b[^;]*;[\t ]*\r?\n?");
         if (!classLine.Success) return source;
         source = source.Insert(classLine.Index + classLine.Length,
             declaration.Value.Trim() + Environment.NewLine);
