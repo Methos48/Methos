@@ -275,7 +275,7 @@ public static class UnrealScriptTypeReferenceRepair
             {
                 string repairedBody = System.Text.RegularExpressions.Regex.Replace(
                     skillList.Body,
-                    @"\\bUnknownFunction154\\s*\\(\\s*SkillID\\s*,\\s*ClassID\\s*\\)",
+                    @"\bUnknownFunction154\s*\(\s*SkillID\s*,\s*ClassID\s*\)",
                     "UnknownFunction154(SkillID, 1323)");
                 if (!string.Equals(skillList.Body, repairedBody, StringComparison.Ordinal))
                 {
