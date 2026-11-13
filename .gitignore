@@ -1,0 +1,30 @@
+# .NET / Visual Studio
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Build and packaging outputs
+/publish/
+/release/
+/artifacts/
+*.msi
+*.exe
+*.pdb
+
+# Methos user workspace (never commit user working files)
+/Compilados/
+
+# Temporary diagnostics
+*.log
+*.tmp
+*.temp
