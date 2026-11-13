@@ -529,6 +529,30 @@ Console.WriteLine("PASS: OlympiadTargetWnd restores EnemyMPLost only when the fi
 
 
 
+string tradeWndShadowedTypeSample = """
+class TradeWnd extends UICommonAPI;
+function HandleTradeAddItem(string param)
+{
+    local ItemInfo ItemInfo;
+    local ItemInfo tempInfo;
+    ParamToItemInfo(param,ItemInfo);
+    tempInfo = ItemInfo;
+}
+""";
+string tradeWndShadowedTypeRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "TradeWnd", tradeWndShadowedTypeSample, out IReadOnlyList<string> tradeWndShadowRepairs);
+int tradeWndTempInfoDeclaration = tradeWndShadowedTypeRepaired.IndexOf(
+    "local ItemInfo tempInfo;", StringComparison.Ordinal);
+int tradeWndItemInfoDeclaration = tradeWndShadowedTypeRepaired.IndexOf(
+    "local ItemInfo ItemInfo;", StringComparison.Ordinal);
+Check(tradeWndShadowRepairs.Count == 1 &&
+      tradeWndTempInfoDeclaration >= 0 &&
+      tradeWndItemInfoDeclaration > tradeWndTempInfoDeclaration &&
+      tradeWndShadowedTypeRepaired.Contains("ParamToItemInfo(param,ItemInfo);", StringComparison.Ordinal) &&
+      tradeWndShadowedTypeRepaired.Contains("tempInfo = ItemInfo;", StringComparison.Ordinal),
+    "TradeWnd local declaration order was not repaired without changing the original variable names or references.");
+Console.WriteLine("PASS: TradeWnd declares the same-named type variable after other ItemInfo locals.");
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
