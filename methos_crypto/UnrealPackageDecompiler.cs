@@ -26,7 +26,7 @@ public sealed record UnrealNameReplacement(int Index, string SafeName, string Or
 public static class UnrealPackageDecompiler
 {
     public static UnrealPackageDecompileResult DecompileToFolder(
-        string packagePath, string outputDirectory, string? referenceSourceDirectory = null)
+        string packagePath, string outputDirectory, string? referenceSourceDirectory = null, string? nativeRegistryPath = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packagePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputDirectory);
@@ -117,6 +117,8 @@ public static class UnrealPackageDecompiler
                 // Normalize unreachable bare returns using tokenized function scope,
                 // including returns following switch/default branches.
                 source = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source).Source;
+                if (!string.IsNullOrWhiteSpace(nativeRegistryPath))
+                    source = UnrealScriptNativeFunctionNormalizer.Normalize(source, nativeRegistryPath, out _, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
                         source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
