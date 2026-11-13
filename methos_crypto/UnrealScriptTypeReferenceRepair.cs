@@ -320,7 +320,13 @@ public static class UnrealScriptTypeReferenceRepair
         {
             source = source.Replace("RecoveredName_2057", "MethosRecoveredName_2124", StringComparison.Ordinal);
             source = source.Replace("RecoveredName_2108", "MethosRecoveredName_2188", StringComparison.Ordinal);
+            source = source.Replace("RecoveredName_255(\"Logo Locked\")",
+                "AddSystemMessage(\"Logo Locked\", MethosRecoveredName_85(\"white\"))", StringComparison.Ordinal);
+            source = source.Replace("RecoveredName_255(\"Logo Unlocked\")",
+                "AddSystemMessage(\"Logo Unlocked\", MethosRecoveredName_85(\"white\"))", StringComparison.Ordinal);
             applied.Add("LogoWnd recovered handle/state references mapped to their declared fields");
+            if (source.Contains("AddSystemMessage(\"Logo Locked\"", StringComparison.Ordinal))
+                applied.Add("LogoWnd lock notifications mapped to inherited AddSystemMessage API");
         }
 
         if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
