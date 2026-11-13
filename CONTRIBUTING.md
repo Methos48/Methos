@@ -8,8 +8,8 @@ Methos es una sola aplicación de Windows. El usuario inicia un único `Methos.e
 
 - Repositorio único: `Methos48/Methos`
 - Rama de integración: `main` (única rama activa; ver [estado de ramas](docs/BRANCHES.md))
-- Aplicación: `src/MethosUEditor/`
-- Motor Unreal/UCC y protección: `src/MethosUEngine/`
+- Aplicación: `src/Methos.App/`
+- Motor Unreal/UCC y protección: `src/Methos.Engine/`
 - Motor y soporte XDAT: `tools/xdat/`
 - Pruebas: `tests/` y `tools/xdat/tests/`
 - Instalador único: `installer/Methos.iss`
@@ -26,7 +26,7 @@ Methos es una sola aplicación de Windows. El usuario inicia un único `Methos.e
 
 ## Motor único
 
-El proyecto de motor referenciado por la aplicación y las pruebas debe ser `src/MethosUEngine/MethosUEngine.csproj`. No crear otra copia del motor C# bajo una carpeta alternativa. Si se necesita una función nueva, incorporarla al motor canónico y actualizar sus pruebas.
+El proyecto de motor referenciado por la aplicación y las pruebas debe ser `src/Methos.Engine/Methos.Engine.csproj`. No crear otra copia del motor C# bajo una carpeta alternativa. Si se necesita una función nueva, incorporarla al motor canónico y actualizar sus pruebas.
 
 ## Integración XDAT
 

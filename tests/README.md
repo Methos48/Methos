@@ -2,8 +2,8 @@
 
 Esta carpeta contiene las pruebas automatizadas de los módulos y motores de Methos.
 
-- `MethosUEngine.Tests/`: pruebas unitarias del motor Unreal/UCC.
-- `ProtectionPipelineSmoke/`: pruebas de integración del motor Unreal/UCC y reconstrucción de paquetes; referencia `src/MethosUEngine/MethosUEngine.csproj`.
+- `Methos.Engine.Tests/`: pruebas unitarias del motor Unreal/UCC.
+- `ProtectionPipelineSmoke/`: pruebas de integración del motor Unreal/UCC y reconstrucción de paquetes; referencia `src/Methos.Engine/Methos.Engine.csproj`.
 - `ProtectionPlannerSmoke/`: pruebas rápidas del planificador de protección, codecs conocidos y rechazo seguro de formatos desconocidos.
 - Los archivos `test_*.py` validan el motor XDAT y se apoyan en `tools/xdat/` como ubicación canónica de imports.
 
