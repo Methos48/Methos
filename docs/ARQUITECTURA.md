@@ -25,12 +25,12 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 |---|---|
 | `src/MethosUEditor/` | Aplicación gráfica principal, navegación y conexión con los módulos. El nombre de carpeta/namespace conserva un identificador técnico histórico; el producto visible es Methos. |
 | `src/MethosUEngine/` | Motor de paquetes Unreal, UCC y herramientas de UnrealScript utilizadas por el módulo U. |
-| `tools/xdat/` | Motor XDAT Python y pruebas/utilidades relacionadas. |
+| `tools/xdat/` | Paquete de código XDAT mantenido: `xdat_core.py`, detección de cifrado, pipeline, metadatos de origen y validadores. Las adaptaciones del kit de Windows están en `tools/xdat/maintenance/`. El instalador todavía obtiene `xdat_core.py` del kit histórico; la migración completa del motor sigue pendiente. |
 | `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
 | `tools/xdat/xdat_core.py` | Código XDAT mantenido en el repositorio. Debe ser la fuente canónica una vez completada la migración del kit histórico. |
 | `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` (raíz) | Insumo heredado que el workflow Windows todavía extrae para copiar el motor XDAT y ejecutar sus pruebas. No es una segunda app, pero sí una duplicación pendiente de retirar después de migrar y validar todo su contenido en `tools/xdat/`. |
 | `methos_crypto/` | Copias históricas/experimentales de componentes del motor. No es el proyecto que compila la aplicación; el motor compilado por la app está en `src/MethosUEngine/`. No borrar ni sincronizar automáticamente sin comparar versiones y revisar workflows. |
-| `tests/` | Pruebas automatizadas de los componentes. |
+| `tests/` | Pruebas automatizadas U y XDAT. Las pruebas Python añaden `tools/xdat/` al camino de importación para que la fuente canónica no dependa de archivos en la raíz. |
 | `tools/` | Herramientas de diagnóstico, inspección y validación; no todas forman parte del producto distribuido. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
 | `docs/` | Documentación técnica, auditorías y resultados de investigación. |
@@ -39,7 +39,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 ## Archivos de entrada de compilación y referencias
 
-Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflows actuales todavía los consumen como insumos de compilación o pruebas. No moverlos ni eliminarlos hasta migrar sus consumidores a rutas canónicas y comprobar la compilación resultante. En particular, el ZIP histórico del kit XDAT todavía alimenta la compilación de lanzamiento; editar únicamente `tools/xdat/xdat_core.py` no garantiza que el instalador use esa versión hasta completar la migración.
+Los scripts de soporte XDAT ya no están en la raíz: su ubicación canónica es `tools/xdat/` y `tools/xdat/maintenance/`. Las pruebas Python permanecen bajo `tests/`. Algunos archivos ZIP y archivos de cliente permanecen en la raíz porque workflows actuales todavía los consumen como insumos de compilación o pruebas. No moverlos ni eliminarlos hasta migrar sus consumidores a rutas canónicas y comprobar la compilación resultante. En particular, el ZIP histórico del kit XDAT todavía alimenta la compilación de lanzamiento y aporta la aplicación fuente sobre la que se aplican las capas de mantenimiento. El instalador incorpora `xdat_core.py` del kit preparado; editar únicamente `tools/xdat/xdat_core.py` del repositorio no garantiza que el instalador use esa versión hasta completar la migración.
 
 Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
