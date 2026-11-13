@@ -39,13 +39,27 @@ public static class UnrealScriptTypeReferenceRepair
 
 
         if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains('ChatFilterBtn.SetTooltipCustomType(SetTooltip("Chat Filter\\\\nMouse R-Click: Hide Chat"));', StringComparison.Ordinal))
+            source.Contains("ChatFilterBtn.SetTooltipCustomType(SetTooltip(\"Chat Filter\\\\nMouse R-Click: Hide Chat\"));", StringComparison.Ordinal))
         {
             source = source.Replace(
-                'ChatFilterBtn.SetTooltipCustomType(SetTooltip("Chat Filter\\\\nMouse R-Click: Hide Chat"));',
-                'ChatFilterBtn.SetTooltipCustomType(MakeTooltipSimpleText("Chat Filter\\\\nMouse R-Click: Hide Chat"));',
+                "ChatFilterBtn.SetTooltipCustomType(SetTooltip(\"Chat Filter\\\\nMouse R-Click: Hide Chat\"));",
+                "ChatFilterBtn.SetTooltipCustomType(MakeTooltipSimpleText(\"Chat Filter\\\\nMouse R-Click: Hide Chat\"));",
                 StringComparison.Ordinal);
             applied.Add("ChatWnd tooltip uses inherited MakeTooltipSimpleText helper");
+        }
+
+        if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("ChatFilterBtn = ButtonHandle(", StringComparison.Ordinal) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\s*var\s+ButtonHandle\s+ChatFilterBtn\s*;"))
+        {
+            const string handleAnchor = "var EditBoxHandle ChatEditBox;";
+            if (source.Contains(handleAnchor, StringComparison.Ordinal))
+            {
+                source = source.Replace(handleAnchor,
+                    handleAnchor + Environment.NewLine + "var ButtonHandle ChatFilterBtn;",
+                    StringComparison.Ordinal);
+                applied.Add("ChatWnd.ChatFilterBtn missing ButtonHandle field restored");
+            }
         }
 
             source.Contains("ChatFilterBtn = ButtonHandle(", StringComparison.Ordinal) &&
