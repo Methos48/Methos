@@ -447,11 +447,11 @@ function OnLoad()
 """;
 string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
-Check(silentOverlayColorRepairs.Count == 0 &&
-      silentOverlayColorRepaired.Contains("RecoveredName_98(\"white\")", StringComparison.Ordinal) &&
+Check(silentOverlayColorRepairs.Count == 1 &&
+      silentOverlayColorRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
       !silentOverlayColorRepaired.Contains("MethosRecoveredName_85", StringComparison.Ordinal),
-    "Silent interface overlay's valid UICommonAPI Color helper call was altered.");
-Console.WriteLine("PASS: Silent interface overlay preserves its declared UICommonAPI Color helper.");
+    "Silent interface overlay textbox color call was not repaired with the correct two-argument API.");
+Console.WriteLine("PASS: Silent interface overlay textbox color call uses the declared two-argument API.");
 
 
 
