@@ -427,6 +427,24 @@ function onActiveTex(bool bActive, int nIndex)
             "GetClassIconCustom(", RegexOptions.IgnoreCase);
     }
 
+    // IsKeyDown consumes Interactions.EInputKey; restore the enum identifiers
+    // for the Win32-compatible ordinal values emitted by the bytecode decompiler.
+    private static string NormalizeInventoryKeyEnums(string className, string source)
+    {
+        if (!className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
+            !className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        source = Regex.Replace(source, @"IsKeyDown\s*\(\s*162\s*\)",
+            "IsKeyDown(EInputKey.IK_LControl)", RegexOptions.IgnoreCase);
+        source = Regex.Replace(source, @"IsKeyDown\s*\(\s*18\s*\)",
+            "IsKeyDown(EInputKey.IK_Alt)", RegexOptions.IgnoreCase);
+        source = Regex.Replace(source, @"IsKeyDown\s*\(\s*17\s*\)",
+            "IsKeyDown(EInputKey.IK_Ctrl)", RegexOptions.IgnoreCase);
+        source = Regex.Replace(source, @"IsKeyDown\s*\(\s*16\s*\)",
+            "IsKeyDown(EInputKey.IK_Shift)", RegexOptions.IgnoreCase);
+        return source;
+    }
+
     // InventoryWnd's recovered sort loop indexes m_itemOrder and compares its
     // entries with ItemInfo.ClassID. The omitted field is therefore an int array.
     private static string RestoreInventoryWndItemOrderArray(string className, string source,
@@ -490,7 +508,7 @@ function onActiveTex(bool bActive, int nIndex)
             return source;
         return Regex.Replace(source,
             @"(UIAPI_TEXTBOX'\.static\.SetAlign\([^,]+,\s*)2(\s*\))",
-            "$1TA_Center$2", RegexOptions.IgnoreCase);
+            "$1ETextAlign.TA_Center$2", RegexOptions.IgnoreCase);
     }
 
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
@@ -656,6 +674,7 @@ function onActiveTex(bool bActive, int nIndex)
                 source = RestoreInventoryWndItemOrderArray(className, source,
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
+                source = NormalizeInventoryKeyEnums(className, source);
                 source = RestoreInventoryWndEarItemArray(className, source,
                     out bool restoredEarItemArray);
                 if (restoredEarItemArray) repairedIdentifiers++;
