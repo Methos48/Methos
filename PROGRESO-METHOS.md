@@ -214,3 +214,14 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Se corrigieron los imports de las pruebas para cargar los módulos desde `tools/xdat/` y se configuró `XDAT_REFERENCE_ROOT` para las pruebas de reconstrucción.
 - El ZIP binario fue renombrado a `Methos-XDAT-Reference-Fixtures.zip` para reflejar su única función restante: conservar datos de prueba. No es parte del instalador ni del runtime.
 - **Pendiente de verificación:** GitHub Actions Windows Release debe finalizar con éxito para confirmar que los fixtures del ZIP tienen la estructura esperada y que todas las pruebas de Methos pasan. Hasta entonces, no se declara aprobada la nueva compilación.
+
+### 13-11-2026 — Cierre de dependencias del programa XDAT independiente
+
+- La compilación ya no extrae ni ejecuta el `app.py` de la aplicación histórica, ni parchea ese programa para convertirlo en Methos.
+- Se retiraron los scripts de overlay y comparación que solo existían para adaptar el antiguo programa: `apply_detection_layer.py`, `auto_pipeline_overlay.py` y `compare_build_kit.py`.
+- Se incorporó `prepare_reference_fixtures.py`, que solo extrae los datos necesarios para las pruebas XDAT (un `interface.xdat` y sus XML), valida la integridad CRC del ZIP y bloquea rutas de extracción inseguras.
+- El ZIP fue renombrado a `Methos-XDAT-Reference-Fixtures.zip`; queda como archivo de datos de prueba, no como kit de compilación, programa ni runtime. No se copia al instalador.
+- El workflow prueba directamente los módulos y tests mantenidos en el repositorio y copia al runtime de Methos únicamente `xdat_core.py` y el puente `XdatBridge.py`.
+- La comprobación del instalador ahora rechaza cualquier ejecutable independiente cuyo nombre contenga XDAT; el producto sigue siendo un solo `Methos.exe`.
+- **Alcance técnico que se conserva para la siguiente etapa:** el pipeline de detección/cifrado permanece como código interno y pruebas, pero todavía no está conectado al puente de la interfaz. No se debe afirmar que el runtime ya procesa todas las variantes cifradas; esta limpieza no altera esa limitación.
+- **Estado de validación:** la nueva ejecución Windows Release debe confirmar la extracción de fixtures, las pruebas de round-trip, la compilación, la instalación y el arranque. El cierre de esta migración se considera sujeto a ese resultado.
