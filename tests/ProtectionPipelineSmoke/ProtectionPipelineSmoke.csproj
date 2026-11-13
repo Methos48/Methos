@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/MethosUEngine/MethosUEngine.csproj" />
+    <ProjectReference Include="../../src/Methos.Engine/Methos.Engine.csproj" />
   </ItemGroup>
 </Project>

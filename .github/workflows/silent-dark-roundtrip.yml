@@ -7,8 +7,8 @@ on:
     paths:
       - "reference-data/packages/silent-dark/**"
       - ".github/workflows/silent-dark-roundtrip.yml"
-      - "src/MethosUEngine/**"
-      - "src/MethosUEngine/**"
+      - "src/Methos.Engine/**"
+      - "src/Methos.Engine/**"
       - "reference-data/ucc-runtime/System/**"
       - "tools/xdat/**"
   workflow_dispatch:
@@ -132,7 +132,7 @@ jobs:
         run: |
           $h = Join-Path $env:RUNNER_TEMP "MethosRoundTrip"
           New-Item -ItemType Directory -Force $h | Out-Null
-          $engine = (Resolve-Path "src\MethosUEngine\MethosUEngine.csproj").Path
+          $engine = (Resolve-Path "src\Methos.Engine\Methos.Engine.csproj").Path
           @"
           <Project Sdk="Microsoft.NET.Sdk">
             <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
@@ -140,7 +140,7 @@ jobs:
           </Project>
           "@ | Set-Content (Join-Path $h "RoundTrip.csproj")
           @'
-          using MethosUEngine;
+          using Methos.Engine;
           using UELib;
           using UELib.Core;
           var cli = Environment.GetCommandLineArgs().Skip(1).ToArray();

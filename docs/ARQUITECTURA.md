@@ -29,10 +29,10 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 
 | Ruta | Responsabilidad |
 |---|---|
-| `src/MethosUEditor/` | Aplicación gráfica principal, navegación y conexión con los módulos. El nombre de carpeta/namespace conserva un identificador técnico histórico; el producto visible es Methos. |
-| `src/MethosUEngine/` | Proyecto C# canónico del motor Unreal/UCC y de los codecs/protecciones, referenciado por la aplicación y las pruebas. |
+| `src/Methos.App/` | Aplicación gráfica principal Methos, navegación y conexión de los módulos U y XDAT. |
+| `src/Methos.Engine/` | Biblioteca interna C# del motor Unreal/UCC y codecs/protecciones, referenciada por Methos.App y las pruebas. |
 | `tools/xdat/` | Código y herramientas mantenidas del módulo XDAT: motor, detección de cifrado, pipeline, metadatos y validadores. Las adaptaciones del kit Windows están en `tools/xdat/maintenance/`; la migración total desde el kit histórico sigue pendiente. |
-| `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
+| `src/Methos.App/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
 | `tests/` | Pruebas automatizadas U, protección y XDAT. Las pruebas Python importan el código desde `tools/xdat/`. |
 | `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |

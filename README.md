@@ -11,7 +11,7 @@ Ambos módulos forman parte de la misma aplicación, la misma ventana principal 
 
 https://github.com/Methos48/Methos
 
-La rama activa es `main`. La arquitectura y las reglas de mantenimiento están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Consulta también el [mapa de workflows](docs/WORKFLOWS.md) y el [inventario de kits y referencias de prueba](docs/ROOT-REFERENCES.md).
+La rama activa es `main`. La arquitectura y auditoría de unificación están en `docs/ARQUITECTURA.md` y `docs/AUDITORIA-UNIFICACION.md`. La arquitectura y las reglas de mantenimiento están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Consulta también el [mapa de workflows](docs/WORKFLOWS.md) y el [inventario de kits y referencias de prueba](docs/ROOT-REFERENCES.md).
 
 ## Instalación
 
@@ -19,8 +19,8 @@ El lanzamiento oficial genera un único instalador Windows x64: `Methos-Setup.ex
 
 ## Estructura del proyecto
 
-- `src/MethosUEditor/` — aplicación gráfica principal Methos (nombre técnico histórico de la carpeta).
-- `src/MethosUEngine/` — motor único Unreal/UCC, codecs y protecciones.
+- `src/Methos.App/` — aplicación gráfica principal Methos.
+- `src/Methos.Engine/` — biblioteca interna del motor Unreal/UCC, codecs y protecciones.
 - `tools/xdat/` — código XDAT canónico, detección de cifrado, pipeline y metadatos; `tools/xdat/maintenance/` contiene las capas que preparan el kit de Windows. La integración total del motor desde esta carpeta sigue pendiente.
 - `tests/` — pruebas automatizadas.
 - `installer/Methos.iss` — único instalador del producto.
