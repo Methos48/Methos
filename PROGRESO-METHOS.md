@@ -1,9 +1,9 @@
 # METHOS — Registro de progreso
 
-**Última actualización:** 12-11-2026  
+**Última actualización:** 13-11-2026  
 **Proyecto:** Methos (editor de archivos de Lineage II Interlude)  
 **Repositorio de trabajo:** https://github.com/Methos48/Methos-XDAT  
-**Módulo complementario:** https://github.com/Methos48/Methos-XDAT
+**Repositorio único del proyecto:** https://github.com/Methos48/Methos-XDAT
 
 Este documento es la bitácora permanente del proyecto. Cada sesión de trabajo debe actualizarlo con cambios reales, pruebas ejecutadas, resultados, problemas pendientes y el siguiente paso. No marcar una tarea como terminada sin una prueba que lo demuestre.
 
@@ -14,6 +14,17 @@ Entregar una aplicación de Windows llamada **Methos**, instalable y con acceso 
 Flujo esperado: cargar archivo → copia de seguridad automática → descompilar/descifrar → editar → compilar/cifrar de nuevo → verificar el resultado.
 
 ## Registro de avances
+
+### 13-11-2026 — Unificación de repositorios en Methos
+
+- Se estableció `Methos-XDAT` como único repositorio activo del producto **Methos**.
+- Se migraron a la rama principal las fuentes de la aplicación gráfica, el motor Unreal/UCC, las pruebas .NET, el instalador, el kit UCC de Interlude, documentación y bitácora que estaban en `Methos-U-Editor`.
+- Se integraron también los componentes XDAT de la rama de investigación: detección de cifrado, pipeline, metadatos de origen y pruebas.
+- La aplicación conserva un único ejecutable de producto: `Methos.exe`; XDAT se integra como módulo interno.
+- Se separó el paquete Unreal de referencia en `reference-data/Interface-UEditor.u` para evitar la colisión de nombres entre `Interface.u` y `interface.u` en Windows.
+- GitHub Actions confirmó la migración de fuentes y la generación del archivo de fuentes. La primera validación UCC detectó que un workflow todavía apuntaba al `interface.u` de XDAT; se corrigió para usar el paquete Unreal de referencia. La validación posterior y la compilación Windows están pendientes de su resultado final.
+- **No se vació todavía `Methos-U-Editor`**: primero se terminará de verificar el instalador, las pruebas y los archivos migrados. Solo después se retirará el contenido del repositorio anterior.
+
 
 ### 12-11-2026 — Interfaz principal y presentación
 
