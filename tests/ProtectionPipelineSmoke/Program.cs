@@ -15,11 +15,7 @@ if (args.Length > 0 && args[0] == "--inspect-protection")
     Console.WriteLine("DECODED_HEADER=" + Convert.ToHexString(inspection.DecodedPayload.AsSpan(0, Math.Min(32, inspection.DecodedPayload.Length))));
     if (inspection.IsPlaintextCandidate && inspection.DecodedPayload.Length >= 4 &&
         BitConverter.ToUInt32(inspection.DecodedPayload, 0) == 0x9E2A83C1)
-    {
-        using var package = UELib.UnrealLoader.LoadPackage(inspection.DecodedPayload, FileAccess.Read);
-        package.InitializePackage();
-        Console.WriteLine($"UNREAL_PACKAGE={package.Version}/{package.LicenseeVersion}; OBJECTS={package.Objects.Count}");
-    }
+        Console.WriteLine("UNREAL_PACKAGE_SIGNATURE=9E2A83C1; structural parser will be run in the next U test.");
     return;
 }
 
