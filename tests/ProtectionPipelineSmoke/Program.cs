@@ -166,6 +166,36 @@ Check(inventoryCountRepairs.Count == 1 &&
     "InventoryWnd SetItemCount nested handle calls were not split into sequential assignments.");
 Console.WriteLine("PASS: InventoryWnd equipment count expression is normalized for UCC.");
 
+string inventoryHandleSample = """
+class InventoryWnd extends UICommonAPI;
+function InitHandle()
+{
+    InventoryItem_1 = "EquipItem_Underwearss";
+    RecoveredName_2802 = ItemWindowHandle(GetHandle("InventoryItem"));
+    RecoveredName_2803 = ItemWindowHandle(GetHandle("QuestItem"));
+    RecoveredName_2804 = ItemWindowHandle(GetHandle("EquipItem"));
+}
+function OnDropItemSource(string strTarget, ItemInfo Info)
+{
+    if((!((((((((Info.DragSrcName == "InventoryItem") || Info.DragSrcName == "QuestItem")) || Info.DragSrcName == InventoryItem_1)) || -1 != InStr(Info.DragSrcName, "EquipItem"))) || Info.DragSrcName == "PetInvenWnd")))
+    {
+        return;
+    }
+}
+""";
+string inventoryHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "InventoryWnd", inventoryHandleSample, out IReadOnlyList<string> inventoryHandleRepairs);
+Check(inventoryHandleRepairs.Count == 2 &&
+      inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2802;", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("if((!((((((((Info.DragSrcName", StringComparison.Ordinal),
+    "InventoryWnd missing state fields or malformed drag-source predicate were not repaired.");
+Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
