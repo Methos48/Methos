@@ -257,11 +257,13 @@ public static class UccCompiler
         if (!className.Equals("ActionWnd", StringComparison.OrdinalIgnoreCase))
             return source;
 
-        source = Regex.Replace(source, @"\\bint\\s*\\(\\s*Type\\s*\\)", match =>
+        int localRepairs = 0;
+        source = Regex.Replace(source, @"\bint\s*\(\s*Type\s*\)", match =>
         {
-            repairs++;
+            localRepairs++;
             return "Type";
         }, RegexOptions.IgnoreCase);
+        repairs = localRepairs;
         return source;
     }
 
