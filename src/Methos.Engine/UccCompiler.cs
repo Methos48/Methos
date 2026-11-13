@@ -804,9 +804,6 @@ function HandleHideLogo()
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
                 source = NormalizeInventoryKeyEnums(className, source);
-                source = RestoreOptionWndDualCountHandler(className, source,
-                    out bool restoredDualCountHandler);
-                if (restoredDualCountHandler) repairedIdentifiers++;
                 source = RestoreOptionWndReferenceHandlers(className, source, referenceSource,
                     out int restoredOptionWndHandlers);
                 repairedIdentifiers += restoredOptionWndHandlers;
