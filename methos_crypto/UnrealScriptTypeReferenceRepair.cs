@@ -321,7 +321,8 @@ public static class UnrealScriptTypeReferenceRepair
                 ("ItemWindowHandle", "RecoveredName_2802"),
                 ("ItemWindowHandle", "RecoveredName_2803"),
                 ("ItemWindowHandle", "RecoveredName_2804"),
-                ("string", "InventoryItem_1")
+                ("string", "InventoryItem_1"),
+                ("ButtonHandle", "TrashButton")
             };
             var declarations = new List<string>();
             foreach (var field in missingFields)
