@@ -561,14 +561,6 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add(className + " custom message calls preserved through UICommonAPI helper");
         }
 
-        if ((className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) ||
-             className.Equals("LoginCharSelectWnd", StringComparison.OrdinalIgnoreCase)) &&
-            source.Contains("RecoveredName_98(", StringComparison.Ordinal))
-        {
-            source = source.Replace("RecoveredName_98(", "MethosRecoveredName_85(", StringComparison.Ordinal);
-            applied.Add(className + " color-name helper mapped to Silent Dark inherited Color API");
-        }
-
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("GetHandle(\"LogoWnd\")", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
