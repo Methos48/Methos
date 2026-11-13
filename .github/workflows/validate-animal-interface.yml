@@ -133,6 +133,20 @@ jobs:
           $map = Join-Path $sourceRoot "methos_name_map.json"
           if (Test-Path -LiteralPath $map) { Select-String -LiteralPath $map -SimpleMatch -Pattern "InterfaceAI_KeySettingWnd" }
 
+      - name: Restore referenced Animal class missing from package decompilation
+        shell: pwsh
+        run: |
+          $className = "InterfaceAI_KeySettingWnd"
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "$className.uc"
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/$className.uc"
+          if (!(Test-Path -LiteralPath $referenceFile)) { throw "Exact reference class $className was not found." }
+          if (!(Test-Path -LiteralPath $sourceFile)) {
+            Copy-Item -LiteralPath $referenceFile -Destination $sourceFile
+            Write-Host "ANIMAL_RESTORED_REFERENCE_CLASS=$className"
+          } else {
+            Write-Host "ANIMAL_REFERENCE_CLASS_ALREADY_PRESENT=$className"
+          }
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
