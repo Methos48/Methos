@@ -15,17 +15,18 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Estado actual y regla de arquitectura (13-11-2026)
 
-- **Producto:** una sola aplicación Windows llamada Methos, con los módulos ARCHIVOS U y ARCHIVOS XDAT dentro de la misma interfaz.
-- **Distribución:** un solo ejecutable principal `Methos.exe` y un solo instalador `Methos-Setup.exe`; no se distribuyen aplicaciones independientes U/XDAT.
-- **Proyectos canónicos:** `src/Methos.App/Methos.App.csproj` y `src/Methos.Engine/Methos.Engine.csproj`. El motor es una biblioteca interna, no un segundo producto.
-- **Código XDAT:** `tools/xdat/xdat_core.py` es la fuente canónica del parser/compilador. El runtime copia ese archivo y `src/Methos.App/XdatBridge.py`; las pruebas se ejecutan desde el repositorio.
-- **Fixtures XDAT:** `reference-data/kits/Methos-XDAT-Reference-Fixtures.zip` contiene únicamente paquetes binarios/XML de referencia. El workflow extrae solo `interface.xdat` y los XML necesarios; no extrae ni ejecuta la antigua interfaz `app.py`, ni distribuye `l2encdec.exe`.
-- **Limpieza estructural:** se retiraron `methos_crypto/`, los proyectos/rutas heredados `MethosUEditor` y `MethosUEngine`, y los antiguos overlays `tools/xdat/maintenance/`. La estructura activa mantiene un solo motor C# y una sola fuente XDAT.
-- **Validación Windows:** [Windows Release 43401463785](https://github.com/Methos48/Methos/actions/runs/43401463785) terminó en **SUCCESS (27 pasos)**. Generó el instalador, probó instalación silenciosa y arranque de `Methos.exe`. Artefacto `Methos-Windows-Installer-x64`, ID `14024748596`, tamaño 77,768,945 bytes.
-- **Archivo limpio de fixtures:** el workflow generó `Methos-XDAT-Reference-Fixtures-Clean`, ID `14025406957`, tamaño 472,410 bytes, y lo normalizó en `main`.
-- **Límite funcional pendiente:** `auto_pipeline.py` se conserva como módulo fuente y tiene pruebas, pero todavía no está conectado al puente C# de la interfaz. No afirmar que el runtime actual procesa todas las variantes cifradas ni que usa `l2encdec.exe`.
-- **Incidencia UCC separada:** el workflow `Silent Dark U and XDAT round-trip` falla en la compilación U por `InventoryWnd.uc(1529): Error, Missing function name`. El mismo error aparece en una ejecución anterior a la unificación (run `43400534612`), por lo que no lo introduce esta limpieza. Debe tratarse como un problema funcional del compilador/fuente U; ese workflow aborta antes de llegar a la fase XDAT.
-- **Conclusión:** la unificación estructural y la distribución de un solo Methos están integradas y validadas por Windows Release. La siguiente etapa es resolver la incidencia UCC y validar recorridos funcionales reales U y XDAT, sin añadir capacidades no probadas.
+- **Producto:** una sola aplicación Windows llamada Methos, con ARCHIVOS U y ARCHIVOS XDAT como módulos internos.
+- **Distribución:** un solo ejecutable principal Methos.exe y un solo instalador Methos-Setup.exe.
+- **Proyectos canónicos:** src/Methos.App/Methos.App.csproj y src/Methos.Engine/Methos.Engine.csproj. El motor es una biblioteca interna.
+- **XDAT:** tools/xdat/xdat_core.py es el parser/compilador de estructura; la protección se procesa en C# mediante ProtectionPipelinePlanner y ProtectionCodecRuntime antes y después del puente XdatBridge.
+- **Protección integrada:** SmartCrypt 1.5.2.2, Lineage2Ver111 con trailer personalizado y Lineage2Ver413 estándar tienen codecs activos. El soporte de ActiveAntiCheat requiere un perfil de clave coincidente; otros protocolos reconocidos siguen bloqueados hasta implementar y validar su codec.
+- **Límite verificado:** el sample real Dunk3l interface.xdat pasa round-trip exacto SmartCrypt 1.5.2.2 + Lineage2Ver111. El workflow no tiene un fixture real protegido .u; no se afirma cobertura real U equivalente.
+- **Nombres Unreal:** el flujo principal y UnrealPackageDecompiler usan UnrealNameSanitizer; los identificadores temporales se registran en methos_name_map.json y se restauran en el paquete después de UCC. El mapa también se conserva en la caché de fuentes.
+- **Branches:** el usuario eliminó las cinco ramas históricas. La consulta posterior confirmó que main es la única rama restante.
+- **Windows Release:** el commit 085126db72136fc1390f3dbedc42fad6993615cb pasó la validación Windows Release. Hay otra ejecución sobre el commit 3e79ac103e8bffff1a00d617029a892f85e6c2c2 en curso al redactar este bloque.
+- **Source Archive:** la generación del archivo de fuentes terminó correctamente en el commit 3e79ac103e8bffff1a00d617029a892f85e6c2c2.
+- **Silent Dark:** el nuevo workflow descompila el paquete original con Methos y exporta 169/169 clases sin errores. UCC encuentra una declaración duplicada de RecoveredName_2070 en DamageLiteAni.uc ([29] y [28]); la metadata del paquete muestra una sola propiedad de clase con ArrayDim=28. Se está comparando la salida UELib cruda con la fuente final para localizar el origen del duplicado.
+- **Conclusión:** la unificación estructural y el pipeline de protección limitado están integrados. La compilación completa de Silent Dark continúa abierta; no declarar terminado ese recorrido hasta resolver el duplicado y validar el round-trip.
 
 ## Registro de avances
 
@@ -68,7 +69,9 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
   - `05d379e99ad500432017f0d3cf973a57cc74d8ff` — normalización de la ruta del icono.
 - **Estado de verificación:** estos cambios visuales están guardados en GitHub, pero todavía no se debe afirmar que la última versión compila o instala correctamente hasta revisar el resultado de GitHub Actions correspondiente a esos cambios.
 
-### Base técnica ya incorporada (estado conocido antes de esta actualización)
+### Notas técnicas históricas anteriores a la integración actual
+
+Este bloque conserva el estado de una etapa anterior; sus pendientes sobre integración de cifrado ya fueron superados por el estado actual descrito arriba.
 
 - La aplicación Windows integra los módulos ARCHIVOS U y ARCHIVOS XDAT bajo el producto Methos. Aunque el motor XDAT pueda ejecutarse como proceso auxiliar interno, para el usuario es una sola aplicación y un único flujo de trabajo.
 - El flujo U inspecciona las capas de protección antes de permitir el procesamiento y bloquea los casos en los que no puede garantizar una decodificación/codificación completa.
@@ -78,11 +81,12 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Pendientes prioritarios
 
-1. **Resolver la incidencia UCC conocida:** investigar `InventoryWnd.uc(1529): Missing function name` en el workflow Silent Dark; comparar el archivo de entrada, la salida reparada y el diagnóstico del compilador.
-2. **Validar ARCHIVOS U con paquetes reales:** copia de seguridad, descompilación, importación, compilación y round-trip sin modificar originales.
-3. **Validar ARCHIVOS XDAT con archivos reales:** paquetes ct0 limpios y editados, preservación binaria y verificación del resultado.
-4. **Mantener explícito el alcance de cifrado:** `auto_pipeline.py` no está conectado a la interfaz C#; integrar variantes protegidas solo después de validar el motor y su dependencia, sin afirmar soporte no probado.
-5. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
+1. **Localizar el duplicado de DamageLiteAni:** comparar la salida cruda de UELib con la fuente final y con la metadata de la propiedad RecoveredName_2070.
+2. **Corregir la exportación sin alterar el comportamiento:** evitar la declaración duplicada o recuperar la distinción correcta de propiedades antes de UCC.
+3. **Completar el round-trip Silent Dark:** compilar y volver a descompilar las 169 clases, verificando las tablas del paquete y la restauración de nombres.
+4. **Ampliar pruebas de protección U:** incorporar un fixture real protegido .u y validar el mismo flujo reversible que ya se comprobó con .xdat.
+5. **Ampliar protocolos cifrados solo con evidencia:** implementar otras variantes después de verificar algoritmo, claves, trailers y round-trip real.
+6. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
 
 ## Reglas para continuar el trabajo
 
@@ -96,7 +100,7 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Próxima acción
 
-Con la migración y la compilación automatizada confirmadas, continuar la validación funcional de ambos módulos dentro de Methos: primero recorrido U y después XDAT, conservando pruebas, fixtures y archivos originales.
+Comparar la salida UELib cruda y la fuente final de DamageLiteAni.uc para identificar quién introduce la segunda declaración de RecoveredName_2070. Corregir solo esa transformación y repetir la compilación UCC.
 
 ### 12-11-2026 — Instalador Methos Windows x64 generado y probado
 
