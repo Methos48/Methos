@@ -831,6 +831,10 @@ function int Convert(string curChar)
 {
     return UnknownFunction237(curChar);
 }
+function string UnknownFunction112(string left, string right)
+{
+    return (left $ right);
+}
 function string Join(string left, string right)
 {
     return UnknownFunction112(left, right);
@@ -865,6 +869,7 @@ try
           unresolvedNativeCalls == 1 &&
           nativeFunctionNormalized.Contains("return Asc(curChar);", StringComparison.Ordinal) &&
           nativeFunctionNormalized.Contains("return (left $ right);", StringComparison.Ordinal) &&
+          nativeFunctionNormalized.Contains("function string UnknownFunction112(string left, string right)", StringComparison.Ordinal) &&
           nativeFunctionNormalized.Contains("UnknownFunction999(1)", StringComparison.Ordinal) &&
           nativeFunctionNormalized.Contains("\"UnknownFunction237(not code) __NFUN_112__(left,right)\"", StringComparison.Ordinal) &&
           nativeFunctionNormalized.Contains("// UnknownFunction237(comment only)", StringComparison.Ordinal),
