@@ -560,6 +560,29 @@ Check(dunk3lSystemBarRepairs.Count == 1 &&
     "Dunk3l SystemBarWnd recovered handles and state were not reconciled.");
 Console.WriteLine("PASS: Dunk3l SystemBarWnd fields are reconciled to declared handles and state.");
 
+string dunk3lSystemMsgSample = """
+class SystemMsgWnd extends UICommonAPI;
+var private ChatWindowHandle MethosRecoveredName_4596;
+var private ChatWindowHandle MethosRecoveredName_4597;
+var private ChatWindowHandle MethosRecoveredName_4598;
+function OnEnterState(name a_PrevStateName)
+{
+    RecoveredName_4557.Clear();
+    RecoveredName_4558.Clear();
+    RecoveredName_4559.Clear();
+}
+""";
+string dunk3lSystemMsgRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "SystemMsgWnd", dunk3lSystemMsgSample, out IReadOnlyList<string> dunk3lSystemMsgRepairs);
+Check(dunk3lSystemMsgRepairs.Count == 1 &&
+      dunk3lSystemMsgRepaired.Contains("MethosRecoveredName_4596.Clear()", StringComparison.Ordinal) &&
+      dunk3lSystemMsgRepaired.Contains("MethosRecoveredName_4597.Clear()", StringComparison.Ordinal) &&
+      dunk3lSystemMsgRepaired.Contains("MethosRecoveredName_4598.Clear()", StringComparison.Ordinal) &&
+      !dunk3lSystemMsgRepaired.Contains("RecoveredName_4557", StringComparison.Ordinal),
+    "Dunk3l SystemMsgWnd clear calls were not rebound to their declared chat handles.");
+Console.WriteLine("PASS: Dunk3l SystemMsgWnd clear calls use declared chat handles.");
+
+
 
 
 
