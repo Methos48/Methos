@@ -1,0 +1,76 @@
+name: Migrar Methos U Editor al repositorio unificado
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/migrate-unified.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout del repositorio Methos-XDAT
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Descargar el repositorio anterior como origen de migración
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/Methos48/Methos-U-Editor.git source-ueditor
+          if (!(Test-Path "source-ueditor/src/MethosUEditor/MethosUEditor.csproj")) {
+            throw "No se encontró el proyecto gráfico Methos en el repositorio de origen."
+          }
+
+      - name: Integrar fuentes, pruebas, instalador, kit UCC y documentación
+        shell: pwsh
+        run: |
+          $source = Join-Path $PWD "source-ueditor"
+          foreach ($relative in @("src", "tests/MethosUEngine.Tests", "tools/PackageProbe", "tools/ProtectionPipelineSmoke", "installer")) {
+            $from = Join-Path $source $relative
+            if (Test-Path -LiteralPath $from) {
+              $to = Join-Path $PWD $relative
+              New-Item -ItemType Directory -Force (Split-Path $to) | Out-Null
+              Copy-Item -LiteralPath $from -Destination $to -Recurse -Force
+            }
+          }
+
+          New-Item -ItemType Directory -Force "docs/methos-ueditor" | Out-Null
+          if (Test-Path (Join-Path $source "docs")) {
+            Copy-Item (Join-Path $source "docs/*") "docs/methos-ueditor/" -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Force ".github/workflows" | Out-Null
+          foreach ($workflow in @("windows-build.yml", "windows-release.yml", "validate-ucc-compiler.yml", "source-archive.yml")) {
+            $from = Join-Path $source ".github/workflows/$workflow"
+            if (Test-Path -LiteralPath $from) {
+              Copy-Item -LiteralPath $from -Destination ".github/workflows/$workflow" -Force
+            }
+          }
+
+          foreach ($file in @("README-ES.txt", "PROGRESO-METHOS.md", "THIRD-PARTY-NOTICES.txt", "Interface.u", "Carpeta interface.u.zip", "Carpeta interface.xdat.zip", "Compilador  U.zip")) {
+            $from = Join-Path $source $file
+            if (Test-Path -LiteralPath $from) {
+              Copy-Item -LiteralPath $from -Destination (Join-Path $PWD $file) -Force
+            }
+          }
+
+          foreach ($required in @("src/MethosUEditor/MethosUEditor.csproj", "src/MethosUEngine/MethosUEngine.csproj", "Compilador  U.zip")) {
+            if (!(Test-Path -LiteralPath $required)) { throw "Falta contenido migrado: $required" }
+          }
+          Write-Host "MIGRATION_CONTENT_CHECK=PASSED"
+
+      - name: Registrar la migración en Git
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src tests tools installer docs/methos-ueditor .github/workflows/windows-build.yml .github/workflows/windows-release.yml .github/workflows/validate-ucc-compiler.yml .github/workflows/source-archive.yml README-ES.txt PROGRESO-METHOS.md THIRD-PARTY-NOTICES.txt Interface.u "Carpeta interface.u.zip" "Carpeta interface.xdat.zip" "Compilador  U.zip"
+          git commit -m "Migrate Methos U Editor into unified Methos repository"
+          git push origin HEAD:main
