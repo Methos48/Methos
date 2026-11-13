@@ -110,6 +110,8 @@ public static class UnrealPackageDecompiler
                     }
                 }
 
+                source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
+
                 string destination = Path.Combine(output, safeName + ".uc");
                 File.WriteAllText(destination, source, new UTF8Encoding(false));
                 exported++;
