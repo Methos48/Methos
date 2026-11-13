@@ -624,7 +624,7 @@ public static class UnrealScriptTypeReferenceRepair
             for (int i = 0; i < fieldMappings.GetLength(0); i++)
                 source = Regex.Replace(source, @"\b" + fieldMappings[i, 0] + @"\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
             if (source.Contains("txt_ExpBarPercentValue = TextBoxHandle(GetHandle(\"SystemBarWnd.ExpText\"))", StringComparison.Ordinal) &&
-                !Regex.IsMatch(source, @"(?im)^\\s*var(?:\\s+private)?\\s+TextBoxHandle\\s+txt_ExpBarPercentValue\\s*;", RegexOptions.CultureInvariant))
+                !Regex.IsMatch(source, @"(?im)^\s*var(?:\s+private)?\s+TextBoxHandle\s+txt_ExpBarPercentValue\s*;", RegexOptions.CultureInvariant))
             {
                 source = source.Replace(
                     "var string m_WindowName;",
