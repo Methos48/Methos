@@ -1,6 +1,6 @@
 # Workflows de Methos
 
-Los workflows son automatizaciones de mantenimiento y validación. No son aplicaciones independientes ni instaladores separados.
+Los workflows son automatizaciones de mantenimiento, investigación y validación. No son aplicaciones independientes ni instaladores separados.
 
 ## Distribución del producto
 
@@ -15,16 +15,16 @@ Los workflows son automatizaciones de mantenimiento y validación. No son aplica
 ## XDAT y cliente
 
 - `inspect-xdat.yml`, `silent-dark-roundtrip.yml`, `protection-pipeline-smoke.yml`: inspección y pruebas de ida/vuelta U/XDAT.
-- `inspect-client.yml`, `inspect-runtime.yml`, `analyze-npkscrypt.yml`, `npkscrypt-*.yml`, `smartcrypt-*.yml`: investigación y captura de evidencia del cliente/protecciones.
+- `inspect-client.yml`, `inspect-runtime.yml`, `analyze-npkscrypt.yml`, `npkscrypt-*.yml`, `smartcrypt-*.yml`: investigación y captura de evidencia del cliente y sus protecciones.
 
 ## Archivo de fuentes
 
-- `source-archive.yml`: genera el archivo de fuentes del repositorio.
+- `source-archive.yml`: genera el archivo de fuentes del único repositorio oficial.
 
 ## Reglas
 
 1. Solo `windows-release.yml` distribuye Methos como producto.
-2. Los workflows de investigación pueden generar artefactos diagnósticos; no deben publicar un segundo ejecutable o instalador de XDAT.
-3. Todos los workflows deben usar el repositorio `Methos48/Methos`; no hacer checkout del antiguo repositorio `Methos-U-Editor`.
+2. Los workflows de investigación pueden generar artefactos diagnósticos; no deben publicar un segundo ejecutable o instalador para XDAT.
+3. Todos los workflows deben trabajar desde `Methos48/Methos`; no incorporar checkouts de repositorios históricos.
 4. Los insumos binarios se mueven solo tras actualizar rutas y verificar hashes.
-5. Una prueba fallida debe quedar identificada como tal; no ocultarla ni declarar que el producto está validado por una compilación exitosa aislada.
+5. Una prueba fallida debe quedar identificada como tal; no ocultarla ni declarar el producto validado por una compilación exitosa aislada.
