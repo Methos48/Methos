@@ -169,6 +169,7 @@ jobs:
                   throw new InvalidDataException($"Silent Dark package cannot be decoded safely: {inspection.Plan.Status}; {inspection.Plan.Explanation}");
               string plainPath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-" + Guid.NewGuid().ToString("N") + ".u");
               string registryPath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-Natives-" + Guid.NewGuid().ToString("N") + ".json");
+              string rawDamagePath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-DamageLiteAni-Raw-" + Guid.NewGuid().ToString("N") + ".uc");
               try {
                   File.WriteAllBytes(plainPath, inspection.DecodedPayload);
                   using (var metadataPackage = UnrealLoader.LoadPackage(plainPath, FileAccess.Read)) {
@@ -196,11 +197,13 @@ jobs:
                       var rawDamage = rawPackage.Objects.OfType<UClass>()
                           .FirstOrDefault(item => string.Equals(item.Name?.ToString(), "DamageLiteAni", StringComparison.OrdinalIgnoreCase));
                       if (rawDamage != null)
-                          File.WriteAllText(Path.Combine(cli[3], "DamageLiteAni-raw.uc"), rawDamage.Decompile());
+                          File.WriteAllText(rawDamagePath, rawDamage.Decompile());
                   }
                   NativeFunctionRegistryBuilder.Build(cli[1], registryPath);
                   var result = UnrealPackageDecompiler.DecompileToFolder(
                       plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
+                  if (File.Exists(rawDamagePath))
+                      File.Copy(rawDamagePath, Path.Combine(cli[3], "DamageLiteAni-raw.uc"), overwrite: true);
                   Console.WriteLine($"UELIB_DECOMPILE classes={result.ClassCount} exported={result.ExportedCount} failed={result.FailedCount} sanitizedNames={result.SanitizedNameCount}");
                   foreach (string error in result.Errors.Take(20)) Console.WriteLine("DECOMPILE_WARNING " + error);
                   if (result.ExportedCount < 100 || result.FailedCount > 0)
@@ -208,6 +211,7 @@ jobs:
               } finally {
                   if (File.Exists(plainPath)) File.Delete(plainPath);
                   if (File.Exists(registryPath)) File.Delete(registryPath);
+                  if (File.Exists(rawDamagePath)) File.Delete(rawDamagePath);
               }
           } else throw new ArgumentException("Unknown mode");
           '@ | Set-Content (Join-Path $h "Program.cs")
