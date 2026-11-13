@@ -40,6 +40,76 @@ public static class UnrealScriptKnownNativeOperatorRepair
     }
 
     /// <summary>
+    /// Restores the verified native 122 equality operator. UELib exposes this
+    /// native as a synthetic call; Interlude UCC requires the UnrealScript == operator.
+    /// </summary>
+    public static string RepairKnownNativeEqualityOperators(string source, out int replacements)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        replacements = 0;
+        return RepairEqualitySegment(source, ref replacements);
+    }
+
+    private static string RepairEqualitySegment(string source, ref int replacements)
+    {
+        const string marker = "__NFUN_122__";
+        var output = new System.Text.StringBuilder(source.Length);
+        int i = 0;
+        while (i < source.Length)
+        {
+            char c = source[i];
+            char next = i + 1 < source.Length ? source[i + 1] : '\0';
+            if (c == '/' && next == '/')
+            {
+                int lineEnd = source.IndexOf('\n', i);
+                if (lineEnd < 0) lineEnd = source.Length;
+                output.Append(source, i, lineEnd - i);
+                i = lineEnd;
+                continue;
+            }
+            if (c == '/' && next == '*')
+            {
+                int commentEnd = source.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                int end = commentEnd < 0 ? source.Length : commentEnd + 2;
+                output.Append(source, i, end - i);
+                i = end;
+                continue;
+            }
+            if (c is '"' or '\'')
+            {
+                char quote = c;
+                int literalStart = i++;
+                while (i < source.Length)
+                {
+                    if (source[i] == '\\') { i += Math.Min(2, source.Length - i); continue; }
+                    if (source[i++] == quote) break;
+                }
+                output.Append(source, literalStart, i - literalStart);
+                continue;
+            }
+            if (source.AsSpan(i).StartsWith(marker, StringComparison.Ordinal) &&
+                i + marker.Length < source.Length && source[i + marker.Length] == '(' &&
+                TryFindUnaryCallEnd(source, i + marker.Length, out int close, out int comma) &&
+                comma >= 0)
+            {
+                string left = RepairEqualitySegment(
+                    source.Substring(i + marker.Length + 1, comma - (i + marker.Length + 1)),
+                    ref replacements);
+                string right = RepairEqualitySegment(
+                    source.Substring(comma + 1, close - comma - 1),
+                    ref replacements);
+                output.Append('(').Append(left.Trim()).Append(" == ").Append(right.Trim()).Append(')');
+                replacements++;
+                i = close + 1;
+                continue;
+            }
+            output.Append(source[i]);
+            i++;
+        }
+        return output.ToString();
+    }
+
+    /// <summary>
     /// Restores the verified UnrealScript native boolean-negation operator (native 129).
     /// UELib emits it as __NFUN_129__(expression); Interlude UCC expects !expression.
     /// Nested native calls are transformed recursively, while strings and comments are preserved.
