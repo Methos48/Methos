@@ -316,12 +316,12 @@ public static class UccCompiler
         return source;
     }
 
-    // Some reference-only ShortcutWnd functions name a removed key-settings
-    // script. Berserker's package contains NPHRN_KeyWnd with the matching panel
-    // and apply routine; redirect the stale references to that present script.
+    // Berserker's ShortcutWnd references NPHRN_KeyWnd, which is present in that
+    // package. Do not rewrite the stock Interlude ShortcutWnd when that script is absent.
     private static string NormalizeShortcutWndKeySettingReference(string className, string source)
     {
-        if (!className.Equals("ShortcutWnd", StringComparison.OrdinalIgnoreCase))
+        if (!className.Equals("ShortcutWnd", StringComparison.OrdinalIgnoreCase) ||
+            !Regex.IsMatch(source, @"(?im)^\\s*var\\s+NPHRN_KeyWnd\\s+NPHRN_KeyWnd\\s*;"))
             return source;
         source = source.Replace("InterfaceAI_KeySettingWnd", "NPHRN_KeyWnd",
             StringComparison.OrdinalIgnoreCase);
