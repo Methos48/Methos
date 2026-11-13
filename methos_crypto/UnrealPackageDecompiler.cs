@@ -42,14 +42,6 @@ public static class UnrealPackageDecompiler
 
         Directory.CreateDirectory(output);
         using var package = UnrealLoader.LoadPackage(input, FileAccess.Read);
-        foreach (int recoveredIndex in new[] { 1266, 1435, 1455, 1467 })
-        {
-            string nameEntry = recoveredIndex < package.Names.Count
-                ? package.Names[recoveredIndex].Name ?? string.Empty : "<out-of-range>";
-            string objectEntry = recoveredIndex < package.Objects.Count
-                ? package.Objects[recoveredIndex].Name?.ToString() ?? string.Empty : "<out-of-range>";
-            Console.WriteLine($"METHOS_RECOVERED_LOOKUP index={recoveredIndex} name={nameEntry} object={objectEntry}");
-        }
 
         // Some protected UE2 interfaces deliberately use control characters,
         // punctuation and empty FNames as UnrealScript identifiers. UELib can
