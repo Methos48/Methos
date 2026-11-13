@@ -357,6 +357,16 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal))
+        {
+            source = source.Replace(
+                "UnknownFunction112(UnknownFunction112(\"\"\",",
+                "UnknownFunction112(UnknownFunction112(Chr(34),",
+                StringComparison.Ordinal);
+            applied.Add("PartyMatchOutWaitListWnd quote literal normalized to Chr(34) for UCC");
+        }
+
         if (className.Equals("TradeWnd", StringComparison.OrdinalIgnoreCase))
         {
             var tradeFunction = UnrealScriptSourceIndex.ParseFunctions(source)
