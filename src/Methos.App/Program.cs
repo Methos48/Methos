@@ -849,6 +849,7 @@ internal sealed class MainForm : Form
             try
             {
                 var source = obj.Decompile();
+                source = UnrealScriptSourceIndex.CommentDecompilerStackTraceLines(source);
                 source = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
                 string nativeRegistryPath = Path.Combine(UccRuntimeRoot, "native-function-registry.json");
                 try
