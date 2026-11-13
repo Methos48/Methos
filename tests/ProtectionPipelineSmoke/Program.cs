@@ -221,6 +221,29 @@ Check(inventoryHandleRepairs.Count == 5 &&
 Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
 
 
+string autoBuffItemCountSample = """
+class AutoBuffWnd extends UICommonAPI;
+function int getItemCount(int ItemID)
+{
+    if(UnknownFunction154(Info.ItemNum, SkillID))
+    {
+        return 1;
+    }
+    return 0;
+}
+function TryUseSkill(int SkillID)
+{
+    UseSkill(SkillID);
+}
+""";
+string autoBuffItemCountRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "AutoBuffWnd", autoBuffItemCountSample, out IReadOnlyList<string> autoBuffItemCountRepairs);
+Check(autoBuffItemCountRepairs.Count == 1 &&
+      autoBuffItemCountRepaired.Contains("UnknownFunction154(Info.ItemNum, ItemID)", StringComparison.Ordinal) &&
+      autoBuffItemCountRepaired.Contains("UseSkill(SkillID)", StringComparison.Ordinal),
+    "AutoBuffWnd.getItemCount did not use its declared ItemID parameter.");
+Console.WriteLine("PASS: AutoBuffWnd.getItemCount references its declared ItemID parameter.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
