@@ -594,6 +594,17 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
         }
 
+        if (className.Equals("UISublimityCommonAPI", StringComparison.OrdinalIgnoreCase) &&
+            Regex.IsMatch(source, @"Class'Methos-Dunk3l-[0-9a-fA-F]+\\.SublimityTimerActor'", RegexOptions.CultureInvariant))
+        {
+            source = Regex.Replace(
+                source,
+                @"Class'Methos-Dunk3l-[0-9a-fA-F]+\\.SublimityTimerActor'",
+                "Class'Interface.SublimityTimerActor'",
+                RegexOptions.CultureInvariant);
+            applied.Add("Dunk3l timer actor package reference restored to the Interface package");
+        }
+
         if (className.Equals("StatusWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("MethosRecoveredName_408(", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_98(\"orange\")", StringComparison.Ordinal))
