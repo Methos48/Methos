@@ -1,0 +1,50 @@
+name: Berserker final U source validation
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - ".github/workflows/berserker-final-u-validation.yml"
+      - "tests/BerserkerUValidation/**"
+      - "src/Methos.Engine/**"
+      - "reference-data/packages/berserker/Interface.u"
+      - "reference-data/kits/Compilador-U.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/dunk3l-edit-roundtrip
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Extract Interlude UCC runtime
+        shell: pwsh
+        run: |
+          Expand-Archive -LiteralPath "reference-data/kits/Compilador-U.zip" -DestinationPath "$env:RUNNER_TEMP/ucc-kit" -Force
+          $kit = Join-Path $env:RUNNER_TEMP "ucc-kit/Compilador  U"
+          if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "Interlude UCC runtime is incomplete." }
+          "UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Resolve native calls, modify, compile and reopen Berserker Interface.u
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "Berserker-Final-U"
+          if (Test-Path $root) { Remove-Item $root -Recurse -Force }
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          dotnet run --project tests/BerserkerUValidation/BerserkerUValidation.csproj --configuration Release -- $env:UCC_ROOT (Join-Path $PWD "reference-data/packages/berserker/Interface.u") $root (Join-Path $root "Output/Interface.u")
+          if ($LASTEXITCODE -ne 0) { throw "Berserker final U validation failed." }
+      - name: Upload final U validation and sources
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Berserker-Final-U-Validation
+          path: ${{ runner.temp }}/Berserker-Final-U
+          if-no-files-found: warn
+          retention-days: 14
