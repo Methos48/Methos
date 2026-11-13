@@ -252,7 +252,9 @@ public static class UccCompiler
                 File.Copy(file, Path.Combine(stagedSystem, Path.GetFileName(file)), overwrite: true);
 
             int repairedIdentifiers = 0;
+            int recoveredControlIdentifiers = 0;
             int skippedTrailingReturnFiles = 0;
+            var stagedSourceDiagnostics = new List<string>();
             foreach (string file in sourceFiles)
             {
                 string source = File.ReadAllText(file, Encoding.Default);
@@ -263,12 +265,27 @@ public static class UccCompiler
                     {
                         source = source.Replace(pair.Key.ToString(), pair.Value);
                         repairedIdentifiers += count;
+                        recoveredControlIdentifiers += count;
                     }
                 }
                 int controlCharactersBefore = source.Count(char.IsControl);
                 source = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
                 int controlCharactersAfter = source.Count(char.IsControl);
-                repairedIdentifiers += Math.Max(0, controlCharactersBefore - controlCharactersAfter);
+                int genericControlRepairs = Math.Max(0, controlCharactersBefore - controlCharactersAfter);
+                repairedIdentifiers += genericControlRepairs;
+                recoveredControlIdentifiers += genericControlRepairs;
+                if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
+                    for (int lineIndex = 0; lineIndex < diagnosticLines.Length; lineIndex++)
+                    {
+                        string diagnosticLine = diagnosticLines[lineIndex];
+                        if (diagnosticLine.Contains("MethosRecovered", StringComparison.Ordinal) ||
+                            (diagnosticLine.Contains("function", StringComparison.OrdinalIgnoreCase) &&
+                             diagnosticLine.Any(ch => char.IsControl(ch) && ch is not '\r' and not '\n' and not '\t')))
+                            stagedSourceDiagnostics.Add($"InventoryWnd.uc:{lineIndex + 1}: {diagnosticLine}");
+                    }
+                }
                 source = NormalizeRecoveredStructOrder(source, out bool movedStruct);
                 if (movedStruct) repairedIdentifiers++;
                 source = NormalizeRecoveredStateFunctionPrototypes(source, out int removedStatePrototypes);
@@ -323,6 +340,8 @@ public static class UccCompiler
 
             string compilerOutput = standardOutput.Result + Environment.NewLine + standardError.Result;
             compilerOutput += Environment.NewLine + $"METHOS_SOURCE_REPAIRS={repairedIdentifiers}";
+            compilerOutput += Environment.NewLine + $"METHOS_CONTROL_IDENTIFIER_REPAIRS={recoveredControlIdentifiers}";
+            compilerOutput += Environment.NewLine + string.Join(Environment.NewLine, stagedSourceDiagnostics);
             compilerOutput += Environment.NewLine + $"METHOS_TRAILING_RETURN_SKIPS={skippedTrailingReturnFiles}";
             if (process.ExitCode != 0 ||
                 !Regex.IsMatch(compilerOutput, @"Success\s*-\s*0 error\(s\)", RegexOptions.IgnoreCase))
