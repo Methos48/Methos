@@ -86,6 +86,15 @@ jobs:
           Write-Host "ANIMAL_RESTORED_PROPERTY_DECLARATIONS=$($missing.Count)"
           Write-Host "ANIMAL_RESTORED_PROPERTY_NAMES=$($missing | ForEach-Object { $_ })"
 
+      - name: Diagnose Animal AutoPotions reference function
+        shell: pwsh
+        run: |
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/AutoPotionsWnd.uc"
+          Write-Host "===== REFERENCE InsertPotion / GetItemType ====="
+          Select-String -LiteralPath $referenceFile -Pattern "InsertPotion|GetItemType" -Context 4,24
+          Write-Host "===== DECOMPILED source tail ====="
+          Get-Content -LiteralPath (Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc") | Select-Object -Last 90
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
