@@ -2,6 +2,22 @@ using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
 
+if (args.Length > 0 && args[0] == "--inspect-package-names")
+{
+    if (args.Length != 2)
+        throw new ArgumentException("Usage: --inspect-package-names <package.u>");
+    var packageIndex = UnrealPackageIndex.Open(args[1]);
+    Console.WriteLine($"PACKAGE_NAMES_COUNT={packageIndex.Names.Count}");
+    for (int i = 0; i < Math.Min(160, packageIndex.Names.Count); i++)
+        Console.WriteLine($"PACKAGE_NAME[{i}]={packageIndex.Names[i]}");
+    foreach (var item in packageIndex.Names.Select((name, index) => (name, index))
+        .Where(item => item.name.Contains("color", StringComparison.OrdinalIgnoreCase)
+            || item.name.Contains("gold", StringComparison.OrdinalIgnoreCase)
+            || item.name.Contains("name", StringComparison.OrdinalIgnoreCase)))
+        Console.WriteLine($"PACKAGE_COLOR_OR_NAME[{item.index}]={item.name}");
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
     if (args.Length is < 3 or > 4)
