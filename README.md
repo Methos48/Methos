@@ -21,8 +21,8 @@ El lanzamiento oficial genera un único instalador Windows x64: `Methos-Setup.ex
 
 - `src/MethosUEditor/` — aplicación gráfica principal Methos (nombre técnico histórico de la carpeta).
 - `src/MethosUEngine/` — motor Unreal/UCC y procesamiento de paquetes U.
-- `tools/xdat/` — motor y herramientas del módulo XDAT.
-- `methos_crypto/` — componentes de análisis y protección.
+- `tools/xdat/` — código y herramientas del módulo XDAT; el workflow de lanzamiento todavía utiliza un kit ZIP histórico como insumo, cuya migración está pendiente.
+- `methos_crypto/` — componentes históricos/experimentales de análisis y protección; el motor que compila la aplicación está en `src/MethosUEngine/`.
 - `tests/` — pruebas automatizadas.
 - `installer/Methos.iss` — único instalador del producto.
 - `docs/` — arquitectura, manuales e investigación técnica.
