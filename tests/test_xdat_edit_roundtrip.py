@@ -5,12 +5,9 @@ import sys
 import os
 import xml.etree.ElementTree as ET
 
-from xdat_core import compile_from_folder, decompile_to_folder, parse_xdat
-
-
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools" / "xdat"))
+from xdat_core import compile_from_folder, decompile_to_folder, parse_xdat
 
 
 class EditedXmlRoundTripTest(unittest.TestCase):
