@@ -607,7 +607,7 @@ public static class UnrealScriptTypeReferenceRepair
             // UELib emits redundant int(<integer literal>) casts in this class.
             // Interlude UCC rejects these as casting an IntProperty to itself.
             string normalized = System.Text.RegularExpressions.Regex.Replace(
-                source, @"\\bint\\s*\\(\\s*(-?\\d+)\\s*\\)", "$1",
+                source, @"\bint\s*\(\s*(-?\d+)\s*\)", "$1",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase |
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant);
             if (!string.Equals(normalized, source, StringComparison.Ordinal))
