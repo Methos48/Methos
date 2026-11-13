@@ -561,7 +561,7 @@ public static class UnrealScriptTypeReferenceRepair
             string recoveredMessageHelper = className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase)
                 ? "MethosRecoveredName_218("
                 : "MethosRecoveredName_255(";
-            source = Regex.Replace(source, @"(?<!Methos)RecoveredName_255\\(", recoveredMessageHelper, RegexOptions.CultureInvariant);
+            source = Regex.Replace(source, @"(?<!Methos)RecoveredName_255\(", recoveredMessageHelper, RegexOptions.CultureInvariant);
             applied.Add(className + " custom message calls preserved through UICommonAPI helper");
         }
 
