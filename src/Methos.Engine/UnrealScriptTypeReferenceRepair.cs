@@ -588,6 +588,14 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Silent login/version label uses an explicit typed RGBA color for the native name control");
         }
 
+        if (className.Equals("StatusWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("MethosRecoveredName_408(", StringComparison.Ordinal) &&
+            source.Contains("RecoveredName_98(\"orange\")", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_98(\"orange\")", "MethosRecoveredName_85(\"orange\")", StringComparison.Ordinal);
+            applied.Add("Dunk3l StatusWnd color calls rebound to UICommonAPI's recovered Color helper");
+        }
+
         if (className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
             source.Contains("local OptionWnd script;", StringComparison.Ordinal))
