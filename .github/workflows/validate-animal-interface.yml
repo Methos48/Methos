@@ -415,6 +415,18 @@ jobs:
           }
           [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
           Write-Host "ANIMAL_TARGET_ALIGN_ENUMS_RESTORED=$changed"
+      - name: Diagnose Animal ToolTip expression
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "ToolTip.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          Write-Host "===== DECOMPILED TOOLTIP LINES 2905-2930 ====="
+          for ($n=2904; $n -lt [Math]::Min(2930,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/ToolTip.uc"
+          if (Test-Path -LiteralPath $referenceFile) {
+            Write-Host "===== REFERENCE TOOLTIP MATCHING LINE CONTEXT ====="
+            Select-String -LiteralPath $referenceFile -Pattern 'ToolTip|function' | Select-Object -Last 30
+          }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
