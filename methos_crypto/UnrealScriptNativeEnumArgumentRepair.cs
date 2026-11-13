@@ -78,9 +78,8 @@ public static class UnrealScriptNativeEnumArgumentRepair
         };
 
     /// <summary>
-    /// Restores the EDialogType identifier for numeric DialogShow calls made
-    /// inside UICommonAPI itself. UCC requires the enum identifier for this
-    /// same-class call even though the decompiler emits the underlying byte.
+    /// Restores the EDialogType identifier for numeric DialogShow calls in
+    /// recovered interface classes. The API takes the enum, not its byte value.
     /// </summary>
     public static string RepairKnownDialogTypeArguments(
         string className, string source, out IReadOnlyList<string> repairs)
@@ -88,12 +87,6 @@ public static class UnrealScriptNativeEnumArgumentRepair
         ArgumentNullException.ThrowIfNull(className);
         ArgumentNullException.ThrowIfNull(source);
         var applied = new List<string>();
-        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
-        {
-            repairs = applied;
-            return source;
-        }
-
         string repaired = Regex.Replace(
             source,
             @"(?<![A-Za-z0-9_])DialogShow\s*\(\s*(?<value>\d+)\s*,",
