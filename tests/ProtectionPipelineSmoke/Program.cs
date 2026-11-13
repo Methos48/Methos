@@ -106,10 +106,10 @@ if (args.Length > 0 && args[0] == "--interface-u-edit-roundtrip")
             {
                 var lineageCodec = new Lineage2Ver111CustomTailCodec(inspection.Lineage2CustomTailProfile);
                 var smartCodec = new SmartCrypt1522Codec(inspection.SmartCryptProfile);
-                byte[] lineage = lineageCodec.Encode(compiledPackage, Path.GetFileName(inputPath));
-                rebuiltProtected = smartCodec.Encode(lineage, Path.GetFileName(inputPath));
+                byte[] rebuiltLineageEnvelope = lineageCodec.Encode(compiledPackage, Path.GetFileName(inputPath));
+                rebuiltProtected = smartCodec.Encode(rebuiltLineageEnvelope, Path.GetFileName(inputPath));
                 byte[] verifiedLineage = smartCodec.Decode(rebuiltProtected, Path.GetFileName(inputPath));
-                if (!verifiedLineage.AsSpan().SequenceEqual(lineage))
+                if (!verifiedLineage.AsSpan().SequenceEqual(rebuiltLineageEnvelope))
                     throw new InvalidDataException("SmartCrypt verification failed after Interface.u recompilation.");
                 byte[] verifiedPackage = lineageCodec.Decode(verifiedLineage, Path.GetFileName(inputPath));
                 if (!verifiedPackage.AsSpan().SequenceEqual(compiledPackage))
