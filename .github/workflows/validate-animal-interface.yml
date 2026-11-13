@@ -60,6 +60,17 @@ jobs:
           Write-Host "ANIMAL_DECOMPILED_CLASSES=$($classes.Count)"
           "ANIMAL_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Diagnose missing Animal class declarations
+        shell: pwsh
+        run: |
+          $reference = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/AutoPotionsWnd.uc"
+          Write-Host "REFERENCE_CLASS_PATH=$reference"
+          if (!(Test-Path -LiteralPath $reference)) { throw "Reference AutoPotionsWnd.uc missing." }
+          Write-Host "REFERENCE_TEXACTIVE_MATCHES:"
+          Select-String -LiteralPath $reference -Pattern "texActive|function onActiveTex" -Context 2,5 | ForEach-Object { $_.ToString() }
+          Write-Host "DECOMPILED_CLASS_DECLARATIONS:"
+          Get-Content (Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc") -TotalCount 100
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
