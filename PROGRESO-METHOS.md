@@ -2,8 +2,8 @@
 
 **Última actualización:** 13-11-2026  
 **Proyecto:** Methos (editor de archivos de Lineage II Interlude)  
-**Repositorio de trabajo:** https://github.com/Methos48/Methos-XDAT  
-**Repositorio único del proyecto:** https://github.com/Methos48/Methos-XDAT
+**Repositorio de trabajo:** https://github.com/Methos  
+**Repositorio único del proyecto:** https://github.com/Methos
 
 Este documento es la bitácora permanente del proyecto. Cada sesión de trabajo debe actualizarlo con cambios reales, pruebas ejecutadas, resultados, problemas pendientes y el siguiente paso. No marcar una tarea como terminada sin una prueba que lo demuestre.
 
@@ -13,6 +13,16 @@ Entregar una aplicación de Windows llamada **Methos**, instalable y con acceso 
 
 Flujo esperado: cargar archivo → copia de seguridad automática → descompilar/descifrar → editar → compilar/cifrar de nuevo → verificar el resultado.
 
+## Estado actual y regla de arquitectura (13-11-2026)
+
+- **Nombre único del producto:** Methos.
+- **Repositorio único de trabajo:** https://github.com/Methos48/Methos (rama `main`).
+- **Aplicación única:** `Methos.exe`, con dos módulos accesibles desde la misma interfaz: **ARCHIVOS U** y **ARCHIVOS XDAT**.
+- U y XDAT no son dos productos ni dos instaladores. Se mantienen sus motores, dependencias y pruebas dentro del mismo proyecto; cualquier proceso auxiliar interno no cambia esta regla de producto.
+- No duplicar la aplicación, no crear un ejecutable de producto separado para XDAT y no dividir el desarrollo en repositorios independientes.
+- La compilación Windows (run `43387205032`) y la validación UCC (run `43386687102`) finalizaron correctamente. Esto acredita los pasos automatizados ejecutados, no compatibilidad universal ni pruebas completas dentro del cliente real.
+- Artefacto Windows más reciente: `Methos-Windows-Installer-x64`, ID `14018119516`, tamaño 77,736,613 bytes.
+
 ## Registro de avances
 
 ### 13-11-2026 — Unificación de repositorios en Methos
@@ -20,9 +30,9 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 - Se estableció `Methos-XDAT` como único repositorio activo del producto **Methos**.
 - Se migraron a la rama principal las fuentes de la aplicación gráfica, el motor Unreal/UCC, las pruebas .NET, el instalador, el kit UCC de Interlude, documentación y bitácora que estaban en `Methos-U-Editor`.
 - Se integraron también los componentes XDAT de la rama de investigación: detección de cifrado, pipeline, metadatos de origen y pruebas.
-- La aplicación conserva un único ejecutable de producto: `Methos.exe`; XDAT se integra como módulo interno.
+- La aplicación conserva un único producto y ejecutable principal: `Methos.exe`. Los módulos ARCHIVOS U y ARCHIVOS XDAT forman parte de Methos; XDAT no se distribuye como una segunda aplicación independiente.
 - Se separó el paquete Unreal de referencia en `reference-data/Interface-UEditor.u` para evitar la colisión de nombres entre `Interface.u` y `interface.u` en Windows.
-- GitHub Actions confirmó la migración de fuentes y la generación del archivo de fuentes. La primera validación UCC detectó que un workflow todavía apuntaba al `interface.u` de XDAT; se corrigió para usar el paquete Unreal de referencia. La validación posterior y la compilación Windows están pendientes de su resultado final.
+- GitHub Actions confirmó la migración y las validaciones posteriores. La ejecución UCC `43386687102` terminó en SUCCESS; la compilación Windows más reciente, ejecución `43387205032`, también terminó en SUCCESS en sus 25 pasos principales. El archivo de fuentes se generó correctamente en la ejecución Source Archive `43387204850`.
 - **Limpieza completada:** `Methos-U-Editor` quedó sin archivos en sus tres ramas (`main`, `backup/methos-foundation-2026-11-12` y `validate-native-engine`). El historial Git anterior se conserva como respaldo histórico; el repositorio activo del proyecto es únicamente `Methos-XDAT`.
 
 
@@ -42,7 +52,7 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ### Base técnica ya incorporada (estado conocido antes de esta actualización)
 
-- La aplicación Windows integra el módulo de trabajo U y aloja el módulo XDAT como proceso separado dentro de la ventana principal.
+- La aplicación Windows integra los módulos ARCHIVOS U y ARCHIVOS XDAT bajo el producto Methos. Aunque el motor XDAT pueda ejecutarse como proceso auxiliar interno, para el usuario es una sola aplicación y un único flujo de trabajo.
 - El flujo U inspecciona las capas de protección antes de permitir el procesamiento y bloquea los casos en los que no puede garantizar una decodificación/codificación completa.
 - El módulo XDAT contiene detección de formato y un pipeline automático que contempla protocolos conocidos de `l2encdec`; los métodos desconocidos deben quedar identificados como no compatibles, no tratarse como descifrados.
 - Existen pruebas previas del motor de paquetes UE2 y del módulo XDAT. Una ejecución anterior de Windows CI terminó correctamente y produjo un instalador, pero fue **anterior** a los últimos cambios de interfaz e icono. No cuenta como validación de la versión actual.
@@ -59,11 +69,11 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 
 - **Validación final de la unificación (13-11-2026):**
-  - GitHub Actions UCC: [ejecución 43386687102](https://github.com/Methos48/Methos-XDAT/actions/runs/43386687102) — SUCCESS. Compiló las 169 fuentes, validó la estructura del paquete, pasó las pruebas unitarias, la modificación real de bytecode y la comprobación de descompilación/recompilación.
-  - Methos Windows x64: [ejecución 43386686912](https://github.com/Methos48/Methos-XDAT/actions/runs/43386686912) — SUCCESS. Generó el ejecutable, integró UCC y XDAT, probó instalación silenciosa y arranque, y confirmó que no se instala un segundo ejecutable XDAT.
+  - GitHub Actions UCC: [ejecución 43386687102](https://github.com/Methos/actions/runs/43386687102) — SUCCESS. Compiló las 169 fuentes, validó la estructura del paquete, pasó las pruebas unitarias, la modificación real de bytecode y la comprobación de descompilación/recompilación.
+  - Methos Windows x64: [ejecución 43386686912](https://github.com/Methos/actions/runs/43386686912) — SUCCESS. Generó el ejecutable, integró UCC y XDAT, probó instalación silenciosa y arranque, y confirmó que no se instala un segundo ejecutable XDAT.
   - Instalador: artefacto `Methos-Windows-Installer-x64`, ID `14019051859`, tamaño 77,735,569 bytes. SHA-256: `73937bc92cb5051d9b2270167b88b6d23c08043a95187b4e91a727078f8a8ea5`.
   - La fuente del instalador y los artefactos de validación están publicados en el repositorio único `Methos-XDAT`.
-- **Limpieza del repositorio anterior:** tras comprobar que los 63 archivos de la rama principal de `Methos-U-Editor` están migrados, conservados o sustituidos intencionalmente, se vaciará su contenido actual en todas sus ramas. El historial Git permanecerá disponible como respaldo histórico.
+- **Limpieza del repositorio anterior:** el contenido de `Methos-U-Editor` quedó vaciado en sus ramas después de la migración. Su historial Git permanece como respaldo histórico; no es un repositorio de trabajo.
 
 ## Reglas para continuar el trabajo
 
@@ -77,12 +87,12 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 
 ## Próxima acción
 
-Consultar GitHub Actions de la rama principal para los commits recientes del lanzador/icono. Si el workflow falló, leer el log del paso fallido y corregirlo. Si terminó correctamente, registrar el run y pasar a la validación funcional de ARCHIVOS U y ARCHIVOS XDAT.
+Con la migración y la compilación automatizada confirmadas, continuar la validación funcional de ambos módulos dentro de Methos: primero recorrido U y después XDAT, conservando pruebas, fixtures y archivos originales.
 
 ### 12-11-2026 — Instalador Methos Windows x64 generado y probado
 
 - **Resultado: compilación e instalación superadas.** GitHub Actions ejecutó el workflow `Methos U Editor - Windows Release` para el commit `05d379e99ad500432017f0d3cf973a57cc74d8ff`.
-- Ejecución: [Windows Release #438](https://github.com/Methos48/Methos-XDAT/actions/runs/43234204448) — **SUCCESS**.
+- Ejecución: [Windows Release #438](https://github.com/Methos/actions/runs/43234204448) — **SUCCESS**.
 - Los 19 pasos principales finalizaron correctamente, incluidos:
   - generación del icono M roja;
   - publicación autónoma de Methos para Windows x64;
