@@ -3,15 +3,13 @@ using System.Text.RegularExpressions;
 namespace MethosUEngine;
 
 /// <summary>
-/// Restores the exact native operators in the recovered Silent Interface
-/// address-check function. The operator meanings are verified against the
-/// matching Interlude reference source: string equality, boolean OR and multiply.
-/// This intentionally targets only the distinctive three-address check.
+/// Restores native operators in the recovered Silent Interface address check.
+/// Meanings are verified against the matching Interlude reference source.
 /// </summary>
 public static class UnrealScriptKnownNativeOperatorRepair
 {
     private static readonly Regex AddressCondition = new(
-        @"__NFUN_132__\(__NFUN_132__\(__NFUN_122__\((?<left>[A-Za-z_]\w*), (?<right>[A-Za-z_]\w*)\), __NFUN_122__\(\k<left>, \"(?<ip1>192\.168\.10\.121)\"\)\), __NFUN_122__\(\k<left>, \"(?<ip2>127\.0\.0\.1)\"\)\)",
+        """__NFUN_132__\(__NFUN_132__\(__NFUN_122__\((?<left>[A-Za-z_]\w*), (?<right>[A-Za-z_]\w*)\), __NFUN_122__\(\k<left>, "(?<ip1>192\.168\.10\.121)"\)\), __NFUN_122__\(\k<left>, "(?<ip2>127\.0\.0\.1)"\)\)""",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static string RepairKnownSilentInterfaceAddressCheck(string source, out int replacements)
