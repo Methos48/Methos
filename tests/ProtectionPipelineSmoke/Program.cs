@@ -68,6 +68,9 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
     SmartCryptKeyProfile smartProfile = SmartCryptKeyProfile.FromEncryptedFile(original);
     var smartCodec = new SmartCrypt1522Codec(smartProfile);
     byte[] lineageEnvelope = smartCodec.Decode(original, Path.GetFileName(inputPath));
+    // Dunk3l Interface.u's final bytes are required by the last export's serial range,
+    // so this U package profile keeps them inside the Unreal payload rather than
+    // stripping them as the separate 20-byte XDAT trailer.
     var tailProfile = Lineage2CustomTailProfile.FromEnvelope(
         lineageEnvelope, includeTailInPayload: true, origin: inputPath);
     var lineageCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
@@ -95,7 +98,16 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
         if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
             throw new InvalidDataException($"Dunk3l U decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
 
+        string[] recoveredClassFiles = Directory.GetFiles(sourceDirectory, "*.uc", SearchOption.TopDirectoryOnly);
+        if (recoveredClassFiles.Length != decompiled.ExportedCount)
+            throw new InvalidDataException($"Dunk3l U source count mismatch: files={recoveredClassFiles.Length}, exported={decompiled.ExportedCount}.");
+        int referenceClassCount = Directory.GetFiles(referenceSourceDirectory, "*.uc", SearchOption.TopDirectoryOnly).Length;
+        Console.WriteLine($"DUNK3L_U_CLASS_COUNTS totalClassObjects={decompiled.TotalClassObjectCount}; exportedClasses={decompiled.ExportedCount}; recoveredSourceFiles={recoveredClassFiles.Length}; uccReferenceFiles={referenceClassCount}; nonExported=[{string.Join(", ", decompiled.NonExportedClassNames)}]; cleanedSwitchDiagnostics={decompiled.RemovedSwitchDiagnosticCount}.");
+        if (referenceClassCount != 169)
+            throw new InvalidDataException($"El kit UCC Interlude contiene {referenceClassCount} fuentes de referencia; se esperaban 169.");
+
         UccCompileResult compiled = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
+        Console.WriteLine($"DUNK3L_UCC_COMPILED_SOURCE_CLASSES={recoveredClassFiles.Length}.");
         string nameMapPath = Path.Combine(sourceDirectory, "methos_name_map.json");
         List<UnrealNameReplacement> nameMap = File.Exists(nameMapPath)
             ? System.Text.Json.JsonSerializer.Deserialize<List<UnrealNameReplacement>>(File.ReadAllText(nameMapPath)) ?? new()
@@ -105,6 +117,20 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
             ? compiled.PackageBytes
             : UnrealPackageIndex.Parse(compiled.PackageBytes).CreateWithReplacedNames(replacements);
         var compiledIndex = UnrealPackageIndex.Parse(compiledPackage);
+        int originalExportDataEnd = originalIndex.Exports
+            .Where(item => item.SerialSize > 0)
+            .Select(item => checked(item.SerialOffset + item.SerialSize))
+            .DefaultIfEmpty(0)
+            .Max();
+        int compiledExportDataEnd = compiledIndex.Exports
+            .Where(item => item.SerialSize > 0)
+            .Select(item => checked(item.SerialOffset + item.SerialSize))
+            .DefaultIfEmpty(0)
+            .Max();
+        bool terminalTwentyBytesEqual = originalPackage.Length >= 20 && compiledPackage.Length >= 20 &&
+            originalPackage.AsSpan(originalPackage.Length - 20, 20)
+                .SequenceEqual(compiledPackage.AsSpan(compiledPackage.Length - 20, 20));
+        Console.WriteLine($"DUNK3L_U_PACKAGE_DATA originalEnd={originalExportDataEnd}/{originalPackage.Length}; compiledEnd={compiledExportDataEnd}/{compiledPackage.Length}; terminal20Equal={terminalTwentyBytesEqual}; mode=payload-owned.");
 
         byte[] rebuiltLineage = lineageCodec.Encode(compiledPackage, Path.GetFileName(inputPath));
         byte[] rebuiltProtected = smartCodec.Encode(rebuiltLineage, Path.GetFileName(inputPath));
@@ -116,9 +142,45 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
             throw new InvalidDataException("Lineage2Ver111 verification failed for the newly compiled Dunk3l U package.");
         _ = UnrealPackageIndex.Parse(verifiedPackage);
 
+        string recheckRoot = Path.Combine(Path.GetTempPath(), "Methos-Dunk3l-Recheck-" + Guid.NewGuid().ToString("N"));
+        string recheckPackage = Path.Combine(recheckRoot, "Interface.u");
+        string recheckSources = Path.Combine(recheckRoot, "UnrealScript");
+        string recheckNativeRegistry = Path.Combine(recheckRoot, "native-function-registry.json");
+        try
+        {
+            Directory.CreateDirectory(recheckRoot);
+            File.WriteAllBytes(recheckPackage, verifiedPackage);
+            NativeFunctionRegistryBuilder.Build(runtimeRoot, recheckNativeRegistry);
+            UnrealPackageDecompileResult reDecompiled = UnrealPackageDecompiler.DecompileToFolder(
+                recheckPackage, recheckSources, referenceSourceDirectory, recheckNativeRegistry);
+            if (reDecompiled.FailedCount != 0 || reDecompiled.ExportedCount != reDecompiled.ClassCount)
+                throw new InvalidDataException($"Rebuilt Dunk3l U re-decompilation incomplete: {reDecompiled.ExportedCount}/{reDecompiled.ClassCount}, errors={reDecompiled.FailedCount}.");
+            if (reDecompiled.ExportedCount != decompiled.ExportedCount)
+                throw new InvalidDataException($"Rebuilt Dunk3l U lost class exports: original={decompiled.ExportedCount}, rebuilt={reDecompiled.ExportedCount}.");
+            string[] originalClassNames = Directory.GetFiles(sourceDirectory, "*.uc", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()!;
+            string[] rebuiltClassNames = Directory.GetFiles(recheckSources, "*.uc", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()!;
+            if (!originalClassNames.SequenceEqual(rebuiltClassNames, StringComparer.OrdinalIgnoreCase))
+            {
+                string missing = string.Join(", ", originalClassNames.Except(rebuiltClassNames, StringComparer.OrdinalIgnoreCase));
+                string extra = string.Join(", ", rebuiltClassNames.Except(originalClassNames, StringComparer.OrdinalIgnoreCase));
+                throw new InvalidDataException($"Rebuilt Dunk3l U class source set changed; missing=[{missing}], extra=[{extra}].");
+            }
+            Console.WriteLine($"PASS: DUNK3L U rebuilt package re-decompiled cleanly; classes={reDecompiled.ExportedCount}; classObjects={reDecompiled.TotalClassObjectCount}; failed={reDecompiled.FailedCount}; cleanedSwitchDiagnostics={reDecompiled.RemovedSwitchDiagnosticCount}; classNames=identical.");
+        }
+        finally
+        {
+            try { if (Directory.Exists(recheckRoot)) Directory.Delete(recheckRoot, recursive: true); } catch { }
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         File.WriteAllBytes(outputPath, rebuiltProtected);
-        Console.WriteLine($"PASS: DUNK3L U full decompile/compile/re-encrypt cycle; classes={decompiled.ExportedCount}; sanitizedNames={decompiled.SanitizedNameCount}; restoredNames={nameMap.Count}; original={originalIndex.Summary.Version}/{originalIndex.Summary.LicenseeVersion} {originalIndex.Summary.NameCount}/{originalIndex.Summary.ImportCount}/{originalIndex.Summary.ExportCount}; compiled={compiledIndex.Summary.Version}/{compiledIndex.Summary.LicenseeVersion} {compiled.NameCount}/{compiled.ImportCount}/{compiled.ExportCount}; protectedBytes={rebuiltProtected.Length}; output={outputPath}.");
+        Console.WriteLine($"PASS: DUNK3L U full decompile/compile/re-encrypt/re-decompile cycle; classes={decompiled.ExportedCount}; sanitizedNames={decompiled.SanitizedNameCount}; restoredNames={nameMap.Count}; original={originalIndex.Summary.Version}/{originalIndex.Summary.LicenseeVersion} {originalIndex.Summary.NameCount}/{originalIndex.Summary.ImportCount}/{originalIndex.Summary.ExportCount}; compiled={compiledIndex.Summary.Version}/{compiledIndex.Summary.LicenseeVersion} {compiled.NameCount}/{compiled.ImportCount}/{compiled.ExportCount}; protectedBytes={rebuiltProtected.Length}; output={outputPath}.");
     }
     finally
     {
@@ -1348,6 +1410,23 @@ Check(decompilerStackTraceSanitized.Contains(
           line.TrimStart().StartsWith("at ", StringComparison.Ordinal)),
     "UELib stack trace lines were left as executable UnrealScript statements.");
 Console.WriteLine("PASS: UELib diagnostic stack traces are retained as comments, not source statements.");
+
+string orphanedSwitchDiagnosticsSample = """
+function bool RecoveredSwitch()
+{
+    return true;
+    // Failed to format nests!:System.ArgumentOutOfRangeException: Index was out of range.
+    // 1 & Type:Switch Position:0x0B8
+}
+""";
+string orphanedSwitchDiagnosticsCleaned = UnrealScriptDecompilerDiagnosticCleaner.RemoveOrphanedSwitchDiagnostics(
+    orphanedSwitchDiagnosticsSample, out int removedOrphanedSwitchDiagnostics);
+Check(removedOrphanedSwitchDiagnostics == 2 &&
+      orphanedSwitchDiagnosticsCleaned.Contains("return true;", StringComparison.Ordinal) &&
+      !orphanedSwitchDiagnosticsCleaned.Contains("Failed to format", StringComparison.Ordinal) &&
+      !orphanedSwitchDiagnosticsCleaned.Contains("Type:Switch Position", StringComparison.Ordinal),
+    "UELib orphaned switch diagnostics were not removed without changing the recovered function body.");
+Console.WriteLine("PASS: orphaned UELib switch diagnostics are removed while preserving recovered statements.");
 
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
