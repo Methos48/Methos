@@ -41,6 +41,8 @@ jobs:
           if (Test-Path $reference) { Copy-Item $reference (Join-Path $refDir "InventoryWnd.uc") }
           $optionReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/OptionWnd.uc"
           if (Test-Path $optionReference) { Copy-Item $optionReference (Join-Path $refDir "OptionWnd.uc") }
+          $optionReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/OptionWnd.uc"
+          if (Test-Path $optionReference) { Copy-Item $optionReference (Join-Path $refDir "OptionWnd.uc") }
           $detailReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/DetailStatusWnd.uc"
           if (Test-Path $detailReference) { Copy-Item $detailReference (Join-Path $refDir "DetailStatusWnd.uc") }
       - name: Export NWindow API definitions for compiler diagnostics
