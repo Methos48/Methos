@@ -38,6 +38,70 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
 
+        if (className.Equals("DamageLiteAni", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function OnLoad()", StringComparison.Ordinal) &&
+            source.Contains("function OnTimer(int RecoveredName_2125)", StringComparison.Ordinal))
+        {
+            var missingFields = new (string Type, string Name)[]
+            {
+                ("WindowHandle", "RecoveredName_2057"),
+                ("TextBoxHandle[29]", "RecoveredName_2070"),
+                ("string", "RecoveredName_2105"),
+                ("string", "RecoveredName_2106"),
+                ("string", "RecoveredName_2107"),
+                ("string", "RecoveredName_2108"),
+                ("int", "RecoveredName_2073"),
+                ("int", "RecoveredName_2074"),
+                ("int", "RecoveredName_2075"),
+                ("int", "RecoveredName_2076"),
+                ("int", "RecoveredName_2077"),
+                ("int", "RecoveredName_2078"),
+                ("int", "RecoveredName_2079"),
+                ("int", "RecoveredName_2080"),
+                ("int", "RecoveredName_2081"),
+                ("int", "RecoveredName_2082"),
+                ("int", "RecoveredName_2083"),
+                ("int", "RecoveredName_2084"),
+                ("int", "RecoveredName_2085"),
+                ("int", "RecoveredName_2086"),
+                ("int", "RecoveredName_2087"),
+                ("int", "RecoveredName_2088"),
+                ("int", "RecoveredName_2089"),
+                ("int", "RecoveredName_2090"),
+                ("int", "RecoveredName_2091"),
+                ("int", "RecoveredName_2092"),
+                ("int", "RecoveredName_2093"),
+                ("int", "RecoveredName_2094"),
+                ("int", "RecoveredName_2095"),
+                ("int", "RecoveredName_2096"),
+                ("int", "RecoveredName_2097"),
+                ("int", "RecoveredName_2098"),
+                ("int", "RecoveredName_2099"),
+                ("int", "RecoveredName_2100"),
+                ("int", "RecoveredName_2101"),
+                ("int", "RecoveredName_2102"),
+                ("int", "RecoveredName_2103"),
+                ("int", "RecoveredName_2104")
+            };
+            var declarations = new List<string>();
+            foreach (var field in missingFields)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    source, @"(?m)^\\s*var\\s+(?:private\\s+)?" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\\s+" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Name) + @"(?:\\s*\\[[^]]+\\])?\\s*;"))
+                    declarations.Add("var private " + field.Type + " " + field.Name + ";");
+            }
+            if (declarations.Count > 0)
+            {
+                const string classAnchor = "class DamageLiteAni extends UICommonAPI;";
+                source = source.Replace(classAnchor,
+                    classAnchor + Environment.NewLine + string.Join(Environment.NewLine, declarations),
+                    StringComparison.Ordinal);
+                applied.Add("DamageLiteAni restored " + declarations.Count + " missing typed state fields");
+            }
+        }
+
         if (className.Equals("DamageLite", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("ManaBurnPending", StringComparison.Ordinal) &&
             source.Contains("ManaBurnTargetName", StringComparison.Ordinal))
