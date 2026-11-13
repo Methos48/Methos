@@ -447,11 +447,11 @@ function OnLoad()
 """;
 string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
-Check(silentOverlayColorRepairs.Count == 1 &&
-      silentOverlayColorRepaired.Contains("MethosRecoveredName_85(\"white\")", StringComparison.Ordinal) &&
-      !silentOverlayColorRepaired.Contains("RecoveredName_98", StringComparison.Ordinal),
-    "Silent interface overlay color helper was not redirected to inherited Color API.");
-Console.WriteLine("PASS: Silent interface overlay uses the inherited Color API.");
+Check(silentOverlayColorRepairs.Count == 0 &&
+      silentOverlayColorRepaired.Contains("RecoveredName_98(\"white\")", StringComparison.Ordinal) &&
+      !silentOverlayColorRepaired.Contains("MethosRecoveredName_85", StringComparison.Ordinal),
+    "Silent interface overlay's valid UICommonAPI Color helper call was altered.");
+Console.WriteLine("PASS: Silent interface overlay preserves its declared UICommonAPI Color helper.");
 
 
 
@@ -464,11 +464,11 @@ function TestColor()
 """;
 string recoveredColorHelperRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "LoginCharSelectWnd", recoveredColorHelperSample, out IReadOnlyList<string> recoveredColorHelperRepairs);
-Check(recoveredColorHelperRepairs.Count == 1 &&
-      recoveredColorHelperRepaired.Contains("MethosRecoveredName_85(\"Goldlite\")", StringComparison.Ordinal) &&
-      !recoveredColorHelperRepaired.Contains("RecoveredName_98", StringComparison.Ordinal),
-    "Recovered color-name helper was not redirected to inherited Color API.");
-Console.WriteLine("PASS: Recovered color-name helper resolves to inherited Color API.");
+Check(recoveredColorHelperRepairs.Count == 0 &&
+      recoveredColorHelperRepaired.Contains("RecoveredName_98(\"Goldlite\")", StringComparison.Ordinal) &&
+      !recoveredColorHelperRepaired.Contains("MethosRecoveredName_85", StringComparison.Ordinal),
+    "Valid UICommonAPI Color helper call was altered.");
+Console.WriteLine("PASS: Recovered color-name helper remains bound to its declared UICommonAPI function.");
 
 
 string logoWndFieldSample = """
