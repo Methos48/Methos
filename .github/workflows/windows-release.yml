@@ -1,4 +1,4 @@
-name: Methos U Editor - Windows Release
+name: Methos - Windows Release
 
 on:
   push:
@@ -25,6 +25,15 @@ on:
       - "installer/**"
       - "README-ES.txt"
       - "THIRD-PARTY-NOTICES.txt"
+      - "PROGRESO-METHOS.md"
+      - "README.md"
+      - "reference-data/**"
+      - "Compilador  U.zip"
+      - "Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip"
+      - "apply_detection_layer.py"
+      - "auto_pipeline_overlay.py"
+      - "encryption_detection.py"
+      - "auto_pipeline.py"
       - ".github/workflows/windows-release.yml"
   workflow_dispatch:
 
