@@ -99,6 +99,19 @@ jobs:
           PY
 
 
+      - name: Generate detailed Animal InventoryWnd analysis
+        shell: bash
+        run: |
+          python tools/xdat/report_animal_inventorywnd.py "$RUNNER_TEMP/animal-inventorywnd-analysis"
+
+      - name: Publish Animal InventoryWnd analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-InventoryWnd-Analysis
+          path: ${{ runner.temp }}/animal-inventorywnd-analysis
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Generate Animal XDAT structural inventory
         shell: bash
         run: |
