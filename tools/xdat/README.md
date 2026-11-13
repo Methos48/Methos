@@ -8,7 +8,7 @@ Esta carpeta contiene el código fuente canónico del módulo XDAT integrado en 
 - `encryption_detection.py`: identificación explícita de cabeceras y protocolos; no inventa claves ni declara compatible un cifrado desconocido.
 - `auto_pipeline.py`: lógica de despacho y publicación transaccional, mantenida como módulo interno y cubierta por pruebas.
 - `package_origin_metadata.py`: manifiesto de origen, hash y protocolo registrado.
-- `../..` `src/Methos.App/XdatBridge.py`: puente que carga el motor canónico desde Methos.exe.
+- `src/Methos.App/XdatBridge.py`: puente que carga el motor canónico desde Methos.exe.
 - `tests/` y `../../tests/test_*xdat*.py`: pruebas del motor y del pipeline.
 
 ## Regla de integración
