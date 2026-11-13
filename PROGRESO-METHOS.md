@@ -151,3 +151,5 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - El kit ZIP histórico todavía se conserva temporalmente como fuente de un fixture de prueba. No se eliminó porque antes debe migrarse ese fixture a `reference-data/` y comprobarse que ningún otro workflow lo consuma.
 - Commits publicados en `main`: `02d50d4` (workflow), `2728880` (arquitectura), `f04c84b` (README).
 - **Estado de validación:** cambio publicado; pendiente comprobar el resultado de GitHub Actions para esta nueva versión. No se declara todavía que el runtime migrado esté validado.
+
+- Ajuste de CI posterior: el kit ZIP histórico se extrae ahora únicamente para copiar `xdat completo/interface.xdat` como fixture temporal de pruebas; el workflow no toma de ese ZIP `app.py`, `xdat_core.py` ni otro código de aplicación. Commit: `a1c8821`.
