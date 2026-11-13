@@ -7,7 +7,7 @@ on:
     paths:
       - "silent dark/**"
       - ".github/workflows/silent-dark-roundtrip.yml"
-      - "methos_crypto/**"
+      - "src/MethosUEngine/**"
       - "src/MethosUEngine/**"
       - "System/**"
       - "tools/xdat/**"
