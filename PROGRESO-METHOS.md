@@ -38,13 +38,10 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 - El round-trip UCC de Silent Dark mantiene una incidencia conocida en `InventoryWnd.uc(1529)`, reproducida también antes de la unificación. Se deja como tarea funcional separada.
 - No añadir funciones nuevas hasta resolver y probar los recorridos reales de U y XDAT.
 
-### 13-11-2026 — Normalización de nombres internos (rama de revisión)
+### 13-11-2026 — Normalización de nombres internos (registro histórico, superado)
 
-- La rama `work/unification-audit` reemplaza los nombres técnicos heredados por `Methos.App` y `Methos.Engine`: proyecto de interfaz, biblioteca interna, namespaces, pruebas y rutas de workflows.
-- El ejecutable de producto sigue siendo uno solo: `Methos.exe`. `Methos.Engine` es una biblioteca interna que no se distribuye como aplicación separada.
-- La carpeta duplicada `methos_crypto/` ya fue eliminada de `main` por la consolidación paralela; esta rama se basa en el `main` actualizado y mantiene el motor canónico en `src/Methos.Engine/`.
-- **Estado:** los cambios estructurales están preparados en la rama de revisión, pero todavía requieren compilación y pruebas Windows. No están incorporados a `main` ni se consideran validados.
-- **Bloqueo restante para completar la unificación:** el workflow de lanzamiento todavía extrae parte del motor XDAT desde el kit histórico; migrarlo a `tools/xdat/` requiere comparación funcional y pruebas de round-trip antes de retirar el ZIP.
+- Los cambios se prepararon en `work/unification-audit` y se integraron en `main` mediante PR #3.
+- Este registro describe el estado intermedio de la revisión; las tareas que aquí figuraban como pendientes ya se completaron y validaron según el bloque **Estado actual** al inicio de esta bitácora.
 
 ### 13-11-2026 — Unificación de repositorios en Methos
 
@@ -138,7 +135,7 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Pruebas pendientes de este bloque: ejecutar el workflow Windows Release después de estos cambios y verificar que produzca un único instalador Methos.
 
 
-- **Auditoría adicional de dependencias:** `src/Methos.Engine/` es el motor compilado por el proyecto .NET. `methos_crypto/` contiene variantes históricas/experimentales y no debe confundirse con la carpeta que compila la aplicación. Asimismo, `tools/xdat/xdat_core.py` está versionado, pero el workflow de lanzamiento todavía extrae el motor XDAT del ZIP histórico `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip`. Esta duplicación quedó documentada como pendiente; no se borró el ZIP ni se afirmó que `tools/xdat` ya sea la única fuente efectiva del instalador.
+- **Auditoría inicial de dependencias (registro histórico, superado):** en ese momento existían copias del motor y el workflow dependía del kit XDAT. La consolidación posterior eliminó la copia `methos_crypto/`, dejó `src/Methos.Engine/` como motor C# canónico y convirtió el ZIP XDAT en un archivo de fixtures; ver el estado actual al inicio de esta bitácora.
 - **Compatibilidad de datos:** se mantienen rutas antiguas de caché y respaldos bajo `%LOCALAPPDATA%` para no romper datos existentes; sus nombres históricos no representan programas separados.
 
 - Se retiró también el workflow temporal `.github/workflows/migrate-unified.yml`: la migración del repositorio ya está completada y no debe repetirse como tarea activa.
@@ -148,8 +145,8 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 
 - **Corrección de workflows heredados:** se eliminaron las referencias de checkout a `Methos48/Methos-U-Editor` en los workflows de inspección Dunk3l y validación Unreal. Ahora usan el kit UCC del repositorio único y el paquete de referencia ubicado en `reference-data/Interface-UEditor.u`. Se actualizaron también sus filtros de rutas.
 
-- **Organización del código XDAT:** se trasladaron los módulos `encryption_detection.py`, `auto_pipeline.py` y `package_origin_metadata.py` desde la raíz a `tools/xdat/`; los scripts de preparación `apply_detection_layer.py` y `auto_pipeline_overlay.py` pasaron a `tools/xdat/maintenance/`. Se actualizaron los imports de las pruebas Python y las rutas/filtros del workflow `windows-release.yml`. Los cinco archivos antiguos de la raíz se eliminaron después de verificar las copias nuevas.
-- La fuente XDAT todavía no está completamente unificada: el workflow Windows continúa extrayendo el kit ZIP histórico para preparar el runtime de la app. La siguiente etapa debe sustituir esa dependencia mediante migración comprobada y pruebas, no borrando el ZIP.
+- **Organización inicial del código XDAT (registro histórico, superado):** los módulos se trasladaron a `tools/xdat/` y se crearon overlays temporales para el kit anterior. Esos overlays fueron retirados al migrar las pruebas al repositorio y convertir el ZIP en fixtures de referencia.
+- **Estado histórico:** la fuente XDAT todavía dependía del kit ZIP. Esa dependencia de código ya fue retirada; el ZIP actual contiene únicamente fixtures de prueba.
 
 - **Unificación del motor C#:** se incorporaron a `src/Methos.Engine/` las cuatro clases que solo existían en `methos_crypto/`: `UnrealPackageDecompiler`, `UnrealScriptKnownNativeOperatorRepair`, `UnrealScriptNativeEnumArgumentRepair` y `UnrealScriptTypeReferenceRepair`. `tests/ProtectionPipelineSmoke` ahora referencia el proyecto real `src/Methos.Engine/Methos.Engine.csproj`, no la copia antigua. Los workflows afectados vigilan la ruta canónica.
 - La carpeta `methos_crypto/` se conserva temporalmente hasta que la nueva referencia compile y pasen las pruebas; después podrá retirarse como duplicado.
