@@ -255,3 +255,10 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - **Pendiente administrativo de Methos:** permanecen ramas históricas inactivas en este repositorio. No se consideran líneas de desarrollo activas; antes de retirarlas hay que auditar sus commits únicos y conservar cualquier material técnico útil.
 - **Criterio de conservación:** se mantienen el historial Git, los archivos de referencia y las ubicaciones locales heredadas que protegen datos de usuario. No se borran datos útiles ni respaldos solo para ocultar nombres antiguos.
 - Esta limpieza no modifica la aplicación ni sus funciones; prepara la documentación para que el desarrollo futuro continúe exclusivamente en Methos.
+
+### 13-11-2026 — Eliminación de documentación duplicada
+
+- Se auditó `docs/methos-ueditor/` contra la documentación técnica canónica ubicada directamente en `docs/`.
+- Se retiraron las 14 copias del subdirectorio heredado. Los documentos canónicos se conservaron en `docs/`; cuando existían diferencias, se mantuvo la versión principal más completa y actualizada.
+- No se eliminaron fuentes del motor, fixtures, paquetes originales, dependencias UCC ni herramientas necesarias para compilar o validar Methos.
+- La limpieza es documental y no cambia el comportamiento del programa. La compilación de Windows y el archivo de fuentes deben volver a validarse sobre el nuevo HEAD.
