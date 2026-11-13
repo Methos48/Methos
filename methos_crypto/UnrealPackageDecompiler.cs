@@ -108,6 +108,12 @@ public static class UnrealPackageDecompiler
                     }
                 }
 
+                // UELib may emit control-character names for protected identifiers and
+                // leave nested scopes open after a switch formatting failure. Repair the
+                // source copy before parsing or handing it to UCC.
+                source = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
+                source = UnrealScriptSourceIndex.RepairMissingFunctionClosures(source).Source;
+
                 // Normalize unreachable bare returns using tokenized function scope,
                 // including returns following switch/default branches.
                 source = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source).Source;
