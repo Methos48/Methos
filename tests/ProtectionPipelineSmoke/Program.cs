@@ -243,6 +243,22 @@ Check(enumParameterSwitchRepairs.Count == 1 &&
 Console.WriteLine("PASS: GMSnoopWnd function-parameter enum switch labels are typed for UCC.");
 
 
+string optionLoginFieldSample = """
+class OptionWnd extends UICommonAPI;
+var bool Log;
+function OnLoad()
+{
+    startMe(bLoginInitialized);
+}
+""";
+string optionLoginFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "OptionWnd", optionLoginFieldSample, out IReadOnlyList<string> optionLoginFieldRepairs);
+Check(optionLoginFieldRepairs.Count == 1 &&
+      optionLoginFieldRepaired.Contains("var bool bLoginInitialized;", StringComparison.Ordinal),
+    "OptionWnd bLoginInitialized field was not restored.");
+Console.WriteLine("PASS: OptionWnd missing login initialization field is restored.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
