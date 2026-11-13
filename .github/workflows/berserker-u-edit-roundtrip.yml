@@ -32,6 +32,13 @@ jobs:
           $kit = Join-Path $env:RUNNER_TEMP "ucc-kit/Compilador  U"
           if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "Interlude UCC runtime is incomplete." }
           "UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Capture matching reference class for diagnostics
+        shell: pwsh
+        run: |
+          $refDir = Join-Path $env:RUNNER_TEMP "Reference-Interface-Classes"
+          New-Item -ItemType Directory -Path $refDir -Force | Out-Null
+          $reference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/InventoryWnd.uc"
+          if (Test-Path $reference) { Copy-Item $reference (Join-Path $refDir "InventoryWnd.uc") }
       - name: Export NWindow API definitions for compiler diagnostics
         shell: pwsh
         run: |
@@ -64,5 +71,6 @@ jobs:
           path: |
             ${{ runner.temp }}/Berserker-U-RoundTrip
             ${{ runner.temp }}/NWindow-API
+            ${{ runner.temp }}/Reference-Interface-Classes
           if-no-files-found: warn
           retention-days: 14
