@@ -561,6 +561,16 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add(className + " custom message calls preserved through UICommonAPI helper");
         }
 
+        if (className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal))
+        {
+            source = source.Replace(
+                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
+                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", \"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
+                StringComparison.Ordinal);
+            applied.Add("Silent branding text color call restored with textbox handle, text, and color arguments");
+        }
+
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("GetHandle(\"LogoWnd\")", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
