@@ -837,6 +837,10 @@ internal sealed class MainForm : Form
 
         using var package = UnrealLoader.LoadPackage(packageLoadPath, FileAccess.Read);
         Log($"Paquete detectado: versión {package.Summary.Version}, licencia {package.Summary.LicenseeVersion}.");
+        var nameReplacements = UnrealNameSanitizer.SanitizePackageNames(package);
+        UnrealNameSanitizer.SaveNameMap(output, nameReplacements);
+        if (nameReplacements.Count > 0)
+            Log($"Nombres Unreal no válidos sustituidos temporalmente: {nameReplacements.Count}. Se restaurarán en el paquete compilado.");
         package.InitializePackage();
         var classes = package.Objects.OfType<UClass>().Where(o => (int)o > 0).ToList();
         int ok = 0, failed = 0, repairedFunctions = 0, insertedClosures = 0, removedClosures = 0, nativeFunctions = 0;
@@ -1034,12 +1038,15 @@ internal sealed class MainForm : Form
         if (Directory.Exists(cachedDirectory))
         {
             int cachedCount = GetSourceFiles(cachedDirectory).Length;
-            if (cachedCount > 0)
+            bool hasNameMap = File.Exists(Path.Combine(cachedDirectory, UnrealNameSanitizer.MapFileName));
+            if (cachedCount > 0 && hasNameMap)
             {
                 RestoreSourceDirectory(cachedDirectory, outputDirectory);
                 Log($"Fuentes exactas restauradas desde la caché de Methos: {cachedCount} clases; SHA-256={hash}.");
                 return true;
             }
+            if (cachedCount > 0)
+                Log("Se omitió una caché antigua sin mapa reversible de nombres; se regenerarán las fuentes para conservar los FNames originales.");
         }
 
         if (packageName.Equals("Interface", StringComparison.OrdinalIgnoreCase) &&
@@ -1096,6 +1103,16 @@ internal sealed class MainForm : Form
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             CopyWithBackup(source, destination);
         }
+
+        string sourceMap = Path.Combine(sourceDirectory, UnrealNameSanitizer.MapFileName);
+        string destinationMap = Path.Combine(outputDirectory, UnrealNameSanitizer.MapFileName);
+        if (File.Exists(sourceMap))
+            CopyWithBackup(sourceMap, destinationMap);
+        else if (File.Exists(destinationMap))
+        {
+            BackupExistingFile(destinationMap);
+            File.Delete(destinationMap);
+        }
     }
 
     private void SaveSourceSnapshot(string packageName, byte[] packageBytes, string sourceDirectory)
@@ -1116,6 +1133,9 @@ internal sealed class MainForm : Form
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
                 File.Copy(source, destination, overwrite: false);
             }
+            string nameMap = Path.Combine(sourceDirectory, UnrealNameSanitizer.MapFileName);
+            if (File.Exists(nameMap))
+                File.Copy(nameMap, Path.Combine(staging, UnrealNameSanitizer.MapFileName), overwrite: false);
 
             if (Directory.Exists(destinationRoot))
                 Directory.Move(destinationRoot, previous);
@@ -1253,10 +1273,12 @@ internal sealed class MainForm : Form
                 throw new InvalidDataException("METHOS_SOURCE_FAILURES\n" + string.Join("\n", preflightFailures));
             Log($"Revisión previa correcta: {ucFiles.Length} fuentes .uc. Iniciando UCC.");
             UccCompileResult uccResult = UccCompiler.CompileInterface(UccRuntimeRoot, sourceDirectory);
+            byte[] compiledPackageBytes = UnrealNameSanitizer.RestoreOriginalNames(
+                uccResult.PackageBytes, sourceDirectory);
             string uccTemporaryOutput = Path.Combine(Path.GetTempPath(), "MethosU_UCC_" + Guid.NewGuid().ToString("N") + ".u");
             try
             {
-                File.WriteAllBytes(uccTemporaryOutput, uccResult.PackageBytes);
+                File.WriteAllBytes(uccTemporaryOutput, compiledPackageBytes);
                 var verifiedUcc = UnrealPackageIndex.Open(uccTemporaryOutput);
                 using (var validation = UnrealLoader.LoadPackage(uccTemporaryOutput, FileAccess.Read))
                 {
@@ -1268,10 +1290,10 @@ internal sealed class MainForm : Form
                 }
 
                 byte[] finalBytes = EncodeCompiledPackage(
-                    uccResult.PackageBytes, protectionInspection, protectionRuntime, originalFileName);
+                    compiledPackageBytes, protectionInspection, protectionRuntime, originalFileName);
                 File.WriteAllBytes(uccTemporaryOutput, finalBytes);
                 var destination = Path.Combine(CompleteDir, baseName + ".u");
-                SaveSourceSnapshot(baseName, uccResult.PackageBytes, sourceDirectory);
+                SaveSourceSnapshot(baseName, compiledPackageBytes, sourceDirectory);
                 ReplaceArchiveWithCompiledFile(uccTemporaryOutput, CompleteDir, baseName + ".u");
                 Log($"Compilación UCC terminada: {ucFiles.Length} fuentes; {finalBytes.Length:N0} bytes; perfil={uccResult.ProfileDescription}; capas={protectionInspection?.Plan.Layers.Count ?? 0}; archivo={destination}");
             }
