@@ -64,7 +64,8 @@ SEGURIDAD DE LOS ARCHIVOS
   contenido anterior desde una copia independiente de recuperación.
 - Si la restauración automática también falla, la copia de recuperación se
   conserva para permitir una recuperación posterior.
-- Los respaldos U se guardan en:
+- Los respaldos U existentes se conservan en esta ruta local heredada para no
+  perder datos de instalaciones anteriores:
   %LOCALAPPDATA%\Methos U Editor\Backups
 - Los respaldos XDAT se guardan en:
   %LOCALAPPDATA%\Methos\Backups\XDAT
