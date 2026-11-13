@@ -597,6 +597,7 @@ string dunk3lManaBurnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMisma
     "TargetStatusWnd", dunk3lManaBurnSample, out IReadOnlyList<string> dunk3lManaBurnRepairs);
 Check(dunk3lManaBurnRepairs.Count == 1 &&
       dunk3lManaBurnRepaired.Contains("const MANA_BURN_SKILL_ID = 1398;", StringComparison.Ordinal) &&
+      dunk3lManaBurnRepaired.Contains("const CARDINAL_CLASS_ID = 97;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal),
     "Dunk3l TargetStatusWnd Mana Burn filter did not receive the Interlude skill ID constant.");
 Console.WriteLine("PASS: Dunk3l TargetStatusWnd preserves the Mana Burn skill filter.");
