@@ -602,6 +602,21 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("Dunk3l target aggro filter rebound to its existing IgnoreAggr option");
         }
 
+        if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase))
+        {
+            // UELib emits redundant int(<integer literal>) casts in this class.
+            // Interlude UCC rejects these as casting an IntProperty to itself.
+            string normalized = System.Text.RegularExpressions.Regex.Replace(
+                source, @"\\bint\\s*\\(\\s*(-?\\d+)\\s*\\)", "$1",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            if (!string.Equals(normalized, source, StringComparison.Ordinal))
+            {
+                source = normalized;
+                applied.Add("ToolTip redundant integer-literal casts normalized for Interlude UCC");
+            }
+        }
+
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("MethosRecoveredName_31()", StringComparison.Ordinal) &&
             !source.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
