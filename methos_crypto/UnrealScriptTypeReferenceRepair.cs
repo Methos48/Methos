@@ -313,6 +313,16 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("GetHandle(\"LogoWnd\")", StringComparison.Ordinal) &&
+            source.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
+            source.Contains("RecoveredName_2108", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_2057", "MethosRecoveredName_2124", StringComparison.Ordinal);
+            source = source.Replace("RecoveredName_2108", "MethosRecoveredName_2188", StringComparison.Ordinal);
+            applied.Add("LogoWnd recovered handle/state references mapped to their declared fields");
+        }
+
         if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("bLoginInitialized", StringComparison.Ordinal) &&
             !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+bool\\s+bLoginInitialized\\s*;"))
