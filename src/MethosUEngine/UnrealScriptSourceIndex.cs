@@ -354,9 +354,9 @@ public static class UnrealScriptSourceIndex
                 tokens.Take(lastReturn).Count(token => token.Text.Equals("return", StringComparison.OrdinalIgnoreCase)) >= 2;
             if (function.ReturnType.Equals("bool", StringComparison.OrdinalIgnoreCase) && hasSwitchDefault)
             {
-                int start = function.BodyOffset + tokens[lastReturn].Start;
-                int end = function.BodyOffset + tokens[lastReturn + 1].End;
-                edits.Add((start, end - start, function.Name, function.Line, "return false;"));
+                int boolStart = function.BodyOffset + tokens[lastReturn].Start;
+                int boolEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((boolStart, boolEnd - boolStart, function.Name, function.Line, "return false;"));
                 continue;
             }
 
@@ -369,9 +369,9 @@ public static class UnrealScriptSourceIndex
                 body.Contains("return ScrInfo.ItemNum;", StringComparison.Ordinal) &&
                 body.Contains("return 0;", StringComparison.Ordinal))
             {
-                int start = function.BodyOffset + tokens[lastReturn].Start;
-                int end = function.BodyOffset + tokens[lastReturn + 1].End;
-                edits.Add((start, end - start, function.Name, function.Line, string.Empty));
+                int scrollStart = function.BodyOffset + tokens[lastReturn].Start;
+                int scrollEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((scrollStart, scrollEnd - scrollStart, function.Name, function.Line, string.Empty));
                 continue;
             }
 
@@ -379,9 +379,9 @@ public static class UnrealScriptSourceIndex
             if (!function.ReturnType.Equals("void", StringComparison.OrdinalIgnoreCase) &&
                 tokens[lastReturn - 1].Text == "}" && hasSwitchDefault)
             {
-                int start = function.BodyOffset + tokens[lastReturn].Start;
-                int end = function.BodyOffset + tokens[lastReturn + 1].End;
-                edits.Add((start, end - start, function.Name, function.Line, string.Empty));
+                int switchStart = function.BodyOffset + tokens[lastReturn].Start;
+                int switchEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((switchStart, switchEnd - switchStart, function.Name, function.Line, string.Empty));
                 continue;
             }
 
