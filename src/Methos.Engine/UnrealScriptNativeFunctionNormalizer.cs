@@ -86,6 +86,8 @@ public static class UnrealScriptNativeFunctionNormalizer
         openParen = closeParen = -1;
         if (start > 0 && (char.IsLetterOrDigit(source[start - 1]) || source[start - 1] == '_'))
             return false;
+        if (IsFunctionDeclarationName(source, start))
+            return false;
 
         const string syntheticPrefix = "__NFUN_";
         const string recoveredPrefix = "UnknownFunction";
@@ -125,6 +127,16 @@ public static class UnrealScriptNativeFunctionNormalizer
 
         closeParen = FindMatchingParen(source, openParen);
         return closeParen >= 0;
+    }
+
+    private static bool IsFunctionDeclarationName(string source, int start)
+    {
+        int lineStart = start <= 0 ? 0 : source.LastIndexOf('\n', start - 1) + 1;
+        string prefix = source.Substring(lineStart, start - lineStart);
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            prefix,
+            @"^\s*(?:(?:native|final|static|simulated|iterator|exec)\s+)*(?:function|event|delegate)\s+(?:[A-Za-z_]\w*\s+)?$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     private static int FindMatchingParen(string source, int openParen)
