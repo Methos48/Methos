@@ -38,6 +38,26 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
 
+        if (className.Equals("DamageLite", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("ManaBurnPending", StringComparison.Ordinal) &&
+            source.Contains("ManaBurnTargetName", StringComparison.Ordinal))
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+bool\\s+ManaBurnPending\\s*;"))
+            {
+                source = source.Replace("var bool Critical;",
+                    "var bool Critical;" + Environment.NewLine + "var bool ManaBurnPending;",
+                    StringComparison.Ordinal);
+                applied.Add("DamageLite.ManaBurnPending bool field restored");
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+string\\s+ManaBurnTargetName\\s*;"))
+            {
+                source = source.Replace("var WindowHandle OnMsgWnd9;",
+                    "var WindowHandle OnMsgWnd9;" + Environment.NewLine + "var string ManaBurnTargetName;",
+                    StringComparison.Ordinal);
+                applied.Add("DamageLite.ManaBurnTargetName string field restored");
+            }
+        }
+
         if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("ChatFilterBtn.SetTooltipCustomType(SetTooltip(\"Chat Filter\\\\nMouse R-Click: Hide Chat\"));", StringComparison.Ordinal))
         {
