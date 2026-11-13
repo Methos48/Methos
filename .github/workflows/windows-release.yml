@@ -302,7 +302,7 @@ jobs:
           foreach ($required in @("xdat_core.py", "xdat_bridge.py")) {
             if (!(Test-Path (Join-Path $xdatRuntime $required))) { throw "Falta el motor XDAT integrado: $required." }
           }
-          $secondApp = Get-ChildItem -LiteralPath $installDir -Recurse -File -Filter "Methos XDAT.exe"
+          $secondApp = Get-ChildItem -LiteralPath $installDir -Recurse -File -Filter "*XDAT*.exe"
           if ($secondApp) { throw "La instalación contiene una segunda aplicación Methos XDAT.exe; no cumple el diseño de aplicación única." }
           $cryptoExe = Get-ChildItem -LiteralPath $installDir -Recurse -File -Filter "l2encdec.exe"
           if ($cryptoExe) { throw "Se detectó l2encdec.exe como ejecutable externo; el paquete no debe depender de ese programa." }
