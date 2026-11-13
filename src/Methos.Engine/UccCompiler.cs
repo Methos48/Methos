@@ -866,9 +866,6 @@ function HandleHideLogo()
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
                 source = NormalizeInventoryKeyEnums(className, source);
-                source = RestoreToolTipItemIcon(className, source,
-                    out bool restoredToolTipItemIcon);
-                if (restoredToolTipItemIcon) repairedIdentifiers++;
                 source = RestoreReferencedMissingFunctions(source, referenceSource,
                     out int restoredOptionWndHandlers);
                 repairedIdentifiers += restoredOptionWndHandlers;
@@ -880,12 +877,6 @@ function HandleHideLogo()
                     normalizedNativeCalls += optionWndNormalizedCalls;
                     unresolvedNativeCalls += optionWndUnresolvedCalls;
                 }
-                source = RestoreOptionWndLogoHandler(className, source,
-                    out bool restoredLogoHandler);
-                if (restoredLogoHandler) repairedIdentifiers++;
-                source = RestoreOptionWndShortcutTransparencyDelegate(className, source,
-                    out bool restoredShortcutTransparencyDelegate);
-                if (restoredShortcutTransparencyDelegate) repairedIdentifiers++;
                 source = RestoreInventoryWndEarItemArray(className, source,
                     out bool restoredEarItemArray);
                 if (restoredEarItemArray) repairedIdentifiers++;
