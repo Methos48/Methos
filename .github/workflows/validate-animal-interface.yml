@@ -177,17 +177,36 @@ jobs:
           } else {
             Write-Host "ANIMAL_FUNCTION_ALREADY_PRESENT=$functionName"
           }
-      - name: Diagnose Animal Shortcut ResetParam reference
+      - name: Restore missing Animal Shortcut ResetParam helper
         shell: pwsh
         run: |
-          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude"
-          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InterfaceAI_KeySettingWnd.uc"
-          Write-Host "===== RESETPARAM CALL SITES ====="
-          Select-String -LiteralPath $sourceFile -SimpleMatch -Pattern "ResetParam" -Context 5,5
-          Write-Host "===== RESETPARAM DEFINITIONS IN INTERLUDE KIT ====="
-          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -SimpleMatch -Pattern "ResetParam" -Context 2,4
-          Write-Host "===== SHORTCUT CLASS DECLARATIONS ====="
-          Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)^\s*(class|struct)\s+Shortcut\b' -Context 0,20
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "Shortcut.uc"
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/Shortcut.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $referenceText = [IO.File]::ReadAllText($referenceFile)
+          $functionName = "ResetParam"
+          if ($sourceText -notmatch ('(?im)^\s*function\s+[^\r\n]*\b' + $functionName + '\s*\(')) {
+            $signature = [regex]::Match($referenceText, '(?im)^\s*function\s+' + [regex]::Escape($functionName) + '\s*\([^)]*\)\s*\{')
+            if (!$signature.Success) { throw "Exact reference function $functionName was not found in Shortcut.uc." }
+            $openBrace = $referenceText.IndexOf('{', $signature.Index)
+            $depth = 0
+            $closeBrace = -1
+            for ($i = $openBrace; $i -lt $referenceText.Length; $i++) {
+              if ($referenceText[$i] -eq '{') { $depth++ }
+              elseif ($referenceText[$i] -eq '}') {
+                $depth--
+                if ($depth -eq 0) { $closeBrace = $i; break }
+              }
+            }
+            if ($closeBrace -lt 0) { throw "Could not locate complete $functionName body." }
+            $functionText = $referenceText.Substring($signature.Index, $closeBrace - $signature.Index + 1).Trim()
+            $sourceText = $sourceText.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine + $functionText + [Environment]::NewLine
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_FUNCTION=$functionName FROM=Shortcut.uc"
+            Write-Host "ANIMAL_RESTORED_FUNCTION_CHARS=$($functionText.Length)"
+          } else {
+            Write-Host "ANIMAL_FUNCTION_ALREADY_PRESENT=$functionName"
+          }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
