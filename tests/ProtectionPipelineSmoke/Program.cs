@@ -340,6 +340,23 @@ Check(manorCropCastRepairs.Count == 1 &&
 Console.WriteLine("PASS: ManorCropInfoChangeWnd redundant integer casts are normalized.");
 
 
+string manorSeedCastSample = """
+class ManorSeedInfoChangeWnd extends UICommonAPI;
+function ShowErrorDialog(int MinValue, int MaxValue, int SystemStringIdx)
+{
+    local string ParamString;
+    ParamAdd(ParamString, "Type", string(int(1)));
+}
+""";
+string manorSeedCastRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ManorSeedInfoChangeWnd", manorSeedCastSample, out IReadOnlyList<string> manorSeedCastRepairs);
+Check(manorSeedCastRepairs.Count == 1 &&
+      manorSeedCastRepaired.Contains("string(1)", StringComparison.Ordinal) &&
+      !manorSeedCastRepaired.Contains("string(int(1))", StringComparison.Ordinal),
+    "ManorSeedInfoChangeWnd redundant integer cast was not removed.");
+Console.WriteLine("PASS: ManorSeedInfoChangeWnd redundant integer casts are normalized.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
