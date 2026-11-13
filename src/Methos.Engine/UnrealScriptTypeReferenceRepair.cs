@@ -357,7 +357,8 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
-        if (className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) &&
+        if ((className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("PartyMatchWaitListWnd", StringComparison.OrdinalIgnoreCase)) &&
             source.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal))
         {
             source = source.Replace(
