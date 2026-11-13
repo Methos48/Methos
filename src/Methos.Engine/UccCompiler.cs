@@ -321,6 +321,10 @@ public static class UccCompiler
                 int genericControlRepairs = Math.Max(0, controlCharactersBefore - controlCharactersAfter);
                 repairedIdentifiers += genericControlRepairs;
                 recoveredControlIdentifiers += genericControlRepairs;
+                string className = Path.GetFileNameWithoutExtension(file);
+                source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+                    className, source, out IReadOnlyList<string> typeReferenceRepairs);
+                repairedIdentifiers += typeReferenceRepairs.Count;
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
