@@ -59,6 +59,8 @@ jobs:
           if (Test-Path $statusReference) { Copy-Item $statusReference (Join-Path $refDir "StatusCustomWnd.uc") }
           $statusWndReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/StatusWnd.uc"
           if (Test-Path $statusWndReference) { Copy-Item $statusWndReference (Join-Path $refDir "StatusWnd.uc") }
+          $uiCommonReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/UICommonAPI.uc"
+          if (Test-Path $uiCommonReference) { Copy-Item $uiCommonReference (Join-Path $refDir "UICommonAPI.uc") }
       - name: Export NWindow API definitions for compiler diagnostics
         shell: pwsh
         run: |
