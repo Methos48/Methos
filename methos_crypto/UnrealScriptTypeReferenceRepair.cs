@@ -266,6 +266,8 @@ public static class UnrealScriptTypeReferenceRepair
                          parameters, @"(?<enumType>(?:[A-Za-z_][A-Za-z0-9_]*\.)*E[A-Z][A-Za-z0-9_]*)\s+(?<variable>[A-Za-z_][A-Za-z0-9_]*)"))
             {
                 string enumType = parameter.Groups["enumType"].Value;
+                int enumSeparator = enumType.LastIndexOf('.');
+                if (enumSeparator >= 0) enumType = enumType[(enumSeparator + 1)..];
                 string variable = parameter.Groups["variable"].Value;
                 var switchMatch = System.Text.RegularExpressions.Regex.Match(
                     source, @"\bswitch\s*\(\s*" +
