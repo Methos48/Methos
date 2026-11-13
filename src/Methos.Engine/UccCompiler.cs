@@ -272,6 +272,56 @@ public static class UccCompiler
         return source;
     }
 
+    // The reference HandleLoadPotions routine dispatches the six item IDs to the
+    // specialized insertion routines already present in AutoPotionsWnd, but the
+    // matching reference source omits the small dispatcher itself. Reconstruct it
+    // from the exact IDs/order in HandleLoadPotions and the existing startup routine.
+    private static string RestoreAutoPotionsWndPotionDispatcher(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("InsertPotion(Potion[", StringComparison.Ordinal))
+            return source;
+        if (Regex.IsMatch(source, @"(?im)^\\s*function\\s+InsertPotion\\s*\\("))
+            return source;
+
+        const string dispatcher = @"
+function InsertPotion(ItemInfo a_ItemInfo)
+{
+    switch(a_ItemInfo.ClassID)
+    {
+        case 5592:
+            InsertCPPotion(a_ItemInfo);
+            break;
+        case 1539:
+            InsertHPPotion(a_ItemInfo);
+            break;
+        case 728:
+            InsertMPPotion(a_ItemInfo);
+            break;
+        case 5591:
+            InsertSmallCPPotion(a_ItemInfo);
+            break;
+        case 8627:
+            InsertElixirHPPotion(a_ItemInfo);
+            break;
+        case 8639:
+            InsertElixirCPPotion(a_ItemInfo);
+            break;
+        default:
+            break;
+    }
+    return;
+}
+";
+        Match classLine = Regex.Match(source, @"(?m)^\\s*class\\s+\\w+\\b[^;]*;[\\t ]*\\r?\\n?");
+        if (!classLine.Success) return source;
+        source = source.Insert(classLine.Index + classLine.Length, dispatcher + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -386,6 +436,9 @@ public static class UccCompiler
                     source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                         source, referenceSource, out IReadOnlyList<string> repairedFunctions);
                     restoredFailedFunctions += repairedFunctions.Count;
+                    source = RestoreAutoPotionsWndPotionDispatcher(className, source,
+                        out bool restoredPotionDispatcher);
+                    if (restoredPotionDispatcher) repairedIdentifiers++;
                     source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
                         source, referenceSource, out IReadOnlyList<string> repairedTrailingReturns);
                     repairedIdentifiers += repairedTrailingReturns.Count;
