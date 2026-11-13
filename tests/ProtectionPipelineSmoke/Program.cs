@@ -617,6 +617,28 @@ Check(partyWndSetNameRepairs.Count == 1 &&
     "PartyWnd SetName arguments were not cast to the actual NWindow enum parameter types.");
 Console.WriteLine("PASS: PartyWnd.SetName arguments use the declared NWindow enum types.");
 
+string partyWndMissingStringReturnSample = """
+class PartyWnd extends UICommonAPI;
+function string GetMainAssistName(int Index)
+{
+    switch(Index)
+    {
+        case 1:
+            return "Name";
+        default:
+            break;
+    }
+    return;
+}
+""";
+string partyWndMissingStringReturnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PartyWnd", partyWndMissingStringReturnSample, out IReadOnlyList<string> partyWndReturnRepairs);
+Check(partyWndReturnRepairs.Count == 1 &&
+      partyWndMissingStringReturnRepaired.Contains("return \"\";", StringComparison.Ordinal),
+    "PartyWnd.GetMainAssistName did not return an empty string for unmatched indices.");
+Console.WriteLine("PASS: PartyWnd.GetMainAssistName has a valid string fallback return.");
+
+
 string uiCommonMissingGotoLabelSample = """
 class UICommonAPI extends Object;
 function int Split(string strInput, string delim, out array<string> arrToken)
