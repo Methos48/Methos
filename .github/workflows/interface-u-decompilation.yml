@@ -40,3 +40,50 @@ jobs:
           path: ${{ runner.temp }}/InterfaceU-${{ matrix.package }}
           if-no-files-found: error
           retention-days: 7
+
+  compile-edit-roundtrip:
+    needs: decompile-u
+    runs-on: windows-2022
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [animal, berserker, l2sudamerica, silent-dark]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Download decompiled UnrealScript sources
+        uses: actions/download-artifact@v4
+        with:
+          name: InterfaceU-${{ matrix.package }}-Decompiled
+          path: InterfaceU-Sources
+      - name: Extract Interlude UCC runtime
+        shell: pwsh
+        run: |
+          Expand-Archive -LiteralPath "reference-data/kits/Compilador-U.zip" -DestinationPath "$env:RUNNER_TEMP/ucc-kit" -Force
+          $kit = Join-Path $env:RUNNER_TEMP "ucc-kit/Compilador  U"
+          if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "Interlude UCC runtime is incomplete." }
+          "UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Modify, compile, protect and reopen Interface.u
+        shell: pwsh
+        run: |
+          $source = Join-Path $PWD "InterfaceU-Sources"
+          $input = Join-Path $PWD "reference-data/packages/${{ matrix.package }}/Interface.u"
+          $outputDir = Join-Path $PWD "InterfaceU-Modified"
+          New-Item -ItemType Directory -Force $outputDir | Out-Null
+          $output = Join-Path $outputDir "Interface.u"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --interface-u-edit-roundtrip $env:UCC_ROOT $input $output $source
+          if ($LASTEXITCODE -ne 0) { throw "Modified Interface.u round-trip failed for ${{ matrix.package }}." }
+          if (!(Test-Path -LiteralPath $output)) { throw "Modified Interface.u output is missing." }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: InterfaceU-${{ matrix.package }}-Modified-RoundTrip
+          path: |
+            InterfaceU-Modified/Interface.u
+            InterfaceU-Sources/*.uc
+            InterfaceU-Sources/methos_name_map.json
+          if-no-files-found: warn
+          retention-days: 14
