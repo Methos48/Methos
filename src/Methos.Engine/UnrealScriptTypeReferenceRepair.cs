@@ -610,6 +610,19 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("ToolTip missing max-width helper restored from its draw-list contents");
         }
 
+        if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
+            source.Contains("= getMaxWidth();", StringComparison.Ordinal))
+        {
+            // Keep the recovered helper's exact behavior, but give it a unique name.
+            // Some Dunk3l exports collide with the original API symbol during UCC binding.
+            source = System.Text.RegularExpressions.Regex.Replace(
+                source, @"\\bgetMaxWidth\\b", "MethosTooltipGetMaxWidth",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            applied.Add("ToolTip max-width helper renamed to avoid UCC symbol binding collision");
+        }
+
         if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("if(ActiveHoldTarget)", StringComparison.Ordinal) &&
             source.Contains("GetOptionBool(\"Custom\", \"HoldTarget\")", StringComparison.Ordinal))
