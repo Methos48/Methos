@@ -174,6 +174,7 @@ function InitHandle()
     RecoveredName_2802 = ItemWindowHandle(GetHandle("InventoryItem"));
     RecoveredName_2803 = ItemWindowHandle(GetHandle("QuestItem"));
     RecoveredName_2804 = ItemWindowHandle(GetHandle("EquipItem"));
+    TrashButton = ButtonHandle(GetHandle("InventoryWnd.TrashButton"));
 }
 function OnDropItem(string strTarget, ItemInfo Info)
 {
@@ -205,6 +206,7 @@ Check(inventoryHandleRepairs.Count == 5 &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("var ButtonHandle TrashButton;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("isDragSrcInventory", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("ItemWindowHandle(GetHandle(strTarget))", StringComparison.Ordinal) &&
