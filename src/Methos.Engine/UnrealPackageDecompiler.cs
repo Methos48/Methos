@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using UELib;
 using UELib.Core;
 
@@ -118,6 +119,8 @@ public static class UnrealPackageDecompiler
             }
         }
 
+        RepairKnownDunk3lInheritedCalls(output, referenceSourceDirectory);
+
         return new UnrealPackageDecompileResult(
             checked((int)package.Summary.Version),
             checked((int)package.Summary.LicenseeVersion),
@@ -129,6 +132,49 @@ public static class UnrealPackageDecompiler
         {
             SanitizedNameCount = replacements.Count
         };
+    }
+
+    // Dunk3l's StatusWnd calls the inherited two-argument status-message helper
+    // using its reference-kit name. In the protected package, the same helper
+    // has an invalid control-character FName and is exported under its reversible
+    // MethosRecoveredName identifier. Reconcile only when both exact signatures
+    // are present; the name map restores the original FName after UCC compilation.
+    private static void RepairKnownDunk3lInheritedCalls(string outputDirectory, string? referenceSourceDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(referenceSourceDirectory))
+            return;
+
+        string childPath = Path.Combine(outputDirectory, "StatusWnd.uc");
+        string parentPath = Path.Combine(outputDirectory, "UICommonAPI.uc");
+        string referenceParentPath = Path.Combine(
+            Path.GetFullPath(referenceSourceDirectory), "UICommonAPI.uc");
+        if (!File.Exists(childPath) || !File.Exists(parentPath) || !File.Exists(referenceParentPath))
+            return;
+
+        string child = File.ReadAllText(childPath);
+        string parent = File.ReadAllText(parentPath);
+        string referenceParent = File.ReadAllText(referenceParentPath);
+
+        const string referenceMethod = "RecoveredName_389";
+        const string sanitizedMethod = "MethosRecoveredName_408";
+        const string parameters = @"\\s*\\(\\s*string\\s+[A-Za-z_]\\w*\\s*,\\s*Color\\s+[A-Za-z_]\\w*\\s*\\)";
+        if (!Regex.IsMatch(referenceParent,
+                @"\\bfunction\\s+" + referenceMethod + parameters,
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) ||
+            !Regex.IsMatch(parent,
+                @"\\bfunction\\s+" + sanitizedMethod + parameters,
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) ||
+            !Regex.IsMatch(child,
+                @"\\b" + referenceMethod + @"\\s*\\(",
+                RegexOptions.CultureInvariant))
+            return;
+
+        string repaired = Regex.Replace(child,
+            @"\\b" + referenceMethod + @"(?=\\s*\\()",
+            sanitizedMethod,
+            RegexOptions.CultureInvariant);
+        if (!string.Equals(repaired, child, StringComparison.Ordinal))
+            File.WriteAllText(childPath, repaired, new UTF8Encoding(false));
     }
 
 }
