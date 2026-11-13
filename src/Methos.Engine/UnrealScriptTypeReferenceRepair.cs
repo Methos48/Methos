@@ -600,7 +600,7 @@ public static class UnrealScriptTypeReferenceRepair
         {
             source = source.Replace(
                 "class TargetStatusWnd extends UICommonAPI;",
-                "class TargetStatusWnd extends UICommonAPI;\n\nconst MANA_BURN_SKILL_ID = 1398;",
+                "class TargetStatusWnd extends UICommonAPI;\n\nconst MANA_BURN_SKILL_ID = 1398;\nconst CARDINAL_CLASS_ID = 97;",
                 StringComparison.Ordinal);
             applied.Add("Dunk3l Mana Burn notice filter restored with the Interlude skill ID");
         }
