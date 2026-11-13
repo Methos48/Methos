@@ -145,7 +145,7 @@ public static class UnrealScriptNativeEnumArgumentRepair
                     !DrawItemTypeNames.TryGetValue(value, out string? enumName))
                     return match.Value;
                 applied.Add($"{match.Groups["target"].Value}: {value} -> {enumName}");
-                return $"{match.Groups["target"].Value} = {enumName}";
+                return $"{match.Groups["target"].Value}.eType = {enumName}";
             },
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
