@@ -1,0 +1,52 @@
+name: Export Dunk3l decompiled XDAT XML
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - ".github/workflows/export-dunk3l-xdat-xml.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Decrypt and export XDAT XML
+        shell: bash
+        run: |
+          mkdir -p Dunk3l-XDAT
+          cp reference-data/client/lineage2/interface.xdat Dunk3l-XDAT/interface.xdat
+          PYTHONPATH=tools/xdat python - <<'PY'
+          from pathlib import Path
+          import tempfile
+          from validate_dunk3l_smartcrypt import decode_smartcrypt_and_111
+          from xdat_core import decompile_to_folder
+          source = Path('reference-data/client/lineage2/interface.xdat').read_bytes()
+          without_tail, with_tail, *_ = decode_smartcrypt_and_111(source)
+          errors=[]
+          for label,payload in [('without-tail',without_tail),('with-tail',with_tail)]:
+              out=Path('Dunk3l-XDAT')
+              try:
+                  windows,shortcuts=decompile_to_folder(payload,out)
+                  if windows < 1: raise ValueError('No se exportaron ventanas')
+                  print(f'PASS: XDAT XML exported using {label}; windows={windows}; shortcuts={shortcuts}')
+                  break
+              except Exception as e:
+                  errors.append(f'{label}: {e}')
+          else:
+              raise RuntimeError('No se pudo exportar XDAT: '+' | '.join(errors))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dunk3l-XDAT-Decompiled-XML
+          path: Dunk3l-XDAT/
+          if-no-files-found: error
+          retention-days: 14
