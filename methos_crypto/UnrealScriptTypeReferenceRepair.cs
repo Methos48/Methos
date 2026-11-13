@@ -52,8 +52,8 @@ public static class UnrealScriptTypeReferenceRepair
                     "$1EChatType($2)$3");
                 if (!string.Equals(repairedBody, function.Body, StringComparison.Ordinal))
                 {
-                    source = source.Remove(function.Start, function.Length)
-                        .Insert(function.Start, repairedBody);
+                    source = source.Remove(function.BodyOffset, function.BodyLength)
+                        .Insert(function.BodyOffset, repairedBody);
                     applied.Add("ChatWnd.GetChatTypeByTabIndex numeric assignments -> EChatType casts");
                 }
             }
