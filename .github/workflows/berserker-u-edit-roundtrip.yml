@@ -32,6 +32,12 @@ jobs:
           $kit = Join-Path $env:RUNNER_TEMP "ucc-kit/Compilador  U"
           if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "Interlude UCC runtime is incomplete." }
           "UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Export NWindow API definitions for compiler diagnostics
+        shell: pwsh
+        run: |
+          $apiDir = Join-Path $env:RUNNER_TEMP "NWindow-API"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile (Join-Path $env:UCC_ROOT "Interlude/System/NWindow.u") $apiDir
+          if ($LASTEXITCODE -ne 0) { Write-Warning "NWindow API source export was incomplete; continuing with Berserker diagnostic." }
       - name: Decode, modify, compile, re-encode and reopen Berserker Interface.u
         shell: pwsh
         run: |
@@ -55,6 +61,8 @@ jobs:
         if: always()
         with:
           name: Berserker-U-Modified-RoundTrip
-          path: ${{ runner.temp }}/Berserker-U-RoundTrip
+          path: |
+            ${{ runner.temp }}/Berserker-U-RoundTrip
+            ${{ runner.temp }}/NWindow-API
           if-no-files-found: warn
           retention-days: 14
