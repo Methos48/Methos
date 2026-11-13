@@ -169,6 +169,34 @@ Check(chatEnumRepairs.Count == 1 &&
     "ChatWnd EChatType numeric assignments were not restored as enum casts.");
 Console.WriteLine("PASS: ChatWnd chat-tab values are explicitly cast to EChatType.");
 
+string enumSwitchSample = """
+class ChatWnd extends UIScript;
+function Test()
+{
+    local UIEventManager.EIMEType imeType;
+    switch(imeType)
+    {
+        case 1:
+            if (true)
+            {
+                Log("case 9: is text, not a label");
+            }
+            break;
+        case 2:
+            break;
+    }
+}
+""";
+string enumSwitchRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ChatWnd", enumSwitchSample, out IReadOnlyList<string> enumSwitchRepairs);
+Check(enumSwitchRepairs.Count == 1 &&
+      enumSwitchRepaired.Contains("case EIMEType(1):", StringComparison.Ordinal) &&
+      enumSwitchRepaired.Contains("case EIMEType(2):", StringComparison.Ordinal) &&
+      enumSwitchRepaired.Contains("\\"case 9: is text, not a label\\"", StringComparison.Ordinal),
+    "Numeric switch labels for enum locals were not restored safely.");
+Console.WriteLine("PASS: numeric enum switch labels are cast without changing string literals.");
+
+
 
 var interfaceSoundSample = """
 class SoundSample extends UIScript;
