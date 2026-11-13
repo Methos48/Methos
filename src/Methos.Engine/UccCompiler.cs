@@ -362,6 +362,55 @@ function InsertPotion(ItemInfo a_ItemInfo)
         return source;
     }
 
+    // The matching AutoPotionsWnd reference calls onActiveTex when clearing a
+    // potion slot, but omits that UI-only helper. Rebuild its six-slot visibility
+    // switch from the class's existing texture handles and the slot order.
+    private static string RestoreAutoPotionsWndActiveTexture(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase) ||
+            !Regex.IsMatch(source, @"(?im)^\s*onActiveTex\s*\("))
+            return source;
+        if (Regex.IsMatch(source, @"(?im)^\s*function\s+onActiveTex\s*\("))
+            return source;
+
+        const string helper = @"
+function onActiveTex(bool bActive, int nIndex)
+{
+    switch(nIndex)
+    {
+        case 0:
+            if(bActive) ToggleCP.ShowWindow(); else ToggleCP.HideWindow();
+            break;
+        case 1:
+            if(bActive) ToggleHP.ShowWindow(); else ToggleHP.HideWindow();
+            break;
+        case 2:
+            if(bActive) ToggleMP.ShowWindow(); else ToggleMP.HideWindow();
+            break;
+        case 3:
+            if(bActive) ToggleSmallCP.ShowWindow(); else ToggleSmallCP.HideWindow();
+            break;
+        case 4:
+            if(bActive) ElixirToggleHP.ShowWindow(); else ElixirToggleHP.HideWindow();
+            break;
+        case 5:
+            if(bActive) ElixirToggleCP.ShowWindow(); else ElixirToggleCP.HideWindow();
+            break;
+        default:
+            break;
+    }
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, helper + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -482,6 +531,9 @@ function InsertPotion(ItemInfo a_ItemInfo)
                     source = RestoreAutoPotionsWndPotionDispatcher(className, source,
                         out bool restoredPotionDispatcher);
                     if (restoredPotionDispatcher) repairedIdentifiers++;
+                    source = RestoreAutoPotionsWndActiveTexture(className, source,
+                        out bool restoredActiveTexture);
+                    if (restoredActiveTexture) repairedIdentifiers++;
                     source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
                         source, referenceSource, out IReadOnlyList<string> repairedTrailingReturns);
                     repairedIdentifiers += repairedTrailingReturns.Count;
