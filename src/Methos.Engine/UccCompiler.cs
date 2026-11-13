@@ -771,6 +771,18 @@ function HandleHideLogo()
         return source;
     }
 
+    // LoadingWnd's ServerAgeLimit local is an enum; restore its enum cast
+    // when UELib emits the underlying byte conversion for the assignment.
+    private static string NormalizeLoadingWndServerAgeLimitEnum(string className, string source)
+    {
+        if (!className.Equals("LoadingWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source,
+            @"\bServerAgeLimit\s*=\s*byte\s*\(\s*ServerAgeLimitInt\s*\)\s*;",
+            "ServerAgeLimit = EServerAgeLimit(ServerAgeLimitInt);",
+            RegexOptions.IgnoreCase);
+    }
+
     // UELib emits integer ordinals for this recovered enum switch, while
     // Interlude UCC requires the declared enum labels.
     private static string NormalizeEventMatchObserverMessageModeSwitch(string className, string source)
@@ -966,6 +978,7 @@ function HandleHideLogo()
                 source = NormalizeLoadingWndServerAgeEnum(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
+                source = NormalizeLoadingWndServerAgeLimitEnum(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
