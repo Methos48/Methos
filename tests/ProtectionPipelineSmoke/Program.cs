@@ -619,6 +619,61 @@ Console.WriteLine("PASS: PartyWnd.SetName arguments use the declared NWindow enu
 
 string uiCommonMissingGotoLabelSample = """
 class UICommonAPI extends Object;
+function int Split(string strInput, string delim, out array<string> arrToken)
+{
+    local int arrSize;
+    if ( (InStr(strInput, delim) > 0) )
+    {
+        arrSize++;
+        goto JL0000;
+    }
+    return arrSize;
+}
+function void JoinArray(array<string> StringArray)
+{
+    local int i;
+    i = 0;
+    if ( (i < StringArray.Length) )
+    {
+        i++;
+        goto JL0007;
+    }
+}
+function void ParamToRecord(string param, out LVDataRecord Record)
+{
+    local int idx;
+    local int MaxColumn;
+    idx = 0;
+    if ( (idx < MaxColumn) )
+    {
+        idx++;
+        goto JL00B7;
+    }
+}
+function string GetSuperRace(string Text)
+{
+    local int i;
+    local array<string> texttemp;
+    local string Result;
+    i = 0;
+    if ( (i <= texttemp.Length) )
+    {
+        i++;
+        goto JL0030;
+    }
+    return Result;
+}
+function string ReplaceText(string Text, string Replace, string With)
+{
+    local int i;
+    i = InStr(Text, Replace);
+    if ( (i != -1) )
+    {
+        i = InStr(Text, Replace);
+        goto JL0012;
+    }
+    return Text;
+}
 function string StrToLower(string Source)
 {
     local int i;
@@ -633,15 +688,21 @@ function string StrToLower(string Source)
 """;
 string uiCommonMissingGotoLabelRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "UICommonAPI", uiCommonMissingGotoLabelSample, out IReadOnlyList<string> uiCommonLabelRepairs);
-int uiCommonLabelIndex = uiCommonMissingGotoLabelRepaired.IndexOf("JL000F:", StringComparison.Ordinal);
-int uiCommonLoopConditionIndex = uiCommonMissingGotoLabelRepaired.IndexOf(
-    "if ( (i < Len(Source)) )", StringComparison.Ordinal);
-Check(uiCommonLabelRepairs.Count == 1 &&
-      uiCommonLabelIndex >= 0 &&
-      uiCommonLoopConditionIndex > uiCommonLabelIndex &&
-      uiCommonMissingGotoLabelRepaired.Contains("goto JL000F;", StringComparison.Ordinal),
-    "UICommonAPI StrToLower did not restore the missing loop destination label.");
-Console.WriteLine("PASS: UICommonAPI StrToLower restores the JL000F loop destination.");
+Check(uiCommonLabelRepairs.Count == 6 &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL0000:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (InStr(strInput, delim) > 0) )", StringComparison.Ordinal) &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL0007:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i < StringArray.Length) )", StringComparison.Ordinal) &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL00B7:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (idx < MaxColumn) )", StringComparison.Ordinal) &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL0030:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i <= texttemp.Length) )", StringComparison.Ordinal) &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL0012:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i != -1) )", StringComparison.Ordinal) &&
+      uiCommonMissingGotoLabelRepaired.IndexOf("JL000F:", StringComparison.Ordinal) <
+          uiCommonMissingGotoLabelRepaired.IndexOf("if ( (i < Len(Source)) )", StringComparison.Ordinal),
+    "UICommonAPI did not restore all six missing loop destination labels.");
+Console.WriteLine("PASS: UICommonAPI restores all six missing loop destination labels.");
 
 string decompilerStackTraceSample = """
 function void DecompiledSwitch()
