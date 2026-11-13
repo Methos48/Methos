@@ -57,7 +57,7 @@ jobs:
           if (!(Test-Path -LiteralPath $output)) { throw "No se generó el Interface.u reconstruido." }
           Write-Host "DUNK3L_REBUILT_U_BYTES=$((Get-Item $output).Length)"
 
-      - name: Descompilar, recompilar y verificar Interface.xdat Dunk3l
+      - name: Validar decodificación y round-trip de Interface.xdat Dunk3l
         id: dunk3l_xdat
         if: always()
         continue-on-error: true
@@ -66,11 +66,7 @@ jobs:
           $xdatInput = Join-Path $PWD "reference-data/client/lineage2/interface.xdat"
           python tools/xdat/validate_dunk3l_smartcrypt.py $xdatInput
           if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo XDAT de Dunk3l." }
-          $outputDirectory = Join-Path $PWD "Dunk3l-Rebuilt"
-          New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
-          $xdatOutput = Join-Path $outputDirectory "interface.xdat"
-          Copy-Item -LiteralPath $xdatInput -Destination $xdatOutput -Force
-          Write-Host "DUNK3L_REBUILT_XDAT_BYTES=$((Get-Item $xdatOutput).Length)"
+          Write-Host "DUNK3L_XDAT_REFERENCE_BYTES=$((Get-Item $xdatInput).Length)"
 
       - name: Confirmar resultados completos de U y XDAT
         if: always()
@@ -91,8 +87,7 @@ jobs:
           name: Dunk3l-Interface-Rebuilt
           path: |
             Dunk3l-Rebuilt/interface.u
-            Dunk3l-Rebuilt/interface.xdat
             Dunk3l-Rebuilt/UnrealScript/*.uc
             Dunk3l-Rebuilt/UnrealScript/methos_name_map.json
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
