@@ -262,3 +262,10 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Se retiraron las 14 copias del subdirectorio heredado. Los documentos canónicos se conservaron en `docs/`; cuando existían diferencias, se mantuvo la versión principal más completa y actualizada.
 - No se eliminaron fuentes del motor, fixtures, paquetes originales, dependencias UCC ni herramientas necesarias para compilar o validar Methos.
 - La limpieza es documental y no cambia el comportamiento del programa. La compilación de Windows y el archivo de fuentes deben volver a validarse sobre el nuevo HEAD.
+
+### 13-11-2026 — Auditoría final de branches históricas
+
+- Se compararon los árboles de las cinco branches históricas con `main`.
+- `migration/methos-unified` y `research/xdat-format-probe` apuntan a árboles vacíos tras sus commits de retiro.
+- Las tres branches `work/*` conservan instantáneas anteriores, documentación duplicada, el kit XDAT antiguo y herramientas temporales/overlays ya sustituidos. No se encontró una segunda aplicación ni código activo necesario que falte en `main`.
+- Se registró el resultado en `docs/BRANCHES.md`. Las cinco branches pueden eliminarse manualmente cuando se confirme la validación final de `main`; no eliminar `main`.
