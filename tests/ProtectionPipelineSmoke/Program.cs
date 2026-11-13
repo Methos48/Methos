@@ -825,6 +825,57 @@ Console.WriteLine("PASS: native 129 boolean negation is restored, including nest
 
 
 
+string nativeFunctionNormalizerSample = """
+class NativeFunctionNormalizerSample extends Object;
+function int Convert(string curChar)
+{
+    return UnknownFunction237(curChar);
+}
+function string Join(string left, string right)
+{
+    return UnknownFunction112(left, right);
+}
+function int LegacyConvert(string curChar)
+{
+    return __NFUN_237__(curChar);
+}
+function int KeepUnknown()
+{
+    return UnknownFunction999(1);
+}
+function string KeepLiteral()
+{
+    return "UnknownFunction237(not code) __NFUN_112__(left,right)";
+}
+// UnknownFunction237(comment only)
+""";
+string nativeFunctionRegistryPath = Path.GetTempFileName();
+try
+{
+    File.WriteAllText(nativeFunctionRegistryPath, """
+[
+  { "NativeToken": 237, "Name": "Asc", "IsOperator": false },
+  { "NativeToken": 112, "Name": "Concat_StrStr", "IsOperator": true }
+]
+""");
+    string nativeFunctionNormalized = UnrealScriptNativeFunctionNormalizer.Normalize(
+        nativeFunctionNormalizerSample, nativeFunctionRegistryPath,
+        out int normalizedNativeCalls, out int unresolvedNativeCalls);
+    Check(normalizedNativeCalls == 3 &&
+          unresolvedNativeCalls == 1 &&
+          nativeFunctionNormalized.Contains("return Asc(curChar);", StringComparison.Ordinal) &&
+          nativeFunctionNormalized.Contains("return (left $ right);", StringComparison.Ordinal) &&
+          nativeFunctionNormalized.Contains("UnknownFunction999(1)", StringComparison.Ordinal) &&
+          nativeFunctionNormalized.Contains("\"UnknownFunction237(not code) __NFUN_112__(left,right)\"", StringComparison.Ordinal) &&
+          nativeFunctionNormalized.Contains("// UnknownFunction237(comment only)", StringComparison.Ordinal),
+        "Native function normalizer did not resolve both UnknownFunction and __NFUN wrappers safely.");
+}
+finally
+{
+    if (File.Exists(nativeFunctionRegistryPath)) File.Delete(nativeFunctionRegistryPath);
+}
+Console.WriteLine("PASS: native function normalizer resolves UnknownFunction wrappers from the verified token registry.");
+
 var trailingReturnSample = """
 class ReturnSample extends Object;
 function int GetValue()
