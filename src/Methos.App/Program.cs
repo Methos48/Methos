@@ -971,12 +971,11 @@ internal sealed class MainForm : Form
                     .Concat(dialogTypeRepairs)
                     .Concat(dialogActionRepairs)
                     .Concat(drawItemRepairs)
-                    .Concat(addressCheckRepairs)
-                    .Concat(equalityRepairs)
-                    .Concat(unaryOperatorRepairs)
                     .ToList();
                 foreach (string repair in appliedSourceRepairs)
                     Log($"Reparación de fuente aplicada en {safeName}.uc: {repair}");
+                if (addressCheckRepairs > 0 || equalityRepairs > 0 || unaryOperatorRepairs > 0)
+                    Log($"Reparaciones de operadores nativos en {safeName}.uc: dirección={addressCheckRepairs}; igualdad={equalityRepairs}; unarios={unaryOperatorRepairs}.");
 
                 SaveTextWithBackup(Path.Combine(output, safeName + ".uc"), source);
                 ok++;
