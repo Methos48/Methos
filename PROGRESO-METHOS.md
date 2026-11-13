@@ -225,3 +225,11 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - La comprobación del instalador ahora rechaza cualquier ejecutable independiente cuyo nombre contenga XDAT; el producto sigue siendo un solo `Methos.exe`.
 - **Alcance técnico que se conserva para la siguiente etapa:** el pipeline de detección/cifrado permanece como código interno y pruebas, pero todavía no está conectado al puente de la interfaz. No se debe afirmar que el runtime ya procesa todas las variantes cifradas; esta limpieza no altera esa limitación.
 - **Estado de validación:** la nueva ejecución Windows Release debe confirmar la extracción de fixtures, las pruebas de round-trip, la compilación, la instalación y el arranque. El cierre de esta migración se considera sujeto a ese resultado.
+
+### 13-11-2026 — Archivo de referencia XDAT depurado y migrado
+
+- **Commit automático verificado:** `a9fab0fc63cc4ed49fb41cf022c736648461c29c` — reemplazó el antiguo ZIP completo por un ZIP limpio de fixtures.
+- Archivo actual: `reference-data/kits/Methos-XDAT-Reference-Fixtures.zip`, 498.092 bytes. Contiene 177 entradas: un `interface.xdat` y los XML de referencia. El ZIP limpio pasó CRC; la inspección confirmó que no contiene `.py`, `.exe`, `.dll`, instaladores ni scripts.
+- Por tanto, ya no queda almacenado en el repositorio el código fuente ni el ejecutable del antiguo programa XDAT dentro de ese paquete. El archivo conserva solo datos de prueba.
+- La ejecución Windows Release `43400821601` finalizó en **SUCCESS**: compilación, pruebas canónicas XDAT, preparación del runtime, creación del instalador e instalación/arranque silenciosos. Artefacto generado: `Methos-Windows-Installer-x64`, ID `14024169547`, 77.766.886 bytes.
+- **Verificación final pendiente:** ejecutar el mismo workflow desde el commit que ya contiene el ZIP limpio para confirmar que las pruebas y el instalador funcionan sin el paquete histórico original. No declarar el cierre completo hasta que esa ejecución termine en SUCCESS.
