@@ -359,6 +359,15 @@ jobs:
           }
           Write-Host "ANIMAL_TYPED_RETURNS_NORMALIZED=$total"
           if ($unknown.Count -gt 0) { Write-Host "ANIMAL_TYPED_RETURN_TYPES_REQUIRING_REVIEW=$($unknown -join ';')" }
+      - name: Diagnose Animal IsKeyDown signature mismatch
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          Write-Host "===== ISKEYDOWN CALL SITE ====="
+          for ($n=348; $n -lt [Math]::Min(368,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
+          Write-Host "===== ISKEYDOWN DEFINITIONS AND EXAMPLES ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)\bIsKeyDown\s*\(' -Context 2,3 | Select-Object -First 80
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
