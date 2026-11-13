@@ -461,6 +461,33 @@ Check(damageLiteAniRepairs.Count == 1 &&
     "DamageLiteAni missing typed fields were not restored.");
 Console.WriteLine("PASS: DamageLiteAni recovered fields are declared with inferred types.");
 
+string damageLiteAniArrayDimensionSample = """
+class DamageLiteAni extends UICommonAPI;
+var private TextBoxHandle RecoveredName_2070[28];
+function OnLoad()
+{
+    RecoveredName_2070[28] = TextBoxHandle(GetHandle("DamageLiteAni.D-28"));
+}
+function OnTimer(int RecoveredName_2125)
+{
+    RecoveredName_2070[28].SetText("");
+}
+""";
+string damageLiteAniArrayDimensionRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "DamageLiteAni", damageLiteAniArrayDimensionSample, out IReadOnlyList<string> damageLiteAniArrayRepairs);
+string[] damageLiteAniArrayDeclarations = damageLiteAniArrayDimensionRepaired
+    .Split('\n')
+    .Select(line => line.Trim())
+    .Where(line => line.StartsWith("var private TextBoxHandle RecoveredName_2070[", StringComparison.Ordinal))
+    .ToArray();
+Check(damageLiteAniArrayRepairs.Count == 1 &&
+      damageLiteAniArrayDeclarations.Length == 1 &&
+      damageLiteAniArrayDeclarations[0] == "var private TextBoxHandle RecoveredName_2070[29];" &&
+      !damageLiteAniArrayDimensionRepaired.Contains("RecoveredName_2070[28];", StringComparison.Ordinal),
+    "DamageLiteAni array dimension repair duplicated the existing property instead of resizing it.");
+Console.WriteLine("PASS: DamageLiteAni inferred array dimension replaces the stale declaration without a duplicate.");
+
+
 
 
 
