@@ -221,6 +221,28 @@ Check(inventoryHandleRepairs.Count == 5 &&
 Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
 
 
+string enumParameterSwitchSample = """
+class GMSnoopWnd extends UICommonAPI;
+function Color GetColorByType(UIEventManager.EChatType a_Type)
+{
+    switch(a_Type)
+    {
+        case 1:
+            return ResultColor;
+        case 3:
+            return ResultColor;
+    }
+}
+""";
+string enumParameterSwitchRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "GMSnoopWnd", enumParameterSwitchSample, out IReadOnlyList<string> enumParameterSwitchRepairs);
+Check(enumParameterSwitchRepairs.Count == 1 &&
+      enumParameterSwitchRepaired.Contains("case UIEventManager.EChatType(1):", StringComparison.Ordinal) &&
+      enumParameterSwitchRepaired.Contains("case UIEventManager.EChatType(3):", StringComparison.Ordinal),
+    "GMSnoopWnd enum parameter switch labels were not cast to UIEventManager.EChatType.");
+Console.WriteLine("PASS: GMSnoopWnd function-parameter enum switch labels are typed for UCC.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
