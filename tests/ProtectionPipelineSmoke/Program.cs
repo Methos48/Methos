@@ -54,7 +54,7 @@ if (args.Length > 0 && args[0] == "--ucc-compile")
     return;
 }
 
-if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
+if (args.Length > 0 && (args[0] == "--dunk3l-u-rebuild" || args[0] == "--dunk3l-u-edit-roundtrip"))
 {
     if (args.Length != 5)
         throw new ArgumentException("Usage: --dunk3l-u-rebuild <uccRuntimeRoot> <encryptedInterface.u> <outputProtected.u> <sourceOutputDirectory>");
@@ -95,6 +95,24 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
         if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
             throw new InvalidDataException($"Dunk3l U decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
 
+        bool editRoundTrip = args[0] == "--dunk3l-u-edit-roundtrip";
+        const string editProbe = "MethosRoundTripProbe_20261113";
+        if (editRoundTrip)
+        {
+            string tooltipSource = Path.Combine(sourceDirectory, "ToolTip.uc");
+            if (!File.Exists(tooltipSource))
+                throw new FileNotFoundException("No se encontró ToolTip.uc para la prueba de modificación U.", tooltipSource);
+            string tooltipText = File.ReadAllText(tooltipSource);
+            int classEnd = tooltipText.IndexOf(';');
+            if (classEnd < 0 || !tooltipText.TrimStart().StartsWith("class ", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("ToolTip.uc no contiene una declaración de clase reconocible.");
+            if (tooltipText.Contains(editProbe, StringComparison.Ordinal))
+                throw new InvalidDataException("El marcador de prueba U ya existe; se esperaba una fuente original limpia.");
+            tooltipText = tooltipText.Insert(classEnd + 1, Environment.NewLine + "var string " + editProbe + ";" + Environment.NewLine);
+            File.WriteAllText(tooltipSource, tooltipText, new System.Text.UTF8Encoding(false));
+            Console.WriteLine($"PASS: U edit probe inserted into ToolTip.uc: {editProbe}.");
+        }
+
         UccCompileResult compiled = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
         string nameMapPath = Path.Combine(sourceDirectory, "methos_name_map.json");
         List<UnrealNameReplacement> nameMap = File.Exists(nameMapPath)
@@ -105,6 +123,8 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
             ? compiled.PackageBytes
             : UnrealPackageIndex.Parse(compiled.PackageBytes).CreateWithReplacedNames(replacements);
         var compiledIndex = UnrealPackageIndex.Parse(compiledPackage);
+        if (editRoundTrip && !compiledIndex.Names.Contains(editProbe, StringComparer.Ordinal))
+            throw new InvalidDataException($"La recompilación U no incorporó el marcador de modificación {editProbe} en la tabla de nombres.");
 
         byte[] rebuiltLineage = lineageCodec.Encode(compiledPackage, Path.GetFileName(inputPath));
         byte[] rebuiltProtected = smartCodec.Encode(rebuiltLineage, Path.GetFileName(inputPath));
@@ -118,6 +138,8 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         File.WriteAllBytes(outputPath, rebuiltProtected);
+        if (editRoundTrip)
+            Console.WriteLine($"PASS: DUNK3L U MODIFIED edit/compile/re-encrypt round-trip; marker={editProbe}; markerPersisted=true.");
         Console.WriteLine($"PASS: DUNK3L U full decompile/compile/re-encrypt cycle; classes={decompiled.ExportedCount}; sanitizedNames={decompiled.SanitizedNameCount}; restoredNames={nameMap.Count}; original={originalIndex.Summary.Version}/{originalIndex.Summary.LicenseeVersion} {originalIndex.Summary.NameCount}/{originalIndex.Summary.ImportCount}/{originalIndex.Summary.ExportCount}; compiled={compiledIndex.Summary.Version}/{compiledIndex.Summary.LicenseeVersion} {compiled.NameCount}/{compiled.ImportCount}/{compiled.ExportCount}; protectedBytes={rebuiltProtected.Length}; output={outputPath}.");
     }
     finally
