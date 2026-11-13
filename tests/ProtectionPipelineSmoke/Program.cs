@@ -491,13 +491,14 @@ function OnRButtonDown(int X, int Y)
 """;
 string logoWndFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "LogoWnd", logoWndFieldSample, out IReadOnlyList<string> logoWndFieldRepairs);
-Check(logoWndFieldRepairs.Count == 2 &&
+Check(logoWndFieldRepairs.Count == 3 &&
       logoWndFieldRepaired.Contains("MethosRecoveredName_2124.SetDraggable(false)", StringComparison.Ordinal) &&
       logoWndFieldRepaired.Contains("if(MethosRecoveredName_2188)", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("RecoveredName_2108", StringComparison.Ordinal) &&
-      logoWndFieldRepaired.Contains("AddSystemMessage(\"Logo Locked\", MethosRecoveredName_85(\"white\"))", StringComparison.Ordinal),
-    "LogoWnd recovered handle/lock references were not mapped to declared fields.");
+      logoWndFieldRepaired.Contains("MethosRecoveredName_255(\"Logo Locked\")", StringComparison.Ordinal) &&
+      !logoWndFieldRepaired.Contains("AddSystemMessage", StringComparison.Ordinal),
+    "LogoWnd recovered handle/state and custom message helper references were not preserved.");
 Console.WriteLine("PASS: LogoWnd recovered references map to declared handle and lock fields.");
 
 
