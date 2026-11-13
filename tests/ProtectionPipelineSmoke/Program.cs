@@ -186,6 +186,25 @@ Check(chatHandleRepairs.Count == 2 &&
     "Missing ChatWnd ChatFilterBtn handle declaration was not restored.");
 Console.WriteLine("PASS: missing ChatWnd ButtonHandle declaration is restored.");
 
+string damageLiteSample = """
+class DamageLite extends UICommonAPI;
+var bool Critical;
+var WindowHandle OnMsgWnd9;
+function HandleSystemMessage(string a_Param)
+{
+    ManaBurnPending = true;
+    ManaBurnTargetName = "";
+}
+""";
+string damageLiteRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "DamageLite", damageLiteSample, out IReadOnlyList<string> damageLiteRepairs);
+Check(damageLiteRepairs.Count == 2 &&
+      damageLiteRepaired.Contains("var bool ManaBurnPending;", StringComparison.Ordinal) &&
+      damageLiteRepaired.Contains("var string ManaBurnTargetName;", StringComparison.Ordinal),
+    "DamageLite Mana Burn state fields were not restored.");
+Console.WriteLine("PASS: DamageLite Mana Burn state fields are restored.");
+
+
 
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
