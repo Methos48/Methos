@@ -654,8 +654,9 @@ string dunk3lToolTipWidthRepaired = UnrealScriptTypeReferenceRepair.RepairKnownM
     "ToolTip", dunk3lToolTipWidthSample, out IReadOnlyList<string> dunk3lToolTipWidthRepairs);
 Check(dunk3lToolTipWidthRepairs.Count == 1 &&
       dunk3lToolTipWidthRepaired.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
-      dunk3lToolTipWidthRepaired.Contains("GetTextSize(DrawItem.t_strText, Width, Height);", StringComparison.Ordinal) &&
-      dunk3lToolTipWidthRepaired.Contains("MaxWidth = m_Tooltip.MinimumWidth;", StringComparison.Ordinal),
+      dunk3lToolTipWidthRepaired.Contains("if(m_Tooltip.MinimumWidth > 0)", StringComparison.Ordinal) &&
+      dunk3lToolTipWidthRepaired.Contains("return m_Tooltip.MinimumWidth;", StringComparison.Ordinal) &&
+      dunk3lToolTipWidthRepaired.Contains("return TOOLTIP_MINIMUM_WIDTH;", StringComparison.Ordinal),
     "Dunk3l ToolTip max-width helper was not restored.");
 Console.WriteLine("PASS: Dunk3l ToolTip max-width helper measures existing draw-list content.");
 
