@@ -473,6 +473,23 @@ jobs:
           }
           Write-Host "===== RESTORED TOOLTIP FUNCTION ====="
           Select-String -LiteralPath $sourceFile -Pattern '(?i)^\s*function\s+int\s+getMaxWidth\s*\(' -Context 0,18
+      - name: Restore Animal LoadingWnd enum assignment
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "LoadingWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $oldLine = 'ServerAgeLimit = byte(ServerAgeLimitInt);'
+          $newLine = 'ServerAgeLimit = UIEventManager.EServerAgeLimit(ServerAgeLimitInt);'
+          if ($sourceText.Contains($oldLine)) {
+            $sourceText = $sourceText.Replace($oldLine, $newLine)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_ENUM_ASSIGNMENT=LoadingWnd.ServerAgeLimit"
+          } elseif ($sourceText.Contains($newLine)) {
+            Write-Host "ANIMAL_ENUM_ASSIGNMENT_ALREADY_RESTORED=LoadingWnd.ServerAgeLimit"
+          } else {
+            throw "Expected LoadingWnd ServerAgeLimit byte cast was not found; refusing a broad replacement."
+          }
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
