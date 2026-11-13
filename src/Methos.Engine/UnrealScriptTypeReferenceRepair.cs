@@ -362,7 +362,7 @@ public static class UnrealScriptTypeReferenceRepair
         {
             source = source.Replace(
                 "m_PlayerName[idx].SetName(\"\", 0, 2);",
-                "m_PlayerName[idx].SetName(\"\", UIEventManager.NCT_Normal, UIEventManager.TA_Center);",
+                "m_PlayerName[idx].SetName(\"\", NCT_Normal, TA_Center);",
                 StringComparison.Ordinal);
             applied.Add("PartyWnd.SetName arguments cast to the declared UIEventManager enums");
         }
