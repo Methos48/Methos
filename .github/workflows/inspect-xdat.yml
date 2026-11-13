@@ -93,6 +93,11 @@ jobs:
           print(f"XML_OUTPUT={out}")
           PY
 
+      - name: Prove a controlled Animal XDAT XML edit survives recompilation
+        shell: bash
+        run: |
+          python tools/xdat/tests/test_animal_xdat_modification.py
+
       - name: Publish Animal XDAT decoded XML
         uses: actions/upload-artifact@v4
         with:
