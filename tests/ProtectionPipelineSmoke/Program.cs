@@ -204,6 +204,33 @@ Check(damageLiteRepairs.Count == 2 &&
     "DamageLite Mana Burn state fields were not restored.");
 Console.WriteLine("PASS: DamageLite Mana Burn state fields are restored.");
 
+string damageLiteAniSample = """
+class DamageLiteAni extends UICommonAPI;
+var private TextBoxHandle MethosRecoveredName_2152[28];
+function OnLoad()
+{
+    RecoveredName_2057 = GetHandle("DamageLiteAni");
+    RecoveredName_2070[0] = TextBoxHandle(GetHandle("DamageLiteAni.D-0"));
+    RecoveredName_2091 = 1996;
+    RecoveredName_2107 = "Miss";
+}
+function OnTimer(int RecoveredName_2125)
+{
+    RecoveredName_2057.KillTimer(RecoveredName_2125);
+    RecoveredName_2070[0].SetText("");
+}
+""";
+string damageLiteAniRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "DamageLiteAni", damageLiteAniSample, out IReadOnlyList<string> damageLiteAniRepairs);
+Check(damageLiteAniRepairs.Count == 1 &&
+      damageLiteAniRepaired.Contains("var private WindowHandle RecoveredName_2057;", StringComparison.Ordinal) &&
+      damageLiteAniRepaired.Contains("var private TextBoxHandle RecoveredName_2070[29];", StringComparison.Ordinal) &&
+      damageLiteAniRepaired.Contains("var private int RecoveredName_2091;", StringComparison.Ordinal) &&
+      damageLiteAniRepaired.Contains("var private string RecoveredName_2107;", StringComparison.Ordinal),
+    "DamageLiteAni missing typed fields were not restored.");
+Console.WriteLine("PASS: DamageLiteAni recovered fields are declared with inferred types.");
+
+
 
 
 string enumSwitchSample = """
