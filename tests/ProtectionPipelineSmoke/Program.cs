@@ -584,6 +584,24 @@ Console.WriteLine("PASS: Dunk3l SystemMsgWnd clear calls use declared chat handl
 
 string dunk3lManaBurnSample = """
 class TargetStatusWnd extends UICommonAPI;
+function OnEvent(int Event_ID, string param)
+{
+    if(Event_ID == 290)
+    {
+        HandleManaBurnNotice(param);
+        if(ActiveIgnoreAggro)
+        {
+            IgnoreAggrFunc(param);
+        }
+    }
+}
+function UpdateTarget()
+{
+    if(GetOptionBool("Custom", "IgnoreAggr") == true)
+    {
+        return;
+    }
+}
 function HandleManaBurnNotice(string param)
 {
     local int SkillID;
@@ -598,7 +616,9 @@ string dunk3lManaBurnRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMisma
 Check(dunk3lManaBurnRepairs.Count == 1 &&
       dunk3lManaBurnRepaired.Contains("const MANA_BURN_SKILL_ID = 1398;", StringComparison.Ordinal) &&
       dunk3lManaBurnRepaired.Contains("const CARDINAL_CLASS_ID = 97;", StringComparison.Ordinal) &&
-      dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal),
+      dunk3lManaBurnRepaired.Contains("SkillID != MANA_BURN_SKILL_ID", StringComparison.Ordinal) &&
+      dunk3lManaBurnRepaired.Contains("if(GetOptionBool(\"Custom\", \"IgnoreAggr\"))", StringComparison.Ordinal) &&
+      !dunk3lManaBurnRepaired.Contains("ActiveIgnoreAggro", StringComparison.Ordinal),
     "Dunk3l TargetStatusWnd Mana Burn filter did not receive the Interlude skill ID constant.");
 Console.WriteLine("PASS: Dunk3l TargetStatusWnd preserves the Mana Burn skill filter.");
 
