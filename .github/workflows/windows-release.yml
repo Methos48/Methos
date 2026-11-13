@@ -227,6 +227,7 @@ jobs:
           if-no-files-found: error
 
       - name: Sustituir el archivo histórico por fixtures limpios en el repositorio
+        continue-on-error: true
         shell: pwsh
         run: |
           $remoteHead = (git ls-remote origin refs/heads/main).Split("`t")[0]
