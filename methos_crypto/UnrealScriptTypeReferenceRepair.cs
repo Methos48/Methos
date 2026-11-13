@@ -255,6 +255,20 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function int EquipItemGetItemNum()", StringComparison.Ordinal) &&
+            source.Contains("RecoveredName_2802.GetItemNum()", StringComparison.Ordinal) &&
+            source.Contains("RecoveredName_2803.GetItemNum()", StringComparison.Ordinal))
+        {
+            const string malformed = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + (EquipItemGetItemNum());";
+            const string corrected = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + EquipItemGetItemNum();";
+            if (source.Contains(malformed, StringComparison.Ordinal))
+            {
+                source = source.Replace(malformed, corrected, StringComparison.Ordinal);
+                applied.Add("InventoryWnd.SetItemCount redundant function-call parentheses removed");
+            }
+        }
+
         repairs = applied;
         return source;
     }
