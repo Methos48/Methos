@@ -97,7 +97,7 @@ public static class UnrealScriptTypeReferenceRepair
             if (closeBrace <= openBrace) continue;
             string switchBody = source.Substring(openBrace + 1, closeBrace - openBrace - 1);
             string repairedSwitch = System.Text.RegularExpressions.Regex.Replace(
-                switchBody, @"(?m)(\bcase\s+)([0-9]+)(\s*:)",
+                switchBody, @"(?m)(^[ \t]*case\s+)([0-9]+)(\s*:)",
                 "$1" + enumType + "($2)$3");
             if (!string.Equals(switchBody, repairedSwitch, StringComparison.Ordinal))
             {
