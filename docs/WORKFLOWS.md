@@ -8,6 +8,7 @@ Los workflows son automatizaciones de mantenimiento, investigación y validació
 
 ## Compilación y validación U
 
+- `windows-build.yml`: análisis manual de paquetes U, inspección de referencias y prueba exploratoria con UELib; genera artefactos de diagnóstico, no distribuye Methos.
 - `validate-ucc-compiler.yml`: verifica el runtime UCC, fuentes y compilación.
 - `validate-unreal-engine.yml`: valida el motor de paquetes Unreal y el round-trip U.
 - `inspect-dunk3l-ucc-reference.yml`, `inspect-dunk3l-interface-api.yml`, `inspect-dunk3l-native-ui-api.yml`: inspecciones técnicas de paquetes y API de referencia.
