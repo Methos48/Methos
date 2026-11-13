@@ -237,8 +237,8 @@ function Color GetColorByType(UIEventManager.EChatType a_Type)
 string enumParameterSwitchRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "GMSnoopWnd", enumParameterSwitchSample, out IReadOnlyList<string> enumParameterSwitchRepairs);
 Check(enumParameterSwitchRepairs.Count == 1 &&
-      enumParameterSwitchRepaired.Contains("case UIEventManager.EChatType(1):", StringComparison.Ordinal) &&
-      enumParameterSwitchRepaired.Contains("case UIEventManager.EChatType(3):", StringComparison.Ordinal),
+      enumParameterSwitchRepaired.Contains("case EChatType(1):", StringComparison.Ordinal) &&
+      enumParameterSwitchRepaired.Contains("case EChatType(3):", StringComparison.Ordinal),
     "GMSnoopWnd enum parameter switch labels were not cast to UIEventManager.EChatType.");
 Console.WriteLine("PASS: GMSnoopWnd function-parameter enum switch labels are typed for UCC.");
 
