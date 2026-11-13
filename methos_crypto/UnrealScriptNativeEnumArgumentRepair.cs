@@ -153,4 +153,45 @@ public static class UnrealScriptNativeEnumArgumentRepair
         return repaired;
     }
 
+    private static readonly IReadOnlyDictionary<int, string> DialogDefaultActionNames =
+        new Dictionary<int, string>
+        {
+            [0] = "EDefaultNone",
+            [1] = "EDefaultOK",
+            [2] = "EDefaultCancel"
+        };
+
+    /// <summary>
+    /// Restores UICommonAPI.DialogDefaultAction identifiers on calls into
+    /// DialogBox, whose typed parameter cannot accept the decompiler's byte.
+    /// </summary>
+    public static string RepairKnownDialogDefaultActionArguments(
+        string className, string source, out IReadOnlyList<string> repairs)
+    {
+        ArgumentNullException.ThrowIfNull(className);
+        ArgumentNullException.ThrowIfNull(source);
+        var applied = new List<string>();
+        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
+        {
+            repairs = applied;
+            return source;
+        }
+
+        string repaired = Regex.Replace(
+            source,
+            @"(?<![A-Za-z0-9_])SetDefaultAction\\s*\\(\\s*(?<value>[0-2])\\s*\\)",
+            match =>
+            {
+                if (!int.TryParse(match.Groups["value"].Value, out int value) ||
+                    !DialogDefaultActionNames.TryGetValue(value, out string? enumName))
+                    return match.Value;
+                applied.Add($"{value} -> {enumName}");
+                return Regex.Replace(match.Value, @"(?<=\\()\\s*\\d+", enumName);
+            },
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        repairs = applied;
+        return repaired;
+    }
+
 }
