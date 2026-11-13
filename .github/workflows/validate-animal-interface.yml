@@ -479,7 +479,7 @@ jobs:
           $sourceFile = Join-Path $env:ANIMAL_SOURCES "LoadingWnd.uc"
           $sourceText = [IO.File]::ReadAllText($sourceFile)
           $oldLine = 'ServerAgeLimit = byte(ServerAgeLimitInt);'
-          $newLine = 'ServerAgeLimit = UIEventManager.EServerAgeLimit(ServerAgeLimitInt);'
+          $newLine = 'ServerAgeLimit = EServerAgeLimit(ServerAgeLimitInt);'
           if ($sourceText.Contains($oldLine)) {
             $sourceText = $sourceText.Replace($oldLine, $newLine)
             [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
