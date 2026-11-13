@@ -1,0 +1,74 @@
+name: Dunk3l Interface U and XDAT full round-trip
+on:
+  push:
+    branches: [main]
+    paths:
+      - "reference-data/client/lineage2/interface.u"
+      - "reference-data/client/lineage2/interface.xdat"
+      - "reference-data/kits/Compilador-U.zip"
+      - "src/Methos.Engine/**"
+      - "tests/ProtectionPipelineSmoke/**"
+      - "tools/xdat/**"
+      - ".github/workflows/validate-dunk3l-interface.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dunk3l:
+    runs-on: windows-2022
+    steps:
+      - name: Descargar fuentes
+        uses: actions/checkout@v4
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Extraer runtime UCC exacto de Interlude
+        shell: pwsh
+        run: |
+          $archive = Join-Path $PWD "reference-data/kits/Compilador-U.zip"
+          if (!(Test-Path -LiteralPath $archive)) { throw "Falta el kit UCC de Interlude." }
+          $root = Join-Path $PWD "Dunk3l-UCC"
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $kit = Join-Path $root "Compilador  U"
+          if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "El runtime UCC de Interlude está incompleto." }
+          "DUNK3L_UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Descompilar, recompilar y verificar Interface.u Dunk3l
+        shell: pwsh
+        run: |
+          $input = Join-Path $PWD "reference-data/client/lineage2/interface.u"
+          $output = Join-Path $PWD "Dunk3l-Rebuilt/interface.u"
+          $sources = Join-Path $PWD "Dunk3l-Rebuilt/UnrealScript"
+          if (!(Test-Path -LiteralPath $input)) { throw "Falta el Interface.u de referencia Dunk3l." }
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --dunk3l-u-rebuild $env:DUNK3L_UCC_ROOT $input $output $sources
+          if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo U de Dunk3l." }
+          if (!(Test-Path -LiteralPath $output)) { throw "No se generó el Interface.u reconstruido." }
+          Write-Host "DUNK3L_REBUILT_U_BYTES=$((Get-Item $output).Length)"
+
+      - name: Descompilar, recompilar y verificar Interface.xdat Dunk3l
+        shell: pwsh
+        run: |
+          python tools/xdat/validate_dunk3l_smartcrypt.py reference-data/client/lineage2/interface.xdat
+          if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo XDAT de Dunk3l." }
+
+      - name: Publicar reconstrucción y fuentes Dunk3l
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dunk3l-Interface-Rebuilt
+          path: |
+            Dunk3l-Rebuilt/interface.u
+            Dunk3l-Rebuilt/UnrealScript/*.uc
+            Dunk3l-Rebuilt/UnrealScript/methos_name_map.json
+          if-no-files-found: warn
+          retention-days: 14
