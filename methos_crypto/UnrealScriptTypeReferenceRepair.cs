@@ -279,6 +279,14 @@ public static class UnrealScriptTypeReferenceRepair
                 applied.Add("InventoryWnd missing isDragSrcInventory helper inlined with equivalent source-name filter");
             }
 
+            const string unresolvedWindowHandleHelper = "getItemWindowHandleBystrTarget(strTarget)";
+            if (source.Contains(unresolvedWindowHandleHelper, StringComparison.Ordinal))
+            {
+                source = source.Replace(unresolvedWindowHandleHelper,
+                    "ItemWindowHandle(GetHandle(strTarget))", StringComparison.Ordinal);
+                applied.Add("InventoryWnd missing target-handle helper replaced with typed GetHandle lookup");
+            }
+
             // This branch belongs to High Five bracelet/talisman UI, not the Interlude client.
             // Remove the recovered, unresolved callback as a unit; the normal Interlude equipment
             // slots and all supported item-update logic below remain intact.
