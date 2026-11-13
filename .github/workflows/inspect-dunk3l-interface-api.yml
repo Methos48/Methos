@@ -17,7 +17,7 @@ jobs:
       - name: Decompile Interface package and locate sound declarations
         shell: pwsh
         run: |
-          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $archive = Join-Path $PWD "Compilador  U.zip"
           $root = Join-Path $PWD "UCC-Reference"
           Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
           $pkg = Get-ChildItem -LiteralPath $root -Recurse -Filter "Interface.u" -File | Select-Object -First 1
