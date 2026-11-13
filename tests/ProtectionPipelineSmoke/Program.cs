@@ -804,6 +804,22 @@ Check(dunk3lToolTipItemTypeRepairs.Count == 2 &&
     "Dunk3l ToolTip item type locals were not restored to their reference types.");
 Console.WriteLine("PASS: ToolTip item type locals and enum assignment match the Interlude reference.");
 
+string dunk3lChatFilterSample = """
+class ChatFilterWnd extends UIScript;
+function ShowTabs()
+{
+    ShowWindow("systemmsgwnd.SystemMsgTabCtrl");
+    HideWindow("systemmsgwnd.SystemMsgTabCtrl");
+}
+""";
+string dunk3lChatFilterRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ChatFilterWnd", dunk3lChatFilterSample, out IReadOnlyList<string> dunk3lChatFilterRepairs);
+Check(dunk3lChatFilterRepairs.Count == 1 &&
+      dunk3lChatFilterRepaired.Contains("Class'NWindow.UIAPI_WINDOW'.static.ShowWindow(\"systemmsgwnd.SystemMsgTabCtrl\")", StringComparison.Ordinal) &&
+      dunk3lChatFilterRepaired.Contains("Class'NWindow.UIAPI_WINDOW'.static.HideWindow(\"systemmsgwnd.SystemMsgTabCtrl\")", StringComparison.Ordinal),
+    "Dunk3l ChatFilterWnd tab visibility calls were not bound to the explicit NWindow API.");
+Console.WriteLine("PASS: ChatFilterWnd tab visibility calls use the explicit NWindow API.");
+
 
 
 
