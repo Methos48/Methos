@@ -133,6 +133,30 @@ Check(dialogTypeRepairs.Count == 2 &&
     "Dunk3l DialogBox enum type references were not reconciled with its declared fields.");
 Console.WriteLine("PASS: Dunk3l DialogBox enum references are reconciled to the declared UICommonAPI types.");
 
+var interfaceSoundSample = """
+class SoundSample extends UIScript;
+function Test()
+{
+    PlayConsoleSound(5);
+    PlayConsoleSound(6);
+    PlayConsoleSound(13);
+    PlayConsoleSound(14);
+    PlayConsoleSound(99);
+    OtherSound(5);
+}
+""";
+string interfaceSoundRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(
+    interfaceSoundSample, out IReadOnlyList<string> interfaceSoundRepairs);
+Check(interfaceSoundRepairs.Count == 4 &&
+      interfaceSoundRepaired.Contains("PlayConsoleSound(IFST_WINDOW_OPEN)", StringComparison.Ordinal) &&
+      interfaceSoundRepaired.Contains("PlayConsoleSound(IFST_WINDOW_CLOSE)", StringComparison.Ordinal) &&
+      interfaceSoundRepaired.Contains("PlayConsoleSound(IFST_INVENWND_OPEN)", StringComparison.Ordinal) &&
+      interfaceSoundRepaired.Contains("PlayConsoleSound(IFST_INVENWND_CLOSE)", StringComparison.Ordinal) &&
+      interfaceSoundRepaired.Contains("PlayConsoleSound(99)", StringComparison.Ordinal) &&
+      interfaceSoundRepaired.Contains("OtherSound(5)", StringComparison.Ordinal),
+    "Native Interlude interface sound enum arguments were not restored from their verified values.");
+Console.WriteLine("PASS: Interlude interface sound arguments are restored to their native enum identifiers.");
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);
