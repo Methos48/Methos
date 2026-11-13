@@ -126,9 +126,9 @@ https://github.com/Methos48/Methos
 El mapa de carpetas, motores, herramientas, pruebas y reglas de mantenimiento
 está en docs/ARQUITECTURA.md.
 
-Algunas carpetas locales de caché y respaldos pueden conservar el nombre
-histórico "Methos U Editor" para mantener compatibilidad con datos de versiones
-anteriores. Ese nombre no representa una aplicación adicional.
+Algunas ubicaciones locales de caché y respaldos se conservan temporalmente
+para mantener los datos de instalaciones anteriores. Son datos de usuario y no
+representan aplicaciones ni componentes adicionales de Methos.
 
 Documentación para mantenimiento:
 - docs/ARQUITECTURA.md: arquitectura y reglas generales.
