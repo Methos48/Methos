@@ -30,10 +30,10 @@ on:
       - "reference-data/**"
       - "reference-data/kits/Compilador-U.zip"
       - "reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip"
-      - "tools/xdat/maintenance/apply_detection_layer.py"
-      - "tools/xdat/maintenance/auto_pipeline_overlay.py"
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
+      - "tools/xdat/package_origin_metadata.py"
+      - "tools/xdat/prepare_reference_fixtures.py"
       - ".github/workflows/windows-release.yml"
   workflow_dispatch:
 
