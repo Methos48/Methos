@@ -37,6 +37,28 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+
+        if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function UIEventManager.EChatType GetChatTypeByTabIndex", StringComparison.Ordinal) &&
+            source.Contains("local UIEventManager.EChatType Type;", StringComparison.Ordinal))
+        {
+            var function = UnrealScriptSourceIndex.ParseFunctions(source).FirstOrDefault(item =>
+                item.Name.Equals("GetChatTypeByTabIndex", StringComparison.OrdinalIgnoreCase));
+            if (function is not null)
+            {
+                string repairedBody = System.Text.RegularExpressions.Regex.Replace(
+                    function.Body,
+                    @"(?m)(\\bType\\s*=\\s*)([0-9]+)(\\s*;)",
+                    "$1EChatType($2)$3");
+                if (!string.Equals(repairedBody, function.Body, StringComparison.Ordinal))
+                {
+                    source = source.Remove(function.Start, function.Length)
+                        .Insert(function.Start, repairedBody);
+                    applied.Add("ChatWnd.GetChatTypeByTabIndex numeric assignments -> EChatType casts");
+                }
+            }
+        }
+
         repairs = applied;
         return source;
     }
