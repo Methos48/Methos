@@ -168,7 +168,6 @@ if (args.Length >= 4 && args[0] == "--ucc-compile")
     UccCompileResult result = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
     File.WriteAllBytes(outputPath, result.PackageBytes);
-    var originalIndex = UnrealPackageIndex.Open("reference-data/Interface-UEditor.u");
     if (result.NameCount <= 0 || result.ImportCount <= 0 || result.ExportCount <= 0)
         throw new Exception("UCC output contains an empty package table.");
 
