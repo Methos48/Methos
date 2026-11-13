@@ -27,7 +27,8 @@ The observed conditional `dsetup.dll`/ordinal-0x67 branch inside the uploaded `n
 
 - [x] Record correct provenance: Dunk3l-created interface, not L2Sudamerica original assets.
 - [x] Withdraw SGuard files as assumed prerequisites.
-- [ ] Establish Dunk3l's exact release/toolchain and protection layer.
+- [x] Confirm the protection chain on the supplied Dunk3l files: SmartCrypt 1.5.2.2 followed by Lineage2Ver111.
+- [ ] Identify the exact original distribution build and compiler/toolchain.
 - [ ] Prove or rule out `npkscrypt.dll` involvement at runtime.
-- [ ] Decode and structurally validate U and XDAT independently.
-- [ ] Implement tested automatic decode/encode support in Methos-XDAT.
+- [x] Decode and structurally validate the real U and XDAT independently, including byte-exact protection round-trips.
+- [x] Implement and test file-based decode/encode for these Dunk3l U/XDAT samples in Methos. This does not imply universal support for other protected files.

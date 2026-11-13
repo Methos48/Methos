@@ -68,6 +68,19 @@ The current capture DLL uses MinHook and installs API hooks during initializatio
 4. In parallel, reverse the per-handle key-state creation and the NPK transform offline. A successful key-state reconstruction would remove dependence on launching the game or an external decryptor.
 5. Once any candidate intermediate is recovered, validate its standard 111/413 layer and then independently validate U and XDAT structure. Preserve both original files throughout.
 
+## Verified file-based result (2026-11-13)
+
+The supplied Dunk3l files have now been validated independently of the still-pending runtime hook investigation:
+
+- The real `Interface.u` is 1,241,967 bytes. Its `FF ED FA CE` SmartCrypt marker and embedded 24-byte seed allow the per-file key state to be derived with the external-key flag clear; the next layer is `Lineage2Ver111`.
+- The original U was decoded and both layers were re-encoded byte for byte. The rebuilt U was then re-protected, decoded again, parsed as Unreal package version 126/0, and re-decompiled: 167/167 exported classes, zero failed classes, identical class-name set, 208 sanitized names restored.
+- The real `Interface.xdat` is 705,813 bytes. Its SmartCrypt and Lineage2Ver111 layers were rebuilt byte for byte; the exact custom 20-byte trailer was retained. XML round-trip: 169 windows and 8 shortcuts. The stored trailer checksum differs from the stock CRC, so the original trailer is preserved rather than replaced.
+- The UCC reference kit contains 169 `.uc` files and its full reference compilation passed. The actual Dunk3l package exports 167 classes; the rebuild intentionally preserves those 167 exports rather than adding unrelated stock reference classes.
+- GitHub Actions: [Dunk3l full round-trip #189](https://github.com/Methos48/Methos/actions/runs/43485104819) and [UCC validation #293](https://github.com/Methos48/Methos/actions/runs/43485104806), both SUCCESS.
+
+For the U file, the terminal 20 bytes are part of the final Unreal export's serial range and remain inside the payload. XDAT uses a separate 20-byte custom trailer. This distinction is deliberate and is tested.
+
+The published `SmartDecrypt.dll`/`npkscrypt.dll` runtime hook chain remains a separate investigation: the successful result above proves the file-based seed-derived codec and round-trip, not that the client runtime hook path was reproduced.
 ## Status
 
 - [x] Find a public SmartCrypt 1.5.2.2 extraction method that explicitly names interface.u and interface.xdat.
@@ -75,7 +88,7 @@ The current capture DLL uses MinHook and installs API hooks during initializatio
 - [x] Identify the two-stage possibility: SmartCrypt layer followed by ordinary L2 413/111 encryption.
 - [ ] Retrieve and validate the linked hook implementation.
 - [ ] Reproduce the exact chained hook behavior with our files.
-- [ ] Produce a real decoded U and XDAT output and validate their structures.
-- [ ] Integrate verified decode/encode methods into the standalone Methos-XDAT program.
+- [x] Produce real decoded U and XDAT outputs and validate their structures with full round-trip checks.
+- [x] Integrate and verify file-based decode/encode methods in the unified Methos engine for the supplied Dunk3l samples; this is not a claim of universal protocol support.
 
 No original interface files have been modified.

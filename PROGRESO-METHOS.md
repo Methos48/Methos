@@ -20,18 +20,29 @@ Flujo esperado: cargar archivo → copia de seguridad automática → descompila
 - **Proyectos canónicos:** src/Methos.App/Methos.App.csproj y src/Methos.Engine/Methos.Engine.csproj. El motor es una biblioteca interna.
 - **XDAT:** tools/xdat/xdat_core.py es el parser/compilador de estructura; la protección se procesa en C# mediante ProtectionPipelinePlanner y ProtectionCodecRuntime antes y después del puente XdatBridge.
 - **Protección integrada:** SmartCrypt 1.5.2.2, Lineage2Ver111 con trailer personalizado y Lineage2Ver413 estándar tienen codecs activos. El soporte de ActiveAntiCheat requiere un perfil de clave coincidente; otros protocolos reconocidos siguen bloqueados hasta implementar y validar su codec.
-- **Límite verificado:** el sample real Dunk3l interface.xdat pasa round-trip exacto SmartCrypt 1.5.2.2 + Lineage2Ver111. El workflow no tiene un fixture real protegido .u; no se afirma cobertura real U equivalente.
+- **Dunk3l U/XDAT real verificado:** `Interface.u` y `Interface.xdat` originales pasan el ciclo de protección, reconstrucción y validación. El U original (1.241.967 bytes) se descifra y vuelve a cifrar byte por byte con SmartCrypt 1.5.2.2 + Lineage2Ver111; el paquete reconstruido conserva esas capas y vuelve a descompilar con 167/167 clases, 0 fallos y nombres idénticos. XDAT conserva su trailer personalizado de 20 bytes y pasa el round-trip binario de 169 ventanas y 8 accesos directos. En U, los últimos 20 bytes pertenecen al payload Unreal y no se separan como el trailer XDAT.
 - **Nombres Unreal:** el flujo principal y UnrealPackageDecompiler usan UnrealNameSanitizer; los identificadores temporales se registran en methos_name_map.json y se restauran en el paquete después de UCC. El mapa también se conserva en la caché de fuentes.
 - **Reparaciones UCC verificadas:** DamageLiteAni ya no duplica EnemyMPLost; OlympiadTargetWnd ya no genera una segunda declaración del campo; TradeWnd ordena correctamente las variables locales ItemInfo para evitar sombra del tipo; PartyMatchOutWaitListWnd y PartyMatchWaitListWnd convierten el literal de comilla inválido a Chr(34).
 - **Normalización nativa:** el normalizador reconoce tanto __NFUN_token__ como UnknownFunctionToken, resuelve los tokens contra el registro del runtime y conserva los nombres de funciones en declaraciones. El token 237 se resolvió como Asc; la suite UCC completa pasó en la ejecución 43415231745 (15/15).
 - **UICommonAPI:** se restauraron las seis etiquetas de salto faltantes en Split, JoinArray, ParamToRecord, GetSuperRace, ReplaceText y StrToLower. También se comentan las trazas de excepción UELib para que no se interpreten como código. Las pruebas específicas están incluidas en la suite.
-- **PartyWnd:** la firma real de SetName está verificada en NWindow.u. La llamada usa NCT_Normal y TA_Center, que corresponden a los valores originales 0 y 2. También se corrigió el retorno vacío de GetMainAssistName para devolver cadena vacía cuando no hay coincidencia. La reconstrucción real Dunk3l está ejecutándose de nuevo para validar estos cambios.
-- **Branches:** el usuario eliminó las cinco ramas históricas. La consulta posterior confirmó que main es la única rama restante.
-- **Windows Release:** la ejecución 43412563594 terminó correctamente en el commit bdbe047927f7504620eec24d1e92bb1ca047ceb4. Las ejecuciones posteriores incluyen la integración del pipeline de reparaciones en la interfaz principal y siguen validándose.
-- **Source Archive:** las generaciones de fuentes de los commits bdbe047, 1cd0290 y e4a5861 terminaron correctamente; hay una ejecución posterior en curso.
+- **PartyWnd:** la firma real de SetName está verificada en NWindow.u. La llamada usa NCT_Normal y TA_Center (valores 0 y 2); también se corrigió el retorno vacío de GetMainAssistName. La reconstrucción Dunk3l ya quedó validada; Silent Dark continúa como trabajo independiente.
+- **Branches:** `main` es la única rama oficial activa. `test/dunk3l-edit-roundtrip` se conserva como rama histórica de pruebas y no recibe desarrollo nuevo.
+- **Windows Release:** ejecución [43485104728](https://github.com/Methos48/Methos/actions/runs/43485104728) terminó SUCCESS sobre el commit `332b858938ed4324dafb16ff3d61bd560c829531`; artefacto `Methos-Windows-Installer-x64`, ID `14066947675`.
+- **Source Archive:** ejecución [43485104843](https://github.com/Methos48/Methos/actions/runs/43485104843) terminó SUCCESS; artefacto `Methos-Source-Code`, ID `14067201597`.
 - **Silent Dark:** el workflow descompila el paquete original y exporta 169/169 clases. La compilación UCC está avanzando con las reparaciones anteriores; la ejecución más reciente está validando las seis etiquetas de UICommonAPI y el retorno de PartyWnd.
-- **Conclusión:** la unificación estructural y el pipeline de protección limitado están integrados. El desarrollo funcional continúa; no declarar finalizada la compilación U ni publicar una versión estable hasta completar las validaciones UCC y el round-trip.
+- **Conclusión:** la reconstrucción real Dunk3l U/XDAT y el ciclo completo de protección/recompilación/re-descompilación están verificados en `main`. Esto no declara terminados Silent Dark, otros clientes ni la prueba de carga dentro del juego.
 
+## Dunk3l — reconstrucción real verificada (13-11-2026)
+
+- Commit de verificación: [332b858](https://github.com/Methos48/Methos/commit/332b858938ed4324dafb16ff3d61bd560c829531) — añade una comprobación byte por byte de la recodificación de las dos capas del U original.
+- Workflow principal: [Dunk3l Interface U and XDAT full round-trip #189](https://github.com/Methos48/Methos/actions/runs/43485104819) — **SUCCESS**.
+- `Interface.u` original: 1.241.967 bytes. SmartCrypt 1.5.2.2 y Lineage2Ver111 se decodifican y se recodifican exactamente contra el original. El U recompilado queda protegido, se vuelve a descifrar y coincide con el paquete compilado; versión Unreal 126/0.
+- La interfaz Dunk3l real contiene **167 exports de clase**. Se recuperaron, compilaron con UCC y re-descompilaron los 167; `failed=0` y el conjunto de nombres quedó idéntico. Se restauraron 208 nombres sanitizados. No se añadieron clases del paquete de referencia que no pertenecen al paquete Dunk3l.
+- El kit de referencia UCC tiene **169 fuentes `.uc`**; la ejecución [43485104806](https://github.com/Methos48/Methos/actions/runs/43485104806) terminó SUCCESS compilando ese conjunto. Es distinto del conjunto real de 167 exports Dunk3l. El diagnóstico que recompila la salida UELib cruda aún muestra el `return;` redundante de `CalculatorWnd.uc(127)`; el descompilador mantenido elimina tres retornos redundantes (`CalculatorWnd=3`) y la compilación final Dunk3l pasa.
+- `Interface.xdat` original: 705.813 bytes; 169 ventanas y 8 accesos directos. El trailer personalizado de 20 bytes se conserva exactamente. El CRC almacenado no coincide con el CRC estándar, por lo que no se inventa ni sustituye.
+- En U, los últimos 20 bytes pertenecen al rango serial del último export Unreal y se mantienen dentro del payload; no se eliminan como trailer separado. En XDAT sí existe el trailer separado de 20 bytes.
+- Artefactos verificados en GitHub Actions: `Dunk3l-Interface-Rebuilt` (ID `14066333166`), `interlude-ucc-reference` (ID `14066129296`) y `Methos-Source-Code` (ID `14067201597`). La comprobación local de los ZIP confirmó integridad, recuentos y cabeceras; el `Interface.u` final se descifra hasta la firma Unreal `C1 83 2A 9E`, versión 126/0.
+- **Límite explícito:** el workflow demuestra estructura, protección, compilación y re-descompilación; todavía no demuestra la carga dentro del cliente del juego. No reemplazar el archivo original del cliente.
 ## Registro de avances
 
 ### 13-11-2026 — Cierre de unificación estructural y validación Windows
@@ -88,8 +99,8 @@ Este bloque conserva el estado de una etapa anterior; sus pendientes sobre integ
 1. **Validar las reparaciones de PartyMatch:** confirmar que las dos ventanas compilan con Chr(34) y continuar hasta completar el UCC round-trip Silent Dark.
 2. **Resolver PartyWnd.SetName:** obtener la firma real desde los paquetes del runtime y aplicar el cast exacto al segundo parámetro.
 3. **Completar el round-trip Silent Dark:** compilar y volver a descompilar las 169 clases, verificando las tablas del paquete y la restauración de nombres.
-4. **Completar la reconstrucción real Dunk3l:** validar descompilación, compilación y lectura posterior del Interface.u original.
-5. **Ampliar pruebas de protección U:** incorporar un fixture real protegido .u y validar el mismo flujo reversible que ya se comprobó con .xdat.
+4. [x] **Completar la reconstrucción real Dunk3l:** ciclo U completo y XDAT validado en la ejecución [43485104819](https://github.com/Methos48/Methos/actions/runs/43485104819).
+5. [x] **Añadir un fixture U real protegido:** SmartCrypt 1.5.2.2 + Lineage2Ver111 se decodifican y recodifican byte por byte; la salida recompilada se vuelve a descompilar sin pérdida de clases. La carga en el cliente del juego queda como prueba separada.
 6. **Ampliar protocolos cifrados solo con evidencia:** implementar otras variantes después de verificar algoritmo, claves, trailers y round-trip real.
 7. **Publicar una versión estable en GitHub Releases** cuando los recorridos funcionales U y XDAT estén comprobados.
 
@@ -105,7 +116,7 @@ Este bloque conserva el estado de una etapa anterior; sus pendientes sobre integ
 
 ## Próxima acción
 
-Comparar la salida UELib cruda y la fuente final de DamageLiteAni.uc para identificar quién introduce la segunda declaración de RecoveredName_2070. Corregir solo esa transformación y repetir la compilación UCC.
+Probar la carga de `Interface.u` reconstruido en una copia aislada del cliente Interlude, sin reemplazar el original. Mantener el round-trip Silent Dark como tarea independiente.
 
 ### 12-11-2026 — Instalador Methos Windows x64 generado y probado
 
