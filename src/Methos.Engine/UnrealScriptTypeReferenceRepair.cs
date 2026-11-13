@@ -359,29 +359,25 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
         {
-            var lowerFunction = UnrealScriptSourceIndex.ParseFunctions(source)
-                .FirstOrDefault(item => item.Name.Equals("StrToLower", StringComparison.OrdinalIgnoreCase));
-            if (lowerFunction is not null)
+            var missingLoopLabels = new (string FunctionName, string Label, string ConditionPattern)[]
             {
-                string body = source.Substring(lowerFunction.BodyOffset, lowerFunction.BodyLength);
-                if (body.Contains("goto JL000F;", StringComparison.Ordinal) &&
-                    !System.Text.RegularExpressions.Regex.IsMatch(
-                        body, @"(?m)^[ \t]*JL000F\s*:"))
+                ("Split", "JL0000", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*InStr\s*\(\s*strInput\s*,\s*delim\s*\)\s*>\s*0\s*\)\s*\)"),
+                ("JoinArray", "JL0007", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*<\s*StringArray\.Length\s*\)\s*\)"),
+                ("ParamToRecord", "JL00B7", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*idx\s*<\s*MaxColumn\s*\)\s*\)"),
+                ("GetSuperRace", "JL0030", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*<=\s*texttemp\.Length\s*\)\s*\)"),
+                ("ReplaceText", "JL0012", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*!=\s*-1\s*\)\s*\)"),
+                ("StrToLower", "JL000F", @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*<\s*Len\s*\(\s*Source\s*\)\s*\)\s*\)")
+            };
+
+            foreach (var missingLabel in missingLoopLabels)
+            {
+                if (TryRestoreMissingLoopLabel(
+                    ref source,
+                    missingLabel.FunctionName,
+                    missingLabel.Label,
+                    missingLabel.ConditionPattern))
                 {
-                    const string loopConditionPattern =
-                        @"(?m)^(?<indent>[ \t]*)if\s*\(\s*\(\s*i\s*<\s*Len\s*\(\s*Source\s*\)\s*\)\s*\)";
-                    var loopCondition = System.Text.RegularExpressions.Regex.Match(body, loopConditionPattern);
-                    if (loopCondition.Success)
-                    {
-                        string newline = source.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
-                        string label = loopCondition.Groups["indent"].Value + "JL000F:" + newline +
-                            loopCondition.Value;
-                        string updatedBody = body.Remove(loopCondition.Index, loopCondition.Length)
-                            .Insert(loopCondition.Index, label);
-                        source = source.Remove(lowerFunction.BodyOffset, lowerFunction.BodyLength)
-                            .Insert(lowerFunction.BodyOffset, updatedBody);
-                        applied.Add("UICommonAPI.StrToLower restored missing JL000F loop label");
-                    }
+                    applied.Add($"UICommonAPI.{missingLabel.FunctionName} restored missing {missingLabel.Label} loop label");
                 }
             }
         }
@@ -577,7 +573,36 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
-        repairs = applied;
+    private static bool TryRestoreMissingLoopLabel(
+        ref string source,
+        string functionName,
+        string label,
+        string conditionPattern)
+    {
+        var function = UnrealScriptSourceIndex.ParseFunctions(source)
+            .FirstOrDefault(item => item.Name.Equals(functionName, StringComparison.OrdinalIgnoreCase));
+        if (function is null) return false;
+
+        string body = source.Substring(function.BodyOffset, function.BodyLength);
+        if (!body.Contains("goto " + label + ";", StringComparison.Ordinal) ||
+            System.Text.RegularExpressions.Regex.IsMatch(
+                body,
+                @"(?m)^[ \t]*" + System.Text.RegularExpressions.Regex.Escape(label) + @"\s*:"))
+            return false;
+
+        var condition = System.Text.RegularExpressions.Regex.Match(body, conditionPattern);
+        if (!condition.Success) return false;
+
+        string newline = source.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        string labelLine = condition.Groups["indent"].Value + label + ":" + newline + condition.Value;
+        string updatedBody = body.Remove(condition.Index, condition.Length)
+            .Insert(condition.Index, labelLine);
+        source = source.Remove(function.BodyOffset, function.BodyLength)
+            .Insert(function.BodyOffset, updatedBody);
+        return true;
+    }
+
+    private static string ReplaceIdentifierToken        repairs = applied;
         return source;
     }
 }
