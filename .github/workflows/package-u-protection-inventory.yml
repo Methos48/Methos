@@ -1,0 +1,31 @@
+name: Package U protection inventory
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - "reference-data/packages/**/Interface.u"
+      - "tests/ProtectionPipelineSmoke/**"
+      - ".github/workflows/package-u-protection-inventory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-u:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [animal, berserker, l2sudamerica, silent-dark]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Inspect protection layers and Unreal package structure
+        shell: pwsh
+        run: |
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-protection "reference-data/packages/${{ matrix.package }}/Interface.u"
+          if ($LASTEXITCODE -ne 0) { throw "Protection inspection failed for ${{ matrix.package }}." }
