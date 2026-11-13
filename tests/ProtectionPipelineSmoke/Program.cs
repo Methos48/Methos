@@ -472,6 +472,25 @@ Check(recoveredColorHelperRepairs.Count == 0 &&
     "Valid UICommonAPI Color helper call was altered.");
 Console.WriteLine("PASS: Recovered color-name helper remains bound to its declared UICommonAPI function.");
 
+string silentLoginVersionSample = """
+class LoginCharSelectWnd extends UICommonAPI;
+function respect()
+{
+    CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, RecoveredName_98("Goldlite"));
+}
+""";
+string silentLoginVersionRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "LoginCharSelectWnd", silentLoginVersionSample, out IReadOnlyList<string> silentLoginVersionRepairs);
+Check(silentLoginVersionRepairs.Count == 1 &&
+      silentLoginVersionRepaired.Contains("local Color MethosSilentVersionColor;", StringComparison.Ordinal) &&
+      silentLoginVersionRepaired.Contains("MethosSilentVersionColor.R = 240;", StringComparison.Ordinal) &&
+      silentLoginVersionRepaired.Contains("MethosSilentVersionColor.G = 227;", StringComparison.Ordinal) &&
+      silentLoginVersionRepaired.Contains("MethosSilentVersionColor.B = 200;", StringComparison.Ordinal) &&
+      silentLoginVersionRepaired.Contains("CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, MethosSilentVersionColor)", StringComparison.Ordinal),
+    "Silent login version label did not receive the explicit Goldlite RGBA repair.");
+Console.WriteLine("PASS: Silent login version label uses explicit Goldlite RGBA values.");
+
+
 string silentTextboxSample = """
 class Interface_by_SILENT extends UICommonAPI;
 function OnLoad()
