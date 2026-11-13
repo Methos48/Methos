@@ -75,6 +75,18 @@ if (args.Length > 0 && args[0] == "--dunk3l-u-rebuild")
         lineageEnvelope, includeTailInPayload: true, origin: inputPath);
     var lineageCodec = new Lineage2Ver111CustomTailCodec(tailProfile);
     byte[] originalPackage = lineageCodec.Decode(lineageEnvelope, Path.GetFileName(inputPath));
+
+    // Verify the original encrypted file can be reconstructed exactly before editing.
+    // For Dunk3l U, the terminal 20 bytes belong to the Unreal payload; unlike XDAT,
+    // they must not be removed or stored as a detached trailer.
+    byte[] originalLineageRoundTrip = lineageCodec.Encode(originalPackage, Path.GetFileName(inputPath));
+    if (!originalLineageRoundTrip.AsSpan().SequenceEqual(lineageEnvelope))
+        throw new InvalidDataException("Original Dunk3l U Lineage2Ver111 envelope failed exact decode/re-encode verification.");
+    byte[] originalSmartCryptRoundTrip = smartCodec.Encode(originalLineageRoundTrip, Path.GetFileName(inputPath));
+    if (!originalSmartCryptRoundTrip.AsSpan().SequenceEqual(original))
+        throw new InvalidDataException("Original Dunk3l U SmartCrypt 1.5.2.2 file failed exact decode/re-encode verification.");
+    Console.WriteLine($"PASS: DUNK3L U original SmartCrypt + Lineage2Ver111 layers re-encoded byte-for-byte; originalBytes={original.Length}; lineageBytes={lineageEnvelope.Length}; tailMode=payload-owned.");
+
     var originalIndex = UnrealPackageIndex.Parse(originalPackage);
 
     string temporaryPackage = Path.Combine(Path.GetTempPath(), "Methos-Dunk3l-" + Guid.NewGuid().ToString("N") + ".u");
