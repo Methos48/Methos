@@ -275,13 +275,10 @@ public static class UccCompiler
     // Restored functions can reference class fields that UELib omitted from the
     // decompiled class header. Recover only missing, actually-used fields from the
     // exact matching reference class, one declaration per field, in the staged copy.
-    private static string RestoreMissingAutoPotionsWndFields(string className, string source,
+    private static string RestoreMissingReferencedClassFields(string className, string source,
         string referenceSource, out int restoredCount)
     {
         restoredCount = 0;
-        if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase))
-            return source;
-
         var additions = new List<string>();
         foreach (Match declaration in Regex.Matches(referenceSource,
             @"(?im)^\s*var\s+(?<type>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)\s+(?<fields>[^;]+);"))
@@ -525,7 +522,7 @@ function onActiveTex(bool bActive, int nIndex)
                     source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                         source, referenceSource, out IReadOnlyList<string> repairedFunctions);
                     restoredFailedFunctions += repairedFunctions.Count;
-                    source = RestoreMissingAutoPotionsWndFields(className, source, referenceSource,
+                    source = RestoreMissingReferencedClassFields(className, source, referenceSource,
                         out int restoredClassFields);
                     repairedIdentifiers += restoredClassFields;
                     source = RestoreAutoPotionsWndPotionDispatcher(className, source,
