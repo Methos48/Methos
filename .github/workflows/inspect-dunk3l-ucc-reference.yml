@@ -41,6 +41,11 @@ jobs:
           $autoBuffReference = Join-Path $classes "AutoBuffWnd.uc"
           if (!(Test-Path $autoBuffReference)) { throw "AutoBuffWnd.uc missing from exact Interlude source kit" }
           Copy-Item $autoBuffReference (Join-Path $root "AutoBuffWnd-reference.uc") -Force
+          $shortcutReference = Join-Path $classes "Shortcut.uc"
+          if (!(Test-Path $shortcutReference)) { throw "Shortcut.uc missing from exact Interlude source kit" }
+          Copy-Item $shortcutReference (Join-Path $root "Shortcut-reference.uc") -Force
+          Write-Host "REFERENCE_SHORTCUT_SKILLTITLE:"
+          Select-String -Path $shortcutReference -Pattern "Skilltitle|SetWindowTitle|var .*Title" -Context 3,4 | ForEach-Object { Write-Host $_.ToString() }
           Write-Host "REFERENCE_AUTOBUFF_UNKNOWNFUNCTION154_CALLS:"
           Select-String -Path $autoBuffReference -Pattern "UnknownFunction154|HandleSkillList|getItemCount" -Context 3,5 | ForEach-Object { Write-Host $_.ToString() }
           Write-Host "REFERENCE_UICOMMONAPI_UNKNOWNFUNCTION154:"
