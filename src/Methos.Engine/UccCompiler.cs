@@ -489,48 +489,7 @@ function AddTooltipItemIcon(ItemInfo item)
         return source;
     }
 
-    // Restore Berserker's missing item-icon and option-row tooltip helpers.
-    private static string RestoreToolTipItemIcon(string className, string source, out bool restored)
-    {
-        restored = false;
-        if (!className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) ||
-            !source.Contains("AddTooltipItemIcon(", StringComparison.Ordinal) ||
-            Regex.IsMatch(source, @"(?im)^\s*function\s+AddTooltipItemIcon\s*\("))
-            return source;
-        const string handler = @"
-function AddTooltipItemIcon(ItemInfo item)
-{
-    local UIEventManager.EItemParamType EItemParamType;
-    EItemParamType = byte(item.ItemType);
-    StartItem();
-    m_Info.eType = DIT_TEXTURE;
-    m_Info.t_bDrawOneLine = true;
-    m_Info.u_nTextureWidth = 32;
-    m_Info.u_nTextureHeight = 32;
-    m_Info.u_strTexture = item.IconName;
-    EndItem();
-    if(IsEnchantableItem(EItemParamType) && item.Enchanted > 0 && item.Enchanted <= 50)
-    {
-        StartItem();
-        m_Info.eType = DIT_TEXTURE;
-        m_Info.nOffSetX = -32;
-        m_Info.t_bDrawOneLine = true;
-        m_Info.u_nTextureWidth = 32;
-        m_Info.u_nTextureHeight = 32;
-        m_Info.u_strTexture = ""L2UI_CH3.EnchantNumbers.enchant"" $ string(item.Enchanted);
-        EndItem();
-    }
-    return;
-}
-";
-        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
-        if (!firstFunction.Success) return source;
-        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
-        restored = true;
-        return source;
-    }
-
-    private static string RestoreToolTipOptionHelpers(string className, string source, out int restoredCount)
+private static string RestoreToolTipOptionHelpers(string className, string source, out int restoredCount)
     {
         restoredCount = 0;
         if (!className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)) return source;
