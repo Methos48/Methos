@@ -382,14 +382,33 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
-        if (className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("m_PlayerName[idx].SetName(\"\", 0, 2);", StringComparison.Ordinal))
+        if (className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase))
         {
-            source = source.Replace(
-                "m_PlayerName[idx].SetName(\"\", 0, 2);",
-                "m_PlayerName[idx].SetName(\"\", NCT_Normal, TA_Center);",
-                StringComparison.Ordinal);
-            applied.Add("PartyWnd.SetName arguments cast to the declared UIEventManager enums");
+            if (source.Contains("m_PlayerName[idx].SetName(\"\", 0, 2);", StringComparison.Ordinal))
+            {
+                source = source.Replace(
+                    "m_PlayerName[idx].SetName(\"\", 0, 2);",
+                    "m_PlayerName[idx].SetName(\"\", NCT_Normal, TA_Center);",
+                    StringComparison.Ordinal);
+                applied.Add("PartyWnd.SetName arguments use the declared NCT_Normal and TA_Center enum values");
+            }
+
+            var mainAssistFunction = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(item => item.Name.Equals("GetMainAssistName", StringComparison.OrdinalIgnoreCase));
+            if (mainAssistFunction is not null)
+            {
+                string body = source.Substring(mainAssistFunction.BodyOffset, mainAssistFunction.BodyLength);
+                string trimmedBody = body.TrimEnd();
+                if (trimmedBody.EndsWith("return;", StringComparison.Ordinal))
+                {
+                    int bareReturnIndex = body.LastIndexOf("return;", StringComparison.Ordinal);
+                    string updatedBody = body.Remove(bareReturnIndex, "return;".Length)
+                        .Insert(bareReturnIndex, "return \"\";");
+                    source = source.Remove(mainAssistFunction.BodyOffset, mainAssistFunction.BodyLength)
+                        .Insert(mainAssistFunction.BodyOffset, updatedBody);
+                    applied.Add("PartyWnd.GetMainAssistName returns an empty string for unmatched indices");
+                }
+            }
         }
 
         if ((className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) ||
