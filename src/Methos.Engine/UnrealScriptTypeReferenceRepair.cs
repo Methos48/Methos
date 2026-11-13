@@ -597,8 +597,8 @@ public static class UnrealScriptTypeReferenceRepair
         if (className.Equals("SystemBarWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("RecoveredName_4534 = TextBoxHandle(GetHandle(m_WindowName $ \".PVPInfo\"))", StringComparison.Ordinal))
         {
-            source = new Regex(@"(?is)(function\\s+OnLoad\\s*\\(\\s*\\)\\s*\\{)")
-                .Replace(source, "$1\\n\\tlocal int RecoveredName_4544, RecoveredName_4545, RecoveredName_4546;", 1);
+            source = new Regex(@"(?is)(function\s+OnLoad\s*\(\s*\)\s*\{)")
+                .Replace(source, "$1\n\tlocal int RecoveredName_4544, RecoveredName_4545, RecoveredName_4546;", 1);
             string[,] fieldMappings =
             {
                 { "RecoveredName_4533", "MethosRecoveredName_4561" },
@@ -612,7 +612,7 @@ public static class UnrealScriptTypeReferenceRepair
                 { "RecoveredName_4542", "MethosRecoveredName_4577" }
             };
             for (int i = 0; i < fieldMappings.GetLength(0); i++)
-                source = Regex.Replace(source, @"\\b" + fieldMappings[i, 0] + @"\\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
+                source = Regex.Replace(source, @"\b" + fieldMappings[i, 0] + @"\b", fieldMappings[i, 1], RegexOptions.CultureInvariant);
             applied.Add("Dunk3l SystemBarWnd recovered fields reconciled with their declared handles and state");
         }
 
