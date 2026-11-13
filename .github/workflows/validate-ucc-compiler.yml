@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         run: |
           $embedded = Join-Path $env:KIT "Testar\system\Interface.u"
-          $repositoryPackage = Join-Path $PWD "Interface.u"
+          $repositoryPackage = Join-Path $PWD "reference-data/Interface-UEditor.u"
           if ((Test-Path -LiteralPath $embedded) -and (Test-Path -LiteralPath $repositoryPackage)) {
             $embeddedHash = (Get-FileHash -LiteralPath $embedded -Algorithm SHA256).Hash
             $repositoryHash = (Get-FileHash -LiteralPath $repositoryPackage -Algorithm SHA256).Hash
@@ -76,7 +76,7 @@ jobs:
         shell: pwsh
         run: |
           $generated = Join-Path $env:KIT "Testar\system\Interface.u"
-          $original = Join-Path $PWD "Interface.u"
+          $original = Join-Path $PWD "reference-data/Interface-UEditor.u"
           $generatedHash = (Get-FileHash -LiteralPath $generated -Algorithm SHA256).Hash
           $originalHash = (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
           Write-Host "UCC_REBUILD_SHA256=$generatedHash"
@@ -111,7 +111,7 @@ jobs:
           dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --verify-function-return $output GMInventoryWnd IsLOrREar 1
           if ($LASTEXITCODE -ne 0) { throw "El bytecode final no refleja la modificación de GMInventoryWnd.IsLOrREar." }
           $generatedHash = (Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash
-          $originalHash = (Get-FileHash -LiteralPath (Join-Path $PWD "Interface.u") -Algorithm SHA256).Hash
+          $originalHash = (Get-FileHash -LiteralPath (Join-Path $PWD "reference-data/Interface-UEditor.u") -Algorithm SHA256).Hash
           Write-Host "METHOS_UCC_SHA256=$generatedHash"
           Write-Host "ORIGINAL_INTERFACE_SHA256=$originalHash"
           Write-Host "METHOS_UCC_EXACT_MATCH=$($generatedHash -eq $originalHash)"
@@ -128,7 +128,7 @@ jobs:
             Copy-Item -Path (Join-Path $sourceDir "*") -Destination $referenceDir -Recurse -Force
             Get-ChildItem -LiteralPath $sourceDir -File -Filter "*.uc" | Remove-Item -Force
           }
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --export-sources Interface.u $sourceDir
+          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --export-sources "reference-data/Interface-UEditor.u" $sourceDir
           if ($LASTEXITCODE -ne 0) { throw "No se pudieron extraer todas las clases de Interface.u." }
           $count = (Get-ChildItem -LiteralPath $sourceDir -File -Filter "*.uc").Count
           if ($count -lt 150) { throw "Se exportaron muy pocas clases ($count)." }
