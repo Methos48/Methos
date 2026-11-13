@@ -35,7 +35,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 | `src/MethosUEditor/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
 | `tools/xdat/xdat_core.py` | Código XDAT mantenido en el repositorio. Debe ser la fuente canónica una vez completada la migración del kit histórico. |
 | `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` (raíz) | Insumo heredado que el workflow Windows todavía extrae para copiar el motor XDAT y ejecutar sus pruebas. No es una segunda app, pero sí una duplicación pendiente de retirar después de migrar y validar todo su contenido en `tools/xdat/`. |
-| `methos_crypto/` | Fuentes históricas/experimentales usadas por algunas pruebas de protección y round-trip. No es el proyecto que compila la aplicación principal; el motor de la app está en `src/MethosUEngine/`. Hay duplicación pendiente de auditar antes de retirar o sincronizar. |
+| `src/MethosUEngine/` | Único proyecto C# del motor Unreal/UCC y de los codecs/protecciones. También es la referencia usada por las pruebas de protección y round-trip. |
 | `tests/` | Pruebas automatizadas U y XDAT. Las pruebas Python añaden `tools/xdat/` al camino de importación para que la fuente canónica no dependa de archivos en la raíz. |
 | `tools/` | Herramientas de diagnóstico, inspección y validación; no todas forman parte del producto distribuido. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
