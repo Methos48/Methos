@@ -242,6 +242,32 @@ Check(nativeOperatorRepairs == 1 &&
     "Verified native equality, OR and multiply operators were not restored.");
 Console.WriteLine("PASS: recovered Silent Interface native operators are restored from the matching Interlude reference.");
 
+var nativeEqualitySample = """
+class EqualityOperatorSample extends Object;
+function bool Compare(string Value)
+{
+    if(__NFUN_122__(Value, "Acumen"))
+    {
+        return true;
+    }
+    return false;
+}
+// __NFUN_122__(mustRemainComment, "literal")
+function string KeepLiteral()
+{
+    return "__NFUN_122__(not, code)";
+}
+""";
+string nativeEqualityRepaired = UnrealScriptKnownNativeOperatorRepair.RepairKnownNativeEqualityOperators(
+    nativeEqualitySample, out int nativeEqualityRepairs);
+Check(nativeEqualityRepairs == 1 &&
+      nativeEqualityRepaired.Contains("if((Value == \"Acumen\"))", StringComparison.Ordinal) &&
+      nativeEqualityRepaired.Contains("// __NFUN_122__(mustRemainComment, \"literal\")", StringComparison.Ordinal) &&
+      nativeEqualityRepaired.Contains("\"__NFUN_122__(not, code)\"", StringComparison.Ordinal),
+    "Native 122 equality calls must be restored without modifying comments or string literals.");
+Console.WriteLine("PASS: native 122 equality calls are restored safely.");
+
+
 var nativeUnarySample = """
 class UnaryOperatorSample extends Object;
 function bool ImMage()
