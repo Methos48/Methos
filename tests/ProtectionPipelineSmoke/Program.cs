@@ -535,7 +535,7 @@ Check(logoWndFieldRepairs.Count == 2 &&
       logoWndFieldRepaired.Contains("if(MethosRecoveredName_2188)", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("RecoveredName_2108", StringComparison.Ordinal) &&
-      logoWndFieldRepaired.Contains("MethosRecoveredName_255(\"Logo Locked\")", StringComparison.Ordinal) &&
+      logoWndFieldRepaired.Contains("MethosRecoveredName_218(\"Logo Locked\")", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("AddSystemMessage", StringComparison.Ordinal),
     "LogoWnd recovered handle/state and custom message helper references were not preserved.");
 Console.WriteLine("PASS: LogoWnd recovered references map to declared handle and lock fields.");
