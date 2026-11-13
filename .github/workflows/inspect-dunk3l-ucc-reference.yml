@@ -38,6 +38,13 @@ jobs:
           Copy-Item $reference (Join-Path $root "UICommonAPI-reference.uc") -Force
           $dialogReference = Join-Path $classes "DialogBox.uc"
           if (Test-Path $dialogReference) { Copy-Item $dialogReference (Join-Path $root "DialogBox-reference.uc") -Force }
+          $autoBuffReference = Join-Path $classes "AutoBuffWnd.uc"
+          if (!(Test-Path $autoBuffReference)) { throw "AutoBuffWnd.uc missing from exact Interlude source kit" }
+          Copy-Item $autoBuffReference (Join-Path $root "AutoBuffWnd-reference.uc") -Force
+          Write-Host "REFERENCE_AUTOBUFF_UNKNOWNFUNCTION154_CALLS:"
+          Select-String -Path $autoBuffReference -Pattern "UnknownFunction154|HandleSkillList|getItemCount" -Context 3,5 | ForEach-Object { Write-Host $_.ToString() }
+          Write-Host "REFERENCE_UICOMMONAPI_UNKNOWNFUNCTION154:"
+          Select-String -Path $reference -Pattern "UnknownFunction154" -Context 2,4 | ForEach-Object { Write-Host $_.ToString() }
           Write-Host "REFERENCE_PLAY_CONSOLE_SOUND_CALLS:"
           Select-String -Path $reference -Pattern "PlayConsoleSound" | ForEach-Object { Write-Host $_.ToString() }
           Write-Host "TARGET_PLAY_CONSOLE_SOUND_CALLS:"
