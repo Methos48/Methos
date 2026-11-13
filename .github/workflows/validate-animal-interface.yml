@@ -218,6 +218,22 @@ jobs:
           Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)function\s+.*\bSetAlign\s*\(' -Context 0,4
           Write-Host "===== ALL SETALIGN REFERENCES IN UI CLASSES ====="
           Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File -Recurse | Select-String -SimpleMatch -Pattern "SetAlign(" -Context 0,1 | Select-Object -First 40
+      - name: Normalize Animal SetAlign enum argument
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InterfaceOptionsWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $oldCall = 'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("InterfaceOptionsWnd.btnOptionsText", 2);'
+          $newCall = 'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("InterfaceOptionsWnd.btnOptionsText", TA_Center);'
+          if ($sourceText.Contains($oldCall)) {
+            $sourceText = $sourceText.Replace($oldCall, $newCall)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_NORMALIZED_SETALIGN=2_TO_TA_Center"
+          } elseif ($sourceText.Contains($newCall)) {
+            Write-Host "ANIMAL_SETALIGN_ALREADY_NORMALIZED=TA_Center"
+          } else {
+            throw "Expected InterfaceOptionsWnd SetAlign call was not found; refusing a broad replacement."
+          }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
