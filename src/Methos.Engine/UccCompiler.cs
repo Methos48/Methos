@@ -248,6 +248,30 @@ public static class UccCompiler
         return output.ToString();
     }
 
+    // AutoPotionsWnd has a recovered HandleLoadPotions function that indexes the
+    // Potion array. UELib can omit this class field even though the exact matching
+    // Interlude reference source still declares it. Restore only that declaration,
+    // verbatim from the matching reference class, in the temporary compiler copy.
+    private static string RestoreAutoPotionsWndPotionArray(string className, string source,
+        string referenceSource, out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase) ||
+            Regex.IsMatch(source, @"(?im)^\\s*var\\s+\\w+\\s+Potion\\s*\\["))
+            return source;
+
+        Match declaration = Regex.Match(referenceSource,
+            @"(?im)^\\s*var\\s+ItemInfo\\s+Potion\\s*\\[\\s*\\d+\\s*\\]\\s*;");
+        if (!declaration.Success) return source;
+
+        Match classLine = Regex.Match(source, @"(?m)^\\s*class\\s+\\w+\\b[^;]*;[\\t ]*\\r?\\n?");
+        if (!classLine.Success) return source;
+        source = source.Insert(classLine.Index + classLine.Length,
+            declaration.Value.Trim() + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -356,6 +380,9 @@ public static class UccCompiler
                 if (File.Exists(referencePath))
                 {
                     string referenceSource = File.ReadAllText(referencePath);
+                    source = RestoreAutoPotionsWndPotionArray(className, source, referenceSource,
+                        out bool restoredPotionArray);
+                    if (restoredPotionArray) repairedIdentifiers++;
                     source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                         source, referenceSource, out IReadOnlyList<string> repairedFunctions);
                     restoredFailedFunctions += repairedFunctions.Count;
