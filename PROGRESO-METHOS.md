@@ -2,7 +2,7 @@
 
 **Última actualización:** 13-11-2026  
 **Proyecto:** Methos (editor de archivos de Lineage II Interlude)  
-**Repositorio de trabajo:** https://github.com/Methos  
+**Repositorio de trabajo:** https://github.com/Methos48/Methos  
 **Repositorio único del proyecto:** https://github.com/Methos48/Methos
 
 Este documento es la bitácora permanente del proyecto. Cada sesión de trabajo debe actualizarlo con cambios reales, pruebas ejecutadas, resultados, problemas pendientes y el siguiente paso. No marcar una tarea como terminada sin una prueba que lo demuestre.
@@ -112,3 +112,15 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 1. Probar y corregir el recorrido funcional de ARCHIVOS U con paquetes reales: carga/copia de seguridad, descompilación, importación de fuentes, compilación y verificación.
 2. Probar el recorrido XDAT con archivos de referencia protegidos y no protegidos.
 3. Publicar una versión estable en GitHub Releases cuando el comportamiento funcional esté validado; conservar el nombre de producto **Methos**.
+
+
+### 13-11-2026 — Normalización de organización y nombre del producto
+
+- Se reafirma como regla permanente que Methos es una sola aplicación, con módulos internos ARCHIVOS U y ARCHIVOS XDAT, un solo ejecutable principal `Methos.exe` y un solo instalador `Methos-Setup.exe`.
+- Se corrigió el enlace del repositorio oficial en la cabecera de esta bitácora: https://github.com/Methos48/Methos.
+- Se creó `docs/ARQUITECTURA.md` como mapa oficial del repositorio, responsabilidades de carpetas, reglas de cambios y dependencias estructurales.
+- Se normalizó el nombre del script de Inno Setup a `installer/Methos.iss`; el identificador interno del instalador se conserva para que las actualizaciones no creen una instalación paralela.
+- Se retiró el workflow heredado que construía un instalador independiente de XDAT. La distribución oficial queda centralizada en `.github/workflows/windows-release.yml`.
+- No se eliminaron los ZIP, DLL, paquetes ni archivos del cliente de la raíz: el workflow oficial aún utiliza algunos como insumos. Su traslado requiere primero migrar referencias y validar el build.
+- Las carpetas y namespaces técnicos históricos `MethosUEditor` se mantienen temporalmente para evitar romper rutas, proyecto y pruebas. La marca que ve el usuario sigue siendo Methos.
+- Pruebas pendientes de este bloque: ejecutar el workflow Windows Release después de estos cambios y verificar que produzca un único instalador Methos.
