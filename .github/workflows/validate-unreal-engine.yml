@@ -38,7 +38,7 @@ jobs:
         shell: pwsh
         run: |
           $apiFiles = @(Get-ChildItem -LiteralPath $env:KIT -Filter "*.uc" -File -Recurse)
-          $signatures = @($apiFiles | Select-String -Pattern '^\s*(?:native(?:\s*\([^)]*\))?\s+)?function\s+.*\bSetName\s*\(')
+          $signatures = @($apiFiles | Select-String -Pattern '^\s*(?:(?:native|final|static|simulated|iterator|exec)\s+)*function\s+.*\bSetName\s*\(')
           if ($signatures.Count -eq 0) {
             Write-Host "No UnrealScript SetName declaration found in the kit sources."
             Write-Host "Available NWindow source files:"
@@ -46,7 +46,8 @@ jobs:
           } else {
             $signatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
           }
-          $system = Join-Path $env:KIT "Interlude\System"
+          $system = Join-Path $PWD "reference-data\ucc-runtime\System"
+          Write-Host "UCC_RUNTIME_PACKAGES=$((Get-ChildItem -LiteralPath $system -Filter \"*.u\" -File | Select-Object -ExpandProperty Name) -join \",\")"
           foreach ($packageName in @("NWindow.u", "Engine.u", "Core.u")) {
             $packagePath = Join-Path $system $packageName
             if (!(Test-Path $packagePath)) { continue }
