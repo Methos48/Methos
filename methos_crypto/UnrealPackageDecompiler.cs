@@ -103,13 +103,15 @@ public static class UnrealPackageDecompiler
                         // successfully decompiled function (and its edits) untouched.
                         source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                             source, referenceSource, out _);
-                        source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
-                            source, referenceSource, out _);
                         source = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
                             safeName, source, out _);
                     }
                 }
 
+                // Remove only an unreachable bare return appended after a value return
+                // in non-void functions. This repair is safe without a reference file.
+                source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
+                    source, string.Empty, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
                         source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
