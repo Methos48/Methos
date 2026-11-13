@@ -623,7 +623,7 @@ public static class UnrealScriptTypeReferenceRepair
             // than assigning a byte to an enum property.
             source = source.Replace(
                 "EEtcItemType = byte(item.ItemSubType);",
-                "EEtcItemType = UIEventManager.EEtcItemType(item.ItemSubType);",
+                "EEtcItemType = EEtcItemType(item.ItemSubType);",
                 StringComparison.Ordinal);
             applied.Add("ToolTip EEtcItemType assignment restored to its declared enum type");
         }
