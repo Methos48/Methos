@@ -313,24 +313,6 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
-        if (className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal))
-        {
-            source = source.Replace(
-                "local OptionWnd script;",
-                "local OptionWnd script;" + Environment.NewLine + "local Color whiteColor;",
-                StringComparison.Ordinal);
-            source = source.Replace(
-                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"));",
-                "whiteColor.R = 255;" + Environment.NewLine +
-                "whiteColor.G = 255;" + Environment.NewLine +
-                "whiteColor.B = 255;" + Environment.NewLine +
-                "whiteColor.A = 255;" + Environment.NewLine +
-                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", whiteColor);",
-                StringComparison.Ordinal);
-            applied.Add("Interface_by_SILENT white text color restored as explicit RGBA Color");
-        }
-
         if (className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("bLoginInitialized", StringComparison.Ordinal) &&
             !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+bool\\s+bLoginInitialized\\s*;"))
