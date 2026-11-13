@@ -221,6 +221,27 @@ Check(inventoryHandleRepairs.Count == 5 &&
 Console.WriteLine("PASS: InventoryWnd missing handle fields and malformed drag-source predicate are repaired.");
 
 
+string privateShopEnumSample = """
+class PrivateShopWnd extends UICommonAPI;
+enum PrivateShopType
+{
+    PT_None,
+    PT_Buy
+};
+var PrivateShopWnd.PrivateShopType m_type;
+function Clear()
+{
+    m_type = 0;
+}
+""";
+string privateShopEnumRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PrivateShopWnd", privateShopEnumSample, out IReadOnlyList<string> privateShopEnumRepairs);
+Check(privateShopEnumRepairs.Count == 1 &&
+      privateShopEnumRepaired.Contains("m_type = PT_None;", StringComparison.Ordinal) &&
+      !privateShopEnumRepaired.Contains("m_type = 0;", StringComparison.Ordinal),
+    "PrivateShopWnd numeric default was not restored to the declared PT_None enum value.");
+Console.WriteLine("PASS: PrivateShopWnd default uses its declared PT_None enum value.");
+
 string enumParameterSwitchSample = """
 class GMSnoopWnd extends UICommonAPI;
 function Color GetColorByType(UIEventManager.EChatType a_Type)
