@@ -252,6 +252,7 @@ public static class UccCompiler
                 File.Copy(file, Path.Combine(stagedSystem, Path.GetFileName(file)), overwrite: true);
 
             int repairedIdentifiers = 0;
+            int skippedTrailingReturnFiles = 0;
             foreach (string file in sourceFiles)
             {
                 string source = File.ReadAllText(file, Encoding.Default);
@@ -274,9 +275,18 @@ public static class UccCompiler
                 repairedIdentifiers += removedStatePrototypes;
                 source = NormalizeRecoveredFunctionBlocks(source, out int insertedClosures);
                 repairedIdentifiers += insertedClosures;
-                var trailingReturns = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source);
-                source = trailingReturns.Source;
-                repairedIdentifiers += trailingReturns.Repairs.Count;
+                try
+                {
+                    var trailingReturns = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source);
+                    source = trailingReturns.Source;
+                    repairedIdentifiers += trailingReturns.Repairs.Count;
+                }
+                catch (InvalidDataException)
+                {
+                    // A decompiler may emit a file with an unclosed function. Do not let
+                    // this optional targeted return repair mask UCC's own diagnostics.
+                    skippedTrailingReturnFiles++;
+                }
                 File.WriteAllText(Path.Combine(stagedClasses, Path.GetFileName(file)), source, new UTF8Encoding(false));
             }
 
@@ -313,6 +323,7 @@ public static class UccCompiler
 
             string compilerOutput = standardOutput.Result + Environment.NewLine + standardError.Result;
             compilerOutput += Environment.NewLine + $"METHOS_SOURCE_REPAIRS={repairedIdentifiers}";
+            compilerOutput += Environment.NewLine + $"METHOS_TRAILING_RETURN_SKIPS={skippedTrailingReturnFiles}";
             if (process.ExitCode != 0 ||
                 !Regex.IsMatch(compilerOutput, @"Success\s*-\s*0 error\(s\)", RegexOptions.IgnoreCase))
             {
