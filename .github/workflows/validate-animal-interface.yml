@@ -151,21 +151,32 @@ jobs:
         shell: pwsh
         run: |
           $sourceFile = Join-Path $env:ANIMAL_SOURCES "ClanWnd.uc"
-          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/ClanWnd.uc"
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/UICommonAPI.uc"
           $sourceText = [IO.File]::ReadAllText($sourceFile)
           $referenceText = [IO.File]::ReadAllText($referenceFile)
           $functionName = "GetClassIconToClan"
           if ($sourceText -notmatch ('(?im)^\s*function\s+[^\r\n]*\b' + $functionName + '\s*\(')) {
-            $referenceFiles = @(Get-ChildItem -LiteralPath (Join-Path $env:ANIMAL_UCC_ROOT "Interlude") -Filter "*.uc" -File -Recurse)
-            $matches = @($referenceFiles | Select-String -SimpleMatch -Pattern $functionName -Context 2,20)
-            Write-Host "===== GLOBAL REFERENCE SEARCH: $functionName ====="
-            $matches | ForEach-Object { Write-Host ("FILE=" + $_.Path + " LINE=" + $_.LineNumber); Write-Host $_.Context.PreContext; Write-Host $_.Line; Write-Host $_.Context.PostContext }
-            if ($matches.Count -eq 0) { throw "Function $functionName was not found in any Interlude reference source." }
-            Write-Host "ANIMAL_GLOBAL_REFERENCE_MATCHES=$($matches.Count)"
+            $signature = [regex]::Match($referenceText, '(?im)^\s*function\s+string\s+' + [regex]::Escape($functionName) + '\s*\([^)]*\)\s*\{')
+            if (!$signature.Success) { throw "Exact reference function $functionName was not found in UICommonAPI.uc." }
+            $openBrace = $referenceText.IndexOf('{', $signature.Index)
+            $depth = 0
+            $closeBrace = -1
+            for ($i = $openBrace; $i -lt $referenceText.Length; $i++) {
+              if ($referenceText[$i] -eq '{') { $depth++ }
+              elseif ($referenceText[$i] -eq '}') {
+                $depth--
+                if ($depth -eq 0) { $closeBrace = $i; break }
+              }
+            }
+            if ($closeBrace -lt 0) { throw "Could not locate the complete body of $functionName." }
+            $functionText = $referenceText.Substring($signature.Index, $closeBrace - $signature.Index + 1).Trim()
+            $sourceText = $sourceText.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine + $functionText + [Environment]::NewLine
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_FUNCTION=$functionName FROM=UICommonAPI.uc"
+            Write-Host "ANIMAL_RESTORED_FUNCTION_CHARS=$($functionText.Length)"
           } else {
             Write-Host "ANIMAL_FUNCTION_ALREADY_PRESENT=$functionName"
           }
-
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
