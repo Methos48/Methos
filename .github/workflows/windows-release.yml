@@ -214,9 +214,17 @@ jobs:
         shell: pwsh
         run: |
           $fixtureRoot = Join-Path $env:RUNNER_TEMP "methos-xdat-fixtures"
-          python tools/xdat/prepare_reference_fixtures.py --archive "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip" --output $fixtureRoot
+          $fixtureZip = Join-Path $env:RUNNER_TEMP "Methos-XDAT-Reference-Fixtures-Clean.zip"
+          python tools/xdat/prepare_reference_fixtures.py --archive "reference-data/kits/Methos-XDAT-Reference-Fixtures.zip" --output $fixtureRoot --zip-out $fixtureZip
           if ($LASTEXITCODE -ne 0) { throw "No se pudieron preparar los fixtures XDAT." }
           "XDAT_REFERENCE_ROOT=$fixtureRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publicar archivo XDAT limpio solo con fixtures
+        uses: actions/upload-artifact@v4
+        with:
+          name: Methos-XDAT-Reference-Fixtures-Clean
+          path: ${{ runner.temp }}/Methos-XDAT-Reference-Fixtures-Clean.zip
+          if-no-files-found: error
 
       - name: Verificar fuentes y pruebas XDAT canónicas del repositorio
         shell: pwsh
