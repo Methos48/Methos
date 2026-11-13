@@ -316,6 +316,26 @@ public static class UccCompiler
         return source;
     }
 
+    // UELib emits numeric property names for ChatWnd's CHAT_WINDOW_* constants
+    // when they are accessed through the script object in ChatFilterWnd.
+    private static string NormalizeChatFilterWndWindowConstants(string className, string source)
+    {
+        if (!className.Equals("ChatFilterWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        var names = new Dictionary<string, string>
+        {
+            ["0"] = "CHAT_WINDOW_NORMAL",
+            ["1"] = "CHAT_WINDOW_TRADE",
+            ["2"] = "CHAT_WINDOW_PARTY",
+            ["3"] = "CHAT_WINDOW_CLAN",
+            ["4"] = "CHAT_WINDOW_ALLY",
+            ["5"] = "CHAT_WINDOW_SYSTEM"
+        };
+        return Regex.Replace(source, @"\bscript\.(?<value>[0-5])\b",
+            match => "script." + names[match.Groups["value"].Value],
+            RegexOptions.IgnoreCase);
+    }
+
     // Berserker's ShortcutWnd references NPHRN_KeyWnd, which is present in that
     // package. Do not rewrite the stock Interlude ShortcutWnd when that script is absent.
     private static string NormalizeShortcutWndKeySettingReference(string className, string source)
@@ -951,6 +971,7 @@ function HandleHideLogo()
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
+                source = NormalizeChatFilterWndWindowConstants(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
