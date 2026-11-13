@@ -289,7 +289,7 @@ public static class UnrealScriptTypeReferenceRepair
         if (className.Equals("Shortcut", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("Skilltitle", StringComparison.Ordinal) &&
             !System.Text.RegularExpressions.Regex.IsMatch(
-                source, @"(?m)^\\s*var\\s+WindowHandle\\s+Skilltitle\\s*;"))
+                source, @"(?m)^\s*var\s+WindowHandle\s+Skilltitle\s*;"))
         {
             const string classAnchor = "class Shortcut extends UICommonAPI;";
             if (source.Contains(classAnchor, StringComparison.Ordinal))
