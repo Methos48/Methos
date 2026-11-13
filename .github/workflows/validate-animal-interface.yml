@@ -152,7 +152,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 )
-            if ($nameMatch.Success -and $sourceText -notmatch ('(?i)\b' + [regex]::Escape($nameMatch.Groups[1].Value) + '\b')) {
+            if ($nameMatch.Success -and $sourceText -notmatch ('(?im)^\s*var\s+[^;]*\b' + [regex]::Escape($nameMatch.Groups[1].Value) + '\b')) {
               $missing.Add($declaration)
             }
           }
