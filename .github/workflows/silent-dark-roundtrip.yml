@@ -203,7 +203,7 @@ jobs:
                   var result = UnrealPackageDecompiler.DecompileToFolder(
                       plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
                   if (File.Exists(rawDamagePath))
-                      File.Copy(rawDamagePath, Path.Combine(cli[3], "DamageLiteAni-raw.uc"), overwrite: true);
+                      File.Copy(rawDamagePath, Path.Combine(Path.GetDirectoryName(cli[3])!, "DamageLiteAni-raw.uc"), overwrite: true);
                   Console.WriteLine($"UELIB_DECOMPILE classes={result.ClassCount} exported={result.ExportedCount} failed={result.FailedCount} sanitizedNames={result.SanitizedNameCount}");
                   foreach (string error in result.Errors.Take(20)) Console.WriteLine("DECOMPILE_WARNING " + error);
                   if (result.ExportedCount < 100 || result.FailedCount > 0)
@@ -235,7 +235,7 @@ jobs:
           $damage = Join-Path $generated "DamageLiteAni.uc"
           if (Test-Path $damage) {
             Copy-Item -LiteralPath $damage -Destination (Join-Path $diagnostics "DamageLiteAni-generated.uc") -Force
-            $rawDamage = Join-Path $generated "DamageLiteAni-raw.uc"
+            $rawDamage = Join-Path $env:RUNNER_TEMP "DamageLiteAni-raw.uc"
             if (Test-Path $rawDamage) {
               Copy-Item -LiteralPath $rawDamage -Destination (Join-Path $diagnostics "DamageLiteAni-raw.uc") -Force
               Write-Host "=== RAW UELIB DAMAGE LITE ARRAY DECLARATIONS ==="
