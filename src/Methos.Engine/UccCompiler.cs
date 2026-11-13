@@ -442,6 +442,53 @@ function onActiveTex(bool bActive, int nIndex)
             "GetClassIconCustom(", RegexOptions.IgnoreCase);
     }
 
+    // Berserker ToolTip lost this small helper during decompilation. Rebuild it
+    // from the matching Silent Dark implementation and Berserker's own StartItem,
+    // EndItem and IsEnchantableItem helpers.
+    private static string RestoreToolTipItemIcon(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("AddTooltipItemIcon(", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+AddTooltipItemIcon\s*\("))
+            return source;
+
+        const string handler = @"
+function AddTooltipItemIcon(ItemInfo item)
+{
+    local UIEventManager.EItemParamType EItemParamType;
+
+    EItemParamType = byte(item.ItemType);
+    StartItem();
+    m_Info.eType = DIT_TEXTURE;
+    m_Info.t_bDrawOneLine = true;
+    m_Info.u_nTextureWidth = 32;
+    m_Info.u_nTextureHeight = 32;
+    m_Info.u_strTexture = item.IconName;
+    EndItem();
+
+    if(IsEnchantableItem(EItemParamType) && item.Enchanted > 0 && item.Enchanted <= 50)
+    {
+        StartItem();
+        m_Info.eType = DIT_TEXTURE;
+        m_Info.nOffSetX = -32;
+        m_Info.t_bDrawOneLine = true;
+        m_Info.u_nTextureWidth = 32;
+        m_Info.u_nTextureHeight = 32;
+        m_Info.u_strTexture = ""L2UI_CH3.EnchantNumbers.enchant"" $ string(item.Enchanted);
+        EndItem();
+    }
+    return;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, handler + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // OptionWnd's Berserker-specific checkbox controls the two PvP/PK count
     // text widgets exposed by DetailStatusWnd. Restore this missing UI handler.
     private static string RestoreOptionWndDualCountHandler(string className, string source,
@@ -820,6 +867,9 @@ function HandleHideLogo()
                     out bool restoredItemOrderArray);
                 if (restoredItemOrderArray) repairedIdentifiers++;
                 source = NormalizeInventoryKeyEnums(className, source);
+                source = RestoreToolTipItemIcon(className, source,
+                    out bool restoredToolTipItemIcon);
+                if (restoredToolTipItemIcon) repairedIdentifiers++;
                 source = RestoreOptionWndReferenceHandlers(className, source, referenceSource,
                     out int restoredOptionWndHandlers);
                 repairedIdentifiers += restoredOptionWndHandlers;
