@@ -426,6 +426,24 @@ function onActiveTex(bool bActive, int nIndex)
             "GetClassIconCustom(", RegexOptions.IgnoreCase);
     }
 
+    // InventoryWnd's recovered sort loop indexes m_itemOrder and compares its
+    // entries with ItemInfo.ClassID. The omitted field is therefore an int array.
+    private static string RestoreInventoryWndItemOrderArray(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) ||
+            !source.Contains("m_itemOrder.Length", StringComparison.Ordinal) ||
+            Regex.IsMatch(source, @"(?im)^\s*var\s+array<int>\s+m_itemOrder\s*;"))
+            return source;
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index,
+            "var array<int> m_itemOrder;" + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // UELib emits integer ordinals for this recovered enum switch, while
     // Interlude UCC requires the declared enum labels.
     private static string NormalizeEventMatchObserverMessageModeSwitch(string className, string source)
@@ -616,6 +634,9 @@ function onActiveTex(bool bActive, int nIndex)
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
+                source = RestoreInventoryWndItemOrderArray(className, source,
+                    out bool restoredItemOrderArray);
+                if (restoredItemOrderArray) repairedIdentifiers++;
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
