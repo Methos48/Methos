@@ -78,13 +78,13 @@ public static class UnrealScriptTypeReferenceRepair
             bool inString = false, inLineComment = false, inBlockComment = false, escaped = false;
             for (int i = openBrace; i < source.Length; i++)
             {
-                char ch = source[i], next = i + 1 < source.Length ? source[i + 1] : '\\0';
-                if (inLineComment) { if (ch == '\\n') inLineComment = false; continue; }
+                char ch = source[i], next = i + 1 < source.Length ? source[i + 1] : '\0';
+                if (inLineComment) { if (ch == '\n') inLineComment = false; continue; }
                 if (inBlockComment) { if (ch == '*' && next == '/') { inBlockComment = false; i++; } continue; }
                 if (inString)
                 {
                     if (escaped) escaped = false;
-                    else if (ch == '\\\\') escaped = true;
+                    else if (ch == '\\') escaped = true;
                     else if (ch == '"') inString = false;
                     continue;
                 }
