@@ -313,6 +313,13 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("ManorCropInfoChangeWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("string(int(1))", StringComparison.Ordinal))
+        {
+            source = source.Replace("string(int(1))", "string(1)", StringComparison.Ordinal);
+            applied.Add("ManorCropInfoChangeWnd redundant int literal casts removed for UCC");
+        }
+
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("GetHandle(\"LogoWnd\")", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
