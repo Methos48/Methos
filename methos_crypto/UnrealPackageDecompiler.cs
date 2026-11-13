@@ -108,10 +108,9 @@ public static class UnrealPackageDecompiler
                     }
                 }
 
-                // Remove only an unreachable bare return appended after a value return
-                // in non-void functions. This repair is safe without a reference file.
-                source = UnrealScriptFailedFunctionRepair.RestoreInvalidTrailingReturns(
-                    source, string.Empty, out _);
+                // Normalize unreachable bare returns using tokenized function scope,
+                // including returns following switch/default branches.
+                source = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source).Source;
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownInterfaceSoundArguments(source, out _);
                         source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(safeName, source, out _);
                 source = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogDefaultActionArguments(safeName, source, out _);
