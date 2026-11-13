@@ -475,6 +475,7 @@ string silentTextboxSample = """
 class Interface_by_SILENT extends UICommonAPI;
 function OnLoad()
 {
+    local OptionWnd script;
     Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor("OKTUBRE INTERFACE", RecoveredName_98("white"));
 }
 """;
