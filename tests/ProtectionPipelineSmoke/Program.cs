@@ -175,12 +175,14 @@ var EditBoxHandle ChatEditBox;
 function OnLoad()
 {
     ChatFilterBtn = ButtonHandle(GetHandle("ChatHideWnd.ChatFilterBtn"));
+    ChatFilterBtn.SetTooltipCustomType(SetTooltip("Chat Filter\\\\nMouse R-Click: Hide Chat"));
 }
 """;
 string chatHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "ChatWnd", chatHandleSample, out IReadOnlyList<string> chatHandleRepairs);
-Check(chatHandleRepairs.Count == 1 &&
-      chatHandleRepaired.Contains("var ButtonHandle ChatFilterBtn;", StringComparison.Ordinal),
+Check(chatHandleRepairs.Count == 2 &&
+      chatHandleRepaired.Contains("var ButtonHandle ChatFilterBtn;", StringComparison.Ordinal) &&
+      chatHandleRepaired.Contains("SetTooltipCustomType(MakeTooltipSimpleText(", StringComparison.Ordinal),
     "Missing ChatWnd ChatFilterBtn handle declaration was not restored.");
 Console.WriteLine("PASS: missing ChatWnd ButtonHandle declaration is restored.");
 
