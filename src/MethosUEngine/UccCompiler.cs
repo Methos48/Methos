@@ -264,12 +264,19 @@ public static class UccCompiler
                         repairedIdentifiers += count;
                     }
                 }
+                string controlCharacterNormalized = UnrealScriptSourceIndex.RepairInvalidControlCharacterIdentifiers(source);
+                if (!string.Equals(controlCharacterNormalized, source, StringComparison.Ordinal))
+                    repairedIdentifiers += 1;
+                source = controlCharacterNormalized;
                 source = NormalizeRecoveredStructOrder(source, out bool movedStruct);
                 if (movedStruct) repairedIdentifiers++;
                 source = NormalizeRecoveredStateFunctionPrototypes(source, out int removedStatePrototypes);
                 repairedIdentifiers += removedStatePrototypes;
                 source = NormalizeRecoveredFunctionBlocks(source, out int insertedClosures);
                 repairedIdentifiers += insertedClosures;
+                ReturnNormalizationResult trailingReturns = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(source);
+                source = trailingReturns.Source;
+                repairedIdentifiers += trailingReturns.Repairs.Count;
                 File.WriteAllText(Path.Combine(stagedClasses, Path.GetFileName(file)), source, new UTF8Encoding(false));
             }
 
