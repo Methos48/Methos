@@ -63,15 +63,55 @@ public static class UnrealScriptFailedFunctionRepair
         ArgumentNullException.ThrowIfNull(referenceSource);
         var repaired = new List<string>();
         IReadOnlyList<UnrealFunctionSource> currentFunctions;
-        IReadOnlyList<UnrealFunctionSource> referenceFunctions;
         try
         {
             currentFunctions = UnrealScriptSourceIndex.ParseFunctions(decompiledSource);
-            referenceFunctions = UnrealScriptSourceIndex.ParseFunctions(referenceSource);
         }
         catch (InvalidDataException)
         {
             repairedFunctions = repaired;
+            return decompiledSource;
+        }
+
+        var currentGroups = currentFunctions.GroupBy(function => function.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
+        var edits = new List<(int Start, int Length)>();
+
+        foreach (var function in currentFunctions)
+        {
+            if (!currentGroups.TryGetValue(function.Name, out var matches) || matches.Length != 1)
+                continue;
+
+            string header = decompiledSource.Substring(function.DeclarationOffset,
+                function.BodyOffset - function.DeclarationOffset);
+            Match signature = Regex.Match(header,
+                @"\\b(?:function|event)\\s+(?<returnType>[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?)\\s+" +
+                Regex.Escape(function.Name) + @"\\s*\\(",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (!signature.Success || signature.Groups["returnType"].Value.Equals("void", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // UELib may append an unreachable bare return after a valid value return.
+            // Removing only this final statement preserves the function's actual result.
+            Match trailingReturn = Regex.Match(function.Body,
+                @"(?<statement>\\breturn\\s*;)\\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (!trailingReturn.Success) continue;
+
+            string precedingBody = function.Body[..trailingReturn.Index].TrimEnd();
+            if (!Regex.IsMatch(precedingBody, @"\\breturn\\s+(?!;)\\S[\\s\\S]*;\\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                continue;
+
+            edits.Add((function.BodyOffset + trailingReturn.Groups["statement"].Index,
+                trailingReturn.Groups["statement"].Length));
+            repaired.Add(function.Name);
+        }
+
+        string result = decompiledSource;
+        foreach (var edit in edits.OrderByDescending(item => item.Start))
+            result = result.Remove(edit.Start, edit.Length);
+        repairedFunctions = repaired;
             return decompiledSource;
         }
 
