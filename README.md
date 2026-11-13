@@ -11,7 +11,7 @@ Ambos módulos forman parte de la misma aplicación, la misma ventana principal 
 
 https://github.com/Methos48/Methos
 
-La rama activa es `main`. La arquitectura, las rutas de código y las reglas para evitar separar el producto están documentadas en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
+La rama activa es `main`. La arquitectura y las reglas de mantenimiento están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). Consulta también el [mapa de workflows](docs/WORKFLOWS.md) y el [inventario de referencias conservadas en la raíz](docs/ROOT-REFERENCES.md).
 
 ## Instalación
 
