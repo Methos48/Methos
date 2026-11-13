@@ -638,6 +638,25 @@ Check(dunk3lManaBurnRepairs.Count == 3 &&
     "Dunk3l TargetStatusWnd Mana Burn filter did not receive the Interlude skill ID constant.");
 Console.WriteLine("PASS: Dunk3l TargetStatusWnd preserves the Mana Burn skill filter.");
 
+string dunk3lToolTipWidthSample = """
+class ToolTip extends UICommonAPI;
+var CustomTooltip m_Tooltip;
+var DrawItemInfo m_Info;
+function AddTooltipItemBar(int minimum_width)
+{
+    m_Info.u_nTextureWidth = getMaxWidth();
+}
+""";
+string dunk3lToolTipWidthRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipWidthSample, out IReadOnlyList<string> dunk3lToolTipWidthRepairs);
+Check(dunk3lToolTipWidthRepairs.Count == 1 &&
+      dunk3lToolTipWidthRepaired.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
+      dunk3lToolTipWidthRepaired.Contains("GetTextSize(DrawItem.t_strText, Width, Height);", StringComparison.Ordinal) &&
+      dunk3lToolTipWidthRepaired.Contains("MaxWidth = m_Tooltip.MinimumWidth;", StringComparison.Ordinal),
+    "Dunk3l ToolTip max-width helper was not restored.");
+Console.WriteLine("PASS: Dunk3l ToolTip max-width helper measures existing draw-list content.");
+
+
 
 
 
