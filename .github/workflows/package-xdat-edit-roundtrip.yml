@@ -1,0 +1,59 @@
+name: Package XDAT modified edit round-trip matrix
+
+on:
+  push:
+    branches: [test/dunk3l-edit-roundtrip]
+    paths:
+      - "reference-data/packages/**/interface.xdat"
+      - "tools/xdat/**"
+      - ".github/workflows/package-xdat-edit-roundtrip.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  raw-ct0:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [animal, berserker, silent-dark]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Modify XML, rebuild XDAT and reread marker
+        run: |
+          python tools/xdat/validate_raw_xdat_edit.py \
+            "reference-data/packages/${{ matrix.package }}/interface.xdat" \
+            --output "$RUNNER_TEMP/${{ matrix.package }}-interface.xdat"
+      - name: Publish modified XDAT evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-XDAT-Modified-RoundTrip
+          path: ${{ runner.temp }}/${{ matrix.package }}-interface.xdat
+          if-no-files-found: error
+          retention-days: 14
+
+  l2sudamerica:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Modify XML, rebuild SmartCrypt and reread marker
+        run: |
+          python tools/xdat/validate_dunk3l_smartcrypt.py \
+            "reference-data/packages/l2sudamerica/interface.xdat" \
+            --edit-roundtrip \
+            --output "$RUNNER_TEMP/l2sudamerica-interface.xdat"
+      - name: Publish modified XDAT evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: l2sudamerica-XDAT-Modified-RoundTrip
+          path: ${{ runner.temp }}/l2sudamerica-interface.xdat
+          if-no-files-found: error
+          retention-days: 14
