@@ -36,7 +36,7 @@ No continuar desarrollo en repositorios históricos ni reconstruir una aplicaci�
 | `tests/` | Pruebas automatizadas U, protección y XDAT. Las pruebas Python importan el código desde `tools/xdat/`. |
 | `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
 | `installer/Methos.iss` | Definición del único instalador de Methos. |
-| `docs/` | Documentación técnica, auditorías y resultados de investigación. |
+| `docs/` | Arquitectura, política de ramas, workflows, inventario de referencias y documentación técnica. |
 | `reference-data/` | Kits, archivos de cliente y paquetes de referencia para pruebas; no se instalan automáticamente. |
 | `.github/workflows/` | Automatización de compilación, validación, inspección y archivo de fuentes. |
 
