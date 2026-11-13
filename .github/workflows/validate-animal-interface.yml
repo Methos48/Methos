@@ -258,6 +258,22 @@ jobs:
           Write-Host "===== REFERENCE INVENTORY FUNCTION NAMES ====="
           $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/InventoryWnd.uc"
           Select-String -LiteralPath $referenceFile -Pattern '^\s*function\b' | Select-Object -Last 25
+      - name: Restore Animal GetCurrentTab null return
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $pattern = '(?ms)(function\s+ItemWindowHandle\s+GetCurrentTab\s*\(\)\s*\{.*?)(\r?\n\s*)return\s*;'
+          $matches = [regex]::Matches($sourceText, $pattern)
+          if ($matches.Count -eq 1) {
+            $sourceText = [regex]::Replace($sourceText, $pattern, '$1$2return None;', 1)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_NULL_RETURN=InventoryWnd.GetCurrentTab"
+          } elseif ($sourceText -match '(?ms)function\s+ItemWindowHandle\s+GetCurrentTab\s*\(\).*?return\s+None\s*;') {
+            Write-Host "ANIMAL_NULL_RETURN_ALREADY_RESTORED=InventoryWnd.GetCurrentTab"
+          } else {
+            throw "Could not uniquely locate the incomplete return in InventoryWnd.GetCurrentTab."
+          }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
