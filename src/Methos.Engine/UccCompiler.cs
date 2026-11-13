@@ -276,7 +276,7 @@ public static class UccCompiler
     // decompiled class header. Recover only missing, actually-used fields from the
     // exact matching reference class, one declaration per field, in the staged copy.
     private static string RestoreMissingReferencedClassFields(string className, string source,
-        string referenceSource, out int restoredCount)
+        string referenceSource, IReadOnlySet<string> availableClassNames, out int restoredCount)
     {
         restoredCount = 0;
         var additions = new List<string>();
@@ -290,6 +290,12 @@ public static class UccCompiler
                     @"^(?<name>[A-Za-z_]\w*)(?<array>\s*\[\s*\d+\s*\])?$");
                 if (!field.Success) continue;
                 string name = field.Groups["name"].Value;
+                bool knownType = availableClassNames.Contains(type) ||
+                    type.EndsWith("Handle", StringComparison.OrdinalIgnoreCase) ||
+                    new[] { "int", "float", "bool", "string", "name", "byte", "object", "class",
+                        "ItemInfo", "SkillInfo", "UserInfo", "Rect", "Vector", "Rotator", "Color" }
+                        .Contains(type, StringComparer.OrdinalIgnoreCase);
+                if (!knownType) continue;
                 if (!Regex.IsMatch(source, @"(?im)^\s*var\s+[^;]*\b" + Regex.Escape(name) + @"\b") &&
                     Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\b"))
                 {
@@ -522,8 +528,11 @@ function onActiveTex(bool bActive, int nIndex)
                     source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                         source, referenceSource, out IReadOnlyList<string> repairedFunctions);
                     restoredFailedFunctions += repairedFunctions.Count;
+                    var availableClassNames = sourceFiles
+                        .Select(path => Path.GetFileNameWithoutExtension(path))
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
                     source = RestoreMissingReferencedClassFields(className, source, referenceSource,
-                        out int restoredClassFields);
+                        availableClassNames, out int restoredClassFields);
                     repairedIdentifiers += restoredClassFields;
                     source = RestoreAutoPotionsWndPotionDispatcher(className, source,
                         out bool restoredPotionDispatcher);
