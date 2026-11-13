@@ -159,9 +159,11 @@ function SetItemCount()
 string inventoryCountRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "InventoryWnd", inventoryCountSample, out IReadOnlyList<string> inventoryCountRepairs);
 Check(inventoryCountRepairs.Count == 1 &&
-      inventoryCountRepaired.Contains(" + EquipItemGetItemNum();", StringComparison.Ordinal) &&
-      !inventoryCountRepaired.Contains("(EquipItemGetItemNum())", StringComparison.Ordinal),
-    "InventoryWnd SetItemCount redundant function-call parentheses were not normalized.");
+      inventoryCountRepaired.Contains("Count = RecoveredName_2802.GetItemNum();", StringComparison.Ordinal) &&
+      inventoryCountRepaired.Contains("Count = Count + RecoveredName_2803.GetItemNum();", StringComparison.Ordinal) &&
+      inventoryCountRepaired.Contains("Count = Count + EquipItemGetItemNum();", StringComparison.Ordinal) &&
+      !inventoryCountRepaired.Contains("Count = (RecoveredName_2802.GetItemNum()", StringComparison.Ordinal),
+    "InventoryWnd SetItemCount nested handle calls were not split into sequential assignments.");
 Console.WriteLine("PASS: InventoryWnd equipment count expression is normalized for UCC.");
 
 string chatEnumSample = """
