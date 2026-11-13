@@ -1,73 +1,73 @@
 # Arquitectura y organización de Methos
 
-## Regla principal del producto
+## Identidad del producto
 
-**Methos es una sola aplicación de Windows.** El único ejecutable principal que utiliza el usuario es `Methos.exe`, instalado mediante `Methos-Setup.exe`.
+**Methos es una sola aplicación de Windows x64.** El usuario abre un único ejecutable principal, `Methos.exe`, instalado mediante `Methos-Setup.exe`.
 
-La ventana principal contiene dos módulos:
+La misma ventana contiene dos módulos funcionales:
 
-- **ARCHIVOS U**: paquetes Unreal `.u`.
-- **ARCHIVOS XDAT**: paquetes `.xdat`.
+- **ARCHIVOS U:** paquetes Unreal `.u`.
+- **ARCHIVOS XDAT:** paquetes `.xdat`.
 
-Son dos capacidades de la misma aplicación, no dos programas, productos, instaladores ni repositorios. Los runtimes y procesos técnicos auxiliares, cuando existan, son internos y no constituyen productos independientes.
+Son dos capacidades de una aplicación, no dos programas, productos ni instalaciones. Las bibliotecas, scripts y runtimes auxiliares son componentes internos de Methos.
 
-## Fuente oficial
+## Fuente oficial única
 
 - Repositorio: https://github.com/Methos48/Methos
-- Rama de trabajo: `main`
-- Este repositorio es la única fuente activa del producto.
+- Rama activa: `main`
 
-No continuar desarrollo en repositorios históricos ni reconstruir una aplicación XDAT separada.
-
-## Documentación complementaria
-
-- `docs/WORKFLOWS.md`: inventario y responsabilidad de cada workflow.
-- `docs/ROOT-REFERENCES.md`: inventario de kits, archivos del cliente y paquetes de referencia organizados bajo `reference-data/`.
-- `tools/xdat/README.md`: estructura y estado de integración del motor XDAT.
+Todo el desarrollo, integración, validación y distribución debe realizarse desde este repositorio y esta rama. No crear repositorios o ramas permanentes para separar U y XDAT.
 
 ## Mapa del código
 
 | Ruta | Responsabilidad |
 |---|---|
-| `src/Methos.App/` | Aplicación gráfica principal Methos, navegación y conexión de los módulos U y XDAT. |
-| `src/Methos.Engine/` | Biblioteca interna C# del motor Unreal/UCC y codecs/protecciones, referenciada por Methos.App y las pruebas. |
-| `tools/xdat/` | Fuente canónica del motor XDAT, detección, pipeline, metadatos, validadores y preparación segura de fixtures. |
-| `src/Methos.App/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre la aplicación principal y el motor XDAT. No es una segunda aplicación. |
-| `tests/` | Pruebas automatizadas U, protección y XDAT. Las pruebas Python importan el código desde `tools/xdat/`. |
-| `tools/` | Herramientas de diagnóstico y preparación; no forman parte del producto. Las pruebas ejecutables viven en `tests/`. |
-| `installer/Methos.iss` | Definición del único instalador de Methos. |
-| `docs/` | Arquitectura, política de ramas, workflows, inventario de referencias y documentación técnica. |
-| `reference-data/` | Kits, archivos de cliente y paquetes de referencia para pruebas; no se instalan automáticamente. |
-| `.github/workflows/` | Automatización de compilación, validación, inspección y archivo de fuentes. |
+| `src/Methos.App/` | Aplicación gráfica principal, ventana, navegación y conexión de los módulos. |
+| `src/Methos.Engine/` | Biblioteca interna C# del motor Unreal/UCC y codecs/protecciones. |
+| `tools/xdat/` | Código fuente XDAT, detección de cifrado, pipeline, metadatos, validadores y preparación de fixtures. |
+| `src/Methos.App/XdatBridge.cs` y `XdatBridge.py` | Puente interno entre Methos y el motor XDAT. |
+| `tests/` y `tools/xdat/tests/` | Pruebas automatizadas de los componentes y flujos U/XDAT. |
+| `tools/` | Herramientas de diagnóstico y preparación; no son aplicaciones de usuario. |
+| `installer/Methos.iss` | Definición del único instalador. |
+| `docs/` | Arquitectura, workflows, inventario de referencias y documentación técnica. |
+| `reference-data/` | Archivos originales y datos de prueba; no son aplicaciones ni se instalan automáticamente. |
+| `third_party/` | Dependencias externas y avisos de licencia. |
+| `.github/workflows/` | Automatización de compilación, validación e investigación. |
 
-## Archivos de entrada de compilación y referencias
+## Código XDAT y datos de referencia
 
-El runtime XDAT se construye desde `tools/xdat/xdat_core.py` y `src/Methos.App/XdatBridge.py`. El archivo `reference-data/kits/Methos-XDAT-Reference-Fixtures.zip` contiene únicamente paquetes binarios/XML de prueba. `tools/xdat/prepare_reference_fixtures.py` extrae solo `interface.xdat` y los XML necesarios, con validación de rutas. No se extrae ni ejecuta la antigua interfaz `app.py`, no se instalan DLL ni ejecutables de ese kit y no se depende de overlays sobre una aplicación externa.
+El runtime XDAT se prepara desde el código mantenido en `tools/xdat/xdat_core.py` y el puente `src/Methos.App/XdatBridge.py`.
 
-Un archivo de referencia no se convierte en parte del producto por estar almacenado en el repositorio. Solo los archivos explícitamente copiados por el workflow de lanzamiento y el instalador forman parte de la distribución.
+`reference-data/kits/Methos-XDAT-Reference-Fixtures.zip` es únicamente un archivo de datos de prueba. Contiene un paquete binario `interface.xdat` y XML de referencia; no contiene código Python, ejecutables, DLL ni instaladores. `tools/xdat/prepare_reference_fixtures.py` extrae los datos necesarios para las pruebas y valida las rutas.
 
-## Workflows y repositorios históricos
+El archivo `reference-data/kits/Compilador-U.zip` conserva los componentes UCC/Interlude necesarios para la compilación y validación de paquetes U. Los demás archivos bajo `reference-data/` son muestras del cliente, paquetes y fuentes originales para pruebas e investigación.
 
-Los workflows de inspección de Dunk3l y validación Unreal/UCC deben tomar sus fuentes desde este repositorio. Se eliminaron las descargas del antiguo repositorio `Methos-U-Editor`; los paquetes UCC y el paquete de referencia se leen ahora desde `reference-data/kits/Compilador-U.zip` y `reference-data/Interface-UEditor.u`. No reintroducir checkouts del repositorio histórico.
+Un archivo de referencia no es parte de la aplicación por estar almacenado en el repositorio. Solo los archivos copiados explícitamente por el workflow de lanzamiento y el instalador forman parte de la distribución.
 
-## Flujo oficial de compilación
+## Workflows y distribución
 
-El workflow de distribución oficial es `.github/workflows/windows-release.yml`. Debe producir:
+El único workflow oficial de distribución es `.github/workflows/windows-release.yml`. Debe producir:
 
 1. Una aplicación Windows x64 llamada `Methos.exe`.
 2. Un instalador único llamado `Methos-Setup.exe`.
-3. Los runtimes internos UCC y XDAT necesarios para las funciones incluidas.
-4. Las cuatro carpetas de trabajo bajo `Compilados/U` y `Compilados/XDAT`.
+3. Los runtimes internos necesarios para las funciones incluidas.
+4. Las carpetas de trabajo bajo `Compilados/U` y `Compilados/XDAT`.
 
-No debe publicar un segundo ejecutable de producto para XDAT ni un instalador XDAT independiente.
+Los demás workflows realizan pruebas, inspecciones o investigación. No deben crear un segundo producto ni instaladores independientes.
+
+## Repositorios y ramas históricos
+
+El repositorio oficial es exclusivamente `Methos48/Methos`. El repositorio auxiliar `Methos48/Methos-Interface` tiene su rama principal sin archivos de producto, pero el repositorio todavía existe en GitHub. Las ramas `migration/*`, `research/*` y `work/*` que permanezcan visibles en el repositorio oficial son referencias históricas, no ramas activas.
+
+No continuar trabajo en esas ubicaciones. Su eliminación definitiva es una tarea administrativa de GitHub; no se debe confundir el hecho de que estén vacías o inactivas con que hayan sido borradas.
 
 ## Compatibilidad de datos locales
 
-Algunas carpetas antiguas bajo `%LOCALAPPDATA%` conservan nombres históricos como `Methos U Editor`. Se mantienen temporalmente para no perder cachés ni respaldos de instalaciones anteriores. Son ubicaciones de datos, no aplicaciones independientes. No renombrarlas sin implementar una migración que copie o detecte los datos existentes.
+Algunas ubicaciones locales heredadas se conservan temporalmente para proteger cachés y respaldos de instalaciones anteriores. Son datos de usuario, no aplicaciones adicionales. No renombrarlas ni eliminarlas sin implementar una migración compatible que detecte y preserve esos datos.
 
 ## Organización de archivos de usuario
 
-La aplicación mantiene separados los espacios de trabajo:
+La aplicación mantiene separados los espacios de trabajo de cada módulo:
 
 ```text
 Compilados/
@@ -81,17 +81,18 @@ Compilados/
 
 Los originales seleccionados por el usuario deben conservarse sin cambios. Las operaciones se realizan sobre copias de trabajo y deben mantener respaldos y validaciones antes de publicar resultados.
 
-## Convenciones para cambios futuros
+## Convenciones obligatorias
 
-1. Usar siempre el nombre **Methos** para el producto, instalador, accesos directos, documentación y artefactos.
+1. Usar siempre el nombre **Methos** para el producto, ejecutable, instalador, accesos directos, documentación y artefactos.
 2. Hablar de **módulo U** y **módulo XDAT**, nunca de dos programas.
-3. Mantener un único repositorio activo: `Methos48/Methos`.
-4. No borrar ni mover archivos de referencia, DLL, ZIP, fuentes duplicadas aparentes o herramientas hasta revisar todos sus usos en código, scripts y workflows.
-5. No cambiar rutas de datos de usuario sin migración compatible; puede haber copias de seguridad y cachés de versiones anteriores.
-6. No renombrar carpetas o namespaces técnicos históricos solo por estética. Hacerlo únicamente si se actualizan todas las referencias y se prueba la compilación.
-7. Cada cambio estructural debe actualizar este documento y `PROGRESO-METHOS.md`.
-8. Un workflow exitoso solo acredita las pruebas que realmente ejecutó. No declarar compatibilidad universal sin pruebas funcionales con archivos reales.
+3. Mantener un solo repositorio activo: `Methos48/Methos`, rama `main`.
+4. No borrar archivos de referencia, DLL, ZIP, fuentes o herramientas hasta revisar todos sus usos y ejecutar las pruebas afectadas.
+5. No cambiar rutas de datos de usuario sin migración compatible.
+6. Cada cambio estructural debe actualizar esta arquitectura y `PROGRESO-METHOS.md`.
+7. Un workflow exitoso solo acredita las pruebas que realmente ejecutó. No declarar compatibilidad universal sin pruebas funcionales con archivos reales.
 
-## Estado de limpieza
+## Estado actual de limpieza
 
-La raíz ya no contiene los kits ni los archivos del cliente usados por los workflows. Se trasladaron a `reference-data/` conservando sus blobs binarios originales y se actualizaron las rutas de las automatizaciones. La duplicación entre `tools/xdat/` y el kit XDAT histórico aún debe resolverse mediante migración y pruebas, no mediante borrado.
+La estructura activa del producto está unificada: una aplicación, un ejecutable principal y un instalador. El antiguo paquete XDAT de compilación fue reemplazado por fixtures puros; el código del antiguo editor no se extrae ni se ejecuta en Windows Release.
+
+Quedan referencias administrativas fuera del código activo: el repositorio vacío `Methos-Interface` y ramas históricas. También se conserva el historial Git y los datos de referencia necesarios. Esos elementos no son programas que se ejecuten ni forman parte del instalador.
