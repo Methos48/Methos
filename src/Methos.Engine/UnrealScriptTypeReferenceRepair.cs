@@ -611,16 +611,18 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
-            source.Contains("= getMaxWidth();", StringComparison.Ordinal))
+            source.Contains("function int getMaxWidth()", StringComparison.Ordinal))
         {
-            // Keep the recovered helper's exact behavior, but give it a unique name.
-            // Some Dunk3l exports collide with the original API symbol during UCC binding.
+            // The recovered helper may be emitted without its original call site when
+            // UELib cannot reconstruct the enclosing nested expression. Rename the
+            // declaration even in that case: the inherited UI API already exposes a
+            // similarly named symbol and Interlude UCC can reject the local binding.
+            // Replacing the whole identifier also preserves any call sites if present.
             source = System.Text.RegularExpressions.Regex.Replace(
                 source, @"\bgetMaxWidth\b", "MethosTooltipGetMaxWidth",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase |
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-            applied.Add("ToolTip max-width helper renamed to avoid UCC symbol binding collision");
+            applied.Add("ToolTip max-width helper renamed to avoid inherited UCC symbol binding collision");
         }
 
         if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
