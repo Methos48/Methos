@@ -58,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: InterfaceU-${{ matrix.package }}-Decompiled
-          path: InterfaceU-Sources
+          path: InterfaceU-Previous-Decompile
       - name: Extract Interlude UCC runtime
         shell: pwsh
         run: |
@@ -69,7 +69,9 @@ jobs:
       - name: Modify, compile, protect and reopen Interface.u
         shell: pwsh
         run: |
-          $source = Join-Path $PWD "InterfaceU-Sources"
+          # Use a clean directory: this command performs its own decompilation.
+          $source = Join-Path $PWD "InterfaceU-RoundTrip-Sources"
+          if (Test-Path -LiteralPath $source) { Remove-Item -LiteralPath $source -Recurse -Force }
           $input = Join-Path $PWD "reference-data/packages/${{ matrix.package }}/Interface.u"
           $outputDir = Join-Path $PWD "InterfaceU-Modified"
           New-Item -ItemType Directory -Force $outputDir | Out-Null
@@ -83,7 +85,7 @@ jobs:
           name: InterfaceU-${{ matrix.package }}-Modified-RoundTrip
           path: |
             InterfaceU-Modified/Interface.u
-            InterfaceU-Sources/*.uc
-            InterfaceU-Sources/methos_name_map.json
+            InterfaceU-RoundTrip-Sources/*.uc
+            InterfaceU-RoundTrip-Sources/methos_name_map.json
           if-no-files-found: warn
           retention-days: 14
