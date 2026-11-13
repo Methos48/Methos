@@ -660,6 +660,25 @@ Check(dunk3lToolTipWidthRepairs.Count == 1 &&
     "Dunk3l ToolTip max-width helper was not restored.");
 Console.WriteLine("PASS: Dunk3l ToolTip max-width helper measures existing draw-list content.");
 
+string dunk3lToolTipBindingSample = """
+class ToolTip extends UICommonAPI;
+function AddCrossLine()
+{
+    m_Info.u_nTextureWidth = getMaxWidth();
+}
+function int getMaxWidth()
+{
+    return 174;
+}
+""";
+string dunk3lToolTipBindingRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipBindingSample, out IReadOnlyList<string> dunk3lToolTipBindingRepairs);
+Check(dunk3lToolTipBindingRepairs.Count == 1 &&
+      dunk3lToolTipBindingRepaired.Contains("= MethosTooltipGetMaxWidth();", StringComparison.Ordinal) &&
+      dunk3lToolTipBindingRepaired.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal),
+    "Dunk3l ToolTip max-width helper was not renamed consistently for UCC.");
+Console.WriteLine("PASS: Dunk3l ToolTip max-width helper has a collision-free symbol.");
+
 
 
 
