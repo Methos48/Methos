@@ -53,6 +53,8 @@ jobs:
           if (Test-Path $chatFilterReference) { Copy-Item $chatFilterReference (Join-Path $refDir "ChatFilterWnd.uc") }
           $chatReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/ChatWnd.uc"
           if (Test-Path $chatReference) { Copy-Item $chatReference (Join-Path $refDir "ChatWnd.uc") }
+          $loadingReference = Join-Path $env:UCC_ROOT "Interlude/Interface/Classes/LoadingWnd.uc"
+          if (Test-Path $loadingReference) { Copy-Item $loadingReference (Join-Path $refDir "LoadingWnd.uc") }
       - name: Export NWindow API definitions for compiler diagnostics
         shell: pwsh
         run: |
