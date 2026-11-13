@@ -263,7 +263,7 @@ public static class UnrealScriptTypeReferenceRepair
             string parameters = functionMatch.Groups["parameters"].Value;
             foreach (System.Text.RegularExpressions.Match parameter in
                      System.Text.RegularExpressions.Regex.Matches(
-                         parameters, @"(?<enumType>(?:[A-Za-z_][A-Za-z0-9_]*\.)*E[A-Za-z0-9_]+)\s+(?<variable>[A-Za-z_][A-Za-z0-9_]*)"))
+                         parameters, @"(?<enumType>(?:[A-Za-z_][A-Za-z0-9_]*\.)*E[A-Z][A-Za-z0-9_]*)\s+(?<variable>[A-Za-z_][A-Za-z0-9_]*)"))
             {
                 string enumType = parameter.Groups["enumType"].Value;
                 string variable = parameter.Groups["variable"].Value;
