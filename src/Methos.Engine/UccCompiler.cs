@@ -101,6 +101,39 @@ public static class UccCompiler
         return output.ToString();
     }
 
+    private static string AppendUccErrorSourceContext(string compilerOutput, string stagedClasses)
+    {
+        var contexts = new List<string>();
+        foreach (Match match in Regex.Matches(compilerOutput,
+            @"(?<file>[A-Za-z0-9_.-]+\.uc)\((?<line>\d+)\)\s*:\s*Error",
+            RegexOptions.IgnoreCase))
+        {
+            string fileName = Path.GetFileName(match.Groups["file"].Value);
+            string sourcePath = Path.Combine(stagedClasses, fileName);
+            if (!File.Exists(sourcePath) ||
+                !int.TryParse(match.Groups["line"].Value, out int errorLine))
+                continue;
+
+            string[] lines = File.ReadAllLines(sourcePath);
+            int first = Math.Max(1, errorLine - 8);
+            int last = Math.Min(lines.Length, errorLine + 8);
+            var excerpt = new StringBuilder();
+            for (int lineNumber = first; lineNumber <= last; lineNumber++)
+            {
+                string printable = new(lines[lineNumber - 1].Select(ch =>
+                    char.IsControl(ch) && ch is not '\r' and not '\n' and not '\t'
+                        ? $"\\u{(int)ch:X4}" : ch).ToArray());
+                excerpt.AppendLine($"{fileName}:{lineNumber}: {printable}");
+            }
+            contexts.Add($"UCC_SOURCE_CONTEXT {fileName}:{errorLine} (staged source)" +
+                Environment.NewLine + excerpt);
+        }
+
+        return contexts.Count == 0
+            ? compilerOutput
+            : compilerOutput + Environment.NewLine + string.Join(Environment.NewLine, contexts);
+    }
+
     private static int CountCodeBraces(string line, ref bool inBlockComment)
     {
         int delta = 0;
@@ -346,8 +379,9 @@ public static class UccCompiler
             if (process.ExitCode != 0 ||
                 !Regex.IsMatch(compilerOutput, @"Success\s*-\s*0 error\(s\)", RegexOptions.IgnoreCase))
             {
-                string detail = compilerOutput.Length > 7000
-                    ? compilerOutput[^7000..]
+                compilerOutput = AppendUccErrorSourceContext(compilerOutput, stagedClasses);
+                string detail = compilerOutput.Length > 10000
+                    ? compilerOutput[^10000..]
                     : compilerOutput;
                 throw new InvalidOperationException(
                     $"UCC no pudo compilar Interface.u (código {process.ExitCode}).{Environment.NewLine}{detail}");
