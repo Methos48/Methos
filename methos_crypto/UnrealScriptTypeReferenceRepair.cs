@@ -262,7 +262,7 @@ public static class UnrealScriptTypeReferenceRepair
         {
             const string malformed = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + (EquipItemGetItemNum());";
             const string partiallyRepaired = "Count = (RecoveredName_2802.GetItemNum() + RecoveredName_2803.GetItemNum()) + EquipItemGetItemNum();";
-            const string corrected = "Count = RecoveredName_2802.GetItemNum();" + Environment.NewLine +
+            string corrected = "Count = RecoveredName_2802.GetItemNum();" + Environment.NewLine +
                 "\tCount = Count + RecoveredName_2803.GetItemNum();" + Environment.NewLine +
                 "\tCount = Count + EquipItemGetItemNum();";
             if (source.Contains(malformed, StringComparison.Ordinal) ||
