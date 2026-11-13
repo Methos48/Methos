@@ -1,0 +1,43 @@
+name: Inspect Dunk3l Interface API
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-dunk3l-interface-api.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Methos48/Methos-U-Editor
+          path: u-editor
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Decompile Interface package and locate sound declarations
+        shell: pwsh
+        run: |
+          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $root = Join-Path $PWD "UCC-Reference"
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $pkg = Get-ChildItem -LiteralPath $root -Recurse -Filter "Interface.u" -File | Select-Object -First 1
+          if (!$pkg) { throw "Interface.u missing from Interlude UCC kit" }
+          Write-Host "INTERFACE_PACKAGE=$($pkg.FullName)"
+          $out = Join-Path $root "Interface-Classes"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $pkg.FullName $out
+          if ($LASTEXITCODE -ne 0) { throw "Interface package decompile failed" }
+          Write-Host "SOUND_DECLARATIONS:"
+          Get-ChildItem -LiteralPath $out -Recurse -Filter "*.uc" -File | Select-String -Pattern "PlayConsoleSound|IFST_WINDOW|enum.*Sound|ConsoleSound" -Context 2,3 | Select-Object -First 80 | ForEach-Object { Write-Host $_.ToString() }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dunk3l-Interface-API-Source
+          path: UCC-Reference/Interface-Classes/*.uc
+          if-no-files-found: error
+          retention-days: 7
