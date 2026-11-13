@@ -384,6 +384,13 @@ jobs:
           } else {
             throw "Expected InventoryWnd key call was not found; refusing a broad replacement."
           }
+      - name: Diagnose Animal SetAlign enum values
+        shell: pwsh
+        run: |
+          Write-Host "===== SETALIGN CALLS IN ALL DECOMPILED SOURCES ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)SetAlign\s*\(' | ForEach-Object { Write-Host ($_.Path + ":" + $_.LineNumber + ": " + $_.Line.Trim()) }
+          Write-Host "===== TEXT ALIGN ENUM REFERENCES IN UCC KIT ====="
+          Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)TA_Left|TA_Center|TA_Right|enum.*Align|ETextAlign' -Context 1,2 | Select-Object -First 100
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
