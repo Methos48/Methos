@@ -59,9 +59,29 @@ jobs:
                 Write-Warning ("Could not decompile API package " + $packageName)
                 continue
               }
-              $packageSignatures = @(Get-ChildItem -LiteralPath $output -Filter "*.uc" -File |
+              $packageSources = @(Get-ChildItem -LiteralPath $output -Filter "*.uc" -File)
+              $packageSignatures = @($packageSources |
                 Select-String -Pattern '^\s*(?:(?:native|final|static|simulated|iterator|exec)\s+)*function\s+.*\bSetName\s*\(')
               $packageSignatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+              $enumDefinitions = @($packageSources |
+                Select-String -Pattern 'enum\s+ENameCtrlType|enum\s+ETextAlign' -Context 0,20)
+              $enumDefinitions | ForEach-Object {
+                Write-Host "ENUM $($_.Path):$($_.LineNumber)"
+                Write-Host $_.Line
+                $_.Context.PostContext | ForEach-Object { Write-Host $_ }
+              }
+              $enumUsages = @($packageSources |
+                Select-String -Pattern '\bENameCtrlType\b|\bETextAlign\b')
+              $enumUsages | ForEach-Object { Write-Host "ENUM-USE $($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+              if ($packageName -eq "NWindow.u") {
+                $uiEventManager = Join-Path $output "UIEventManager.uc"
+                $textBoxHandle = Join-Path $output "TextBoxHandle.uc"
+                foreach ($sourceFile in @($uiEventManager, $textBoxHandle)) {
+                  if (Test-Path $sourceFile) {
+                    Copy-Item -LiteralPath $sourceFile -Destination (Join-Path $env:RUNNER_TEMP ([IO.Path]::GetFileName($sourceFile))) -Force
+                  }
+                }
+              }
             } catch {
               Write-Warning ("SetName signature inspection failed for " + $packageName + ": " + $_.Exception.Message)
             }
