@@ -59,6 +59,12 @@ public static class UnrealScriptFailedFunctionRepair
         var currentBodies = functionsAfterRepair.Values.Select(function => function.Body).ToArray();
         var missingCalledFunctions = referenceFunctions.Values
             .Where(reference => !functionsAfterRepair.ContainsKey(reference.Name))
+            // ToolTip's getMaxWidth is renamed before UCC staging because its recovered
+            // symbol collides with an Interlude API binding. Treat that safe alias as the
+            // same function here; otherwise this second pass appends the original helper
+            // again and the later rename produces a duplicate UCC declaration.
+            .Where(reference => !(reference.Name.Equals("getMaxWidth", StringComparison.OrdinalIgnoreCase) &&
+                functionsAfterRepair.ContainsKey("MethosTooltipGetMaxWidth")))
             .Where(reference => currentBodies.Any(body =>
                 Regex.IsMatch(body,
                     @"\b" + Regex.Escape(reference.Name) + @"\s*\(",
