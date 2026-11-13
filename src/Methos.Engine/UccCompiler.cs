@@ -414,6 +414,18 @@ function onActiveTex(bool bActive, int nIndex)
         return source;
     }
 
+    // The generic Interlude reference calls GetClassIconToClan, which is absent
+    // from the Berserker UICommonAPI. Its available class-icon equivalent is
+    // GetClassIconCustom; normalize only this stale reference call in ClanWnd staging.
+    private static string NormalizeClanWndClassIconCall(string className, string source)
+    {
+        if (!className.Equals("ClanWnd", StringComparison.OrdinalIgnoreCase) ||
+            source.Contains("function string GetClassIconToClan", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source, @"\bGetClassIconToClan\s*\(",
+            "GetClassIconCustom(", RegexOptions.IgnoreCase);
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -571,6 +583,7 @@ function onActiveTex(bool bActive, int nIndex)
                 repairedIdentifiers += typeReferenceRepairs.Count;
                 source = NormalizeActionWndIntPropertyCasts(className, source, out int actionWndCastRepairs);
                 repairedIdentifiers += actionWndCastRepairs;
+                source = NormalizeClanWndClassIconCall(className, source);
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
