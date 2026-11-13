@@ -258,10 +258,10 @@ public static class UccCompiler
             return source;
 
         int localRepairs = 0;
-        source = Regex.Replace(source, @"\bint\s*\(\s*Type\s*\)", match =>
+        source = Regex.Replace(source, @"\bint\s*\(\s*(Type|\d+)\s*\)", match =>
         {
             localRepairs++;
-            return "Type";
+            return match.Groups[1].Value;
         }, RegexOptions.IgnoreCase);
         repairs = localRepairs;
         return source;
