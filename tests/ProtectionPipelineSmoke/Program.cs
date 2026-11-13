@@ -480,9 +480,10 @@ function OnLoad()
 string silentTextboxRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentTextboxSample, out IReadOnlyList<string> silentTextboxRepairs);
 Check(silentTextboxRepairs.Count == 1 &&
-      silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", \"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal),
-    "Silent branding textbox color call did not receive the correct control, text, and color arguments.");
-Console.WriteLine("PASS: Silent branding textbox color call uses the complete API signature.");
+      silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
+      !silentTextboxRepaired.Contains("OKTUBRE INTERFACE\", RecoveredName_98", StringComparison.Ordinal),
+    "Silent branding textbox color call did not receive the correct control and color arguments.");
+Console.WriteLine("PASS: Silent branding textbox color call uses the correct API signature.");
 
 
 string logoWndFieldSample = """
