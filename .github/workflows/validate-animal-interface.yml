@@ -86,19 +86,26 @@ jobs:
           Write-Host "ANIMAL_RESTORED_PROPERTY_DECLARATIONS=$($missing.Count)"
           Write-Host "ANIMAL_RESTORED_PROPERTY_NAMES=$($missing | ForEach-Object { $_ })"
 
-      - name: Diagnose Animal AutoPotions reference function
+      - name: Restore missing Animal GetItemType function and diagnose references
         shell: pwsh
         run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc"
           $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/AutoPotionsWnd.uc"
-          Write-Host "===== REFERENCE InsertPotion / GetItemType ====="
-          Select-String -LiteralPath $referenceFile -Pattern "InsertPotion|GetItemType" -Context 4,24
-          Write-Host "===== DECOMPILED source tail ====="
-          Get-Content -LiteralPath (Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc") | Select-Object -Last 90
-          Write-Host "===== ALL REFERENCE DECLARATIONS / USES ====="
-          Get-ChildItem -LiteralPath (Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes") -Filter "*.uc" -Recurse | Select-String -SimpleMatch -Pattern "GetItemType(" -Context 2,4
-          Write-Host "===== REFERENCE CLASS TOP ====="
-          Get-Content -LiteralPath $referenceFile | Select-Object -First 100
-
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $referenceText = [IO.File]::ReadAllText($referenceFile)
+          if ($sourceText -notmatch '(?im)^\s*function\s+(?:int\s+)?GetItemType\s*\(') {
+            $match = [regex]::Match($referenceText, '(?ms)^\s*function\s+int\s+GetItemType\s*\([^)]*\)\s*\{.*?^\s*\}')
+            if (!$match.Success) { throw "Exact reference function GetItemType was not found." }
+            $sourceText = $sourceText.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine + $match.Value.Trim() + [Environment]::NewLine
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_FUNCTION=GetItemType"
+          } else {
+            Write-Host "ANIMAL_RESTORED_FUNCTION=already-present"
+          }
+          Write-Host "===== REFERENCE GetItemType ====="
+          Select-String -LiteralPath $referenceFile -SimpleMatch -Pattern "function int GetItemType" -Context 0,35
+          Write-Host "===== RESTORED SOURCE FUNCTIONS ====="
+          Select-String -LiteralPath $sourceFile -SimpleMatch -Pattern "function int GetItemType","function InsertPotion"
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
