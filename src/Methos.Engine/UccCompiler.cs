@@ -272,6 +272,46 @@ public static class UccCompiler
         return source;
     }
 
+    // Restored functions can reference class fields that UELib omitted from the
+    // decompiled class header. Recover only missing, actually-used fields from the
+    // exact matching reference class, one declaration per field, in the staged copy.
+    private static string RestoreMissingAutoPotionsWndFields(string className, string source,
+        string referenceSource, out int restoredCount)
+    {
+        restoredCount = 0;
+        if (!className.Equals("AutoPotionsWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+
+        var additions = new List<string>();
+        foreach (Match declaration in Regex.Matches(referenceSource,
+            @"(?im)^\\s*var\\s+(?<type>[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?)\\s+(?<fields>[^;]+);"))
+        {
+            string type = declaration.Groups["type"].Value;
+            foreach (string rawField in declaration.Groups["fields"].Value.Split(','))
+            {
+                Match field = Regex.Match(rawField.Trim(),
+                    @"^(?<name>[A-Za-z_]\\w*)(?<array>\\s*\\[\\s*\\d+\\s*\\])?$");
+                if (!field.Success) continue;
+                string name = field.Groups["name"].Value;
+                if (!Regex.IsMatch(source, @"(?im)^\\s*var\\s+[^;]*\\b" + Regex.Escape(name) + @"\\b") &&
+                    Regex.IsMatch(source, @"\\b" + Regex.Escape(name) + @"\\b"))
+                {
+                    string array = field.Groups["array"].Value;
+                    additions.Add($"var {type} {name}{array};");
+                }
+            }
+        }
+
+        if (additions.Count == 0) return source;
+        Match firstFunction = Regex.Match(source, @"(?im)^\\s*function\\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index,
+            string.Join(Environment.NewLine, additions.Distinct(StringComparer.OrdinalIgnoreCase)) +
+            Environment.NewLine + Environment.NewLine);
+        restoredCount = additions.Count;
+        return source;
+    }
+
     // The reference HandleLoadPotions routine dispatches the six item IDs to the
     // specialized insertion routines already present in AutoPotionsWnd, but the
     // matching reference source omits the small dispatcher itself. Reconstruct it
@@ -436,6 +476,9 @@ function InsertPotion(ItemInfo a_ItemInfo)
                     source = UnrealScriptFailedFunctionRepair.RestoreFailedFunctions(
                         source, referenceSource, out IReadOnlyList<string> repairedFunctions);
                     restoredFailedFunctions += repairedFunctions.Count;
+                    source = RestoreMissingAutoPotionsWndFields(className, source, referenceSource,
+                        out int restoredClassFields);
+                    repairedIdentifiers += restoredClassFields;
                     source = RestoreAutoPotionsWndPotionDispatcher(className, source,
                         out bool restoredPotionDispatcher);
                     if (restoredPotionDispatcher) repairedIdentifiers++;
