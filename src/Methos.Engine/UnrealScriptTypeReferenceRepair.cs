@@ -603,7 +603,7 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("m_Info.u_nTextureWidth = getMaxWidth();", StringComparison.Ordinal) &&
+            source.Contains("MethosRecoveredName_31()", StringComparison.Ordinal) &&
             !source.Contains("function int getMaxWidth()", StringComparison.Ordinal))
         {
             source += "\n\nfunction int getMaxWidth()\n{\n\tlocal int i, Width, Height, MaxWidth;\n\tlocal DrawItemInfo DrawItem;\n\n\tMaxWidth = m_Tooltip.MinimumWidth;\n\tfor(i = 0; i < m_Tooltip.DrawList.Length; i++)\n\t{\n\t\tDrawItem = m_Tooltip.DrawList[i];\n\t\tif(DrawItem.eType == DIT_TEXT)\n\t\t{\n\t\t\tGetTextSize(DrawItem.t_strText, Width, Height);\n\t\t\tWidth += DrawItem.nOffSetX;\n\t\t}\n\t\telse\n\t\t{\n\t\t\tWidth = DrawItem.u_nTextureWidth + DrawItem.nOffSetX;\n\t\t}\n\t\tif(Width > MaxWidth)\n\t\t{\n\t\t\tMaxWidth = Width;\n\t\t}\n\t}\n\treturn MaxWidth;\n}";
