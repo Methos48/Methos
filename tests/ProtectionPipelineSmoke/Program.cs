@@ -181,6 +181,7 @@ function OnDropItem(string strTarget, ItemInfo Info)
     {
         return;
     }
+    normalinven = getItemWindowHandleBystrTarget(strTarget);
 }
 function OnDropItemSource(string strTarget, ItemInfo Info)
 {
@@ -199,13 +200,15 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
 """;
 string inventoryHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "InventoryWnd", inventoryHandleSample, out IReadOnlyList<string> inventoryHandleRepairs);
-Check(inventoryHandleRepairs.Count == 4 &&
+Check(inventoryHandleRepairs.Count == 5 &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2802;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("isDragSrcInventory", StringComparison.Ordinal) &&
+      inventoryHandleRepaired.Contains("ItemWindowHandle(GetHandle(strTarget))", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("getItemWindowHandleBystrTarget", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("RecoveredName_1266", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("IsChecked(", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("RecoveredName_1455", StringComparison.Ordinal) &&
