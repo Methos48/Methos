@@ -5,15 +5,12 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools" / "xdat"))
 from package_origin_metadata import (
     build_origin_record, save_origin_record, load_and_validate_origin,
     require_recorded_protocol,
 )
-
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tools" / "xdat"))
 
 
 class OriginMetadataTests(unittest.TestCase):
