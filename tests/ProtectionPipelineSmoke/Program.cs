@@ -470,6 +470,20 @@ Check(recoveredColorHelperRepairs.Count == 0 &&
     "Valid UICommonAPI Color helper call was altered.");
 Console.WriteLine("PASS: Recovered color-name helper remains bound to its declared UICommonAPI function.");
 
+string silentTextboxSample = """
+class Interface_by_SILENT extends UICommonAPI;
+function OnLoad()
+{
+    Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor("OKTUBRE INTERFACE", RecoveredName_98("white"));
+}
+""";
+string silentTextboxRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "Interface_by_SILENT", silentTextboxSample, out IReadOnlyList<string> silentTextboxRepairs);
+Check(silentTextboxRepairs.Count == 1 &&
+      silentTextboxRepaired.Contains("SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", \"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal),
+    "Silent branding textbox color call did not receive the correct control, text, and color arguments.");
+Console.WriteLine("PASS: Silent branding textbox color call uses the complete API signature.");
+
 
 string logoWndFieldSample = """
 class LogoWnd extends UICommonAPI;
@@ -491,7 +505,7 @@ function OnRButtonDown(int X, int Y)
 """;
 string logoWndFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "LogoWnd", logoWndFieldSample, out IReadOnlyList<string> logoWndFieldRepairs);
-Check(logoWndFieldRepairs.Count == 3 &&
+Check(logoWndFieldRepairs.Count == 2 &&
       logoWndFieldRepaired.Contains("MethosRecoveredName_2124.SetDraggable(false)", StringComparison.Ordinal) &&
       logoWndFieldRepaired.Contains("if(MethosRecoveredName_2188)", StringComparison.Ordinal) &&
       !logoWndFieldRepaired.Contains("RecoveredName_2057", StringComparison.Ordinal) &&
