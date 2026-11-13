@@ -569,6 +569,23 @@ Check(holdIgnoreMessageRepairs.Count == 1 &&
     "Legacy HoldIgnoreTargetWnd message helper was incorrectly rebound to the Dunk3l helper index.");
 Console.WriteLine("PASS: Legacy HoldIgnoreTargetWnd keeps its own UICommonAPI message helper mapping.");
 
+string legacyLogoMessageSample = """
+class LogoWnd extends UICommonAPI;
+var private WindowHandle RecoveredName_2057;
+var private bool RecoveredName_2108;
+function OnRButtonDown()
+{
+    RecoveredName_255("Logo Locked");
+}
+""";
+string legacyLogoMessageRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "LogoWnd", legacyLogoMessageSample, out IReadOnlyList<string> legacyLogoMessageRepairs);
+Check(legacyLogoMessageRepairs.Count == 1 &&
+      legacyLogoMessageRepaired.Contains("MethosRecoveredName_255(\"Logo Locked\")", StringComparison.Ordinal),
+    "Legacy UEditor LogoWnd was incorrectly rebound to the Dunk3l helper index.");
+Console.WriteLine("PASS: Legacy UEditor LogoWnd keeps its own UICommonAPI message helper mapping.");
+
+
 
 
 string manorCropCastSample = """
