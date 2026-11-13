@@ -1,7 +1,13 @@
 import unittest
+import sys
 from pathlib import Path
 from unittest.mock import patch
 from auto_pipeline import ENGINE_PROTOCOLS, AutoPipelineError, decode_xdat
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools" / "xdat"))
+
 
 class AutoPipelineTests(unittest.TestCase):
     def test_supported_engine_protocols_are_explicit(self):
