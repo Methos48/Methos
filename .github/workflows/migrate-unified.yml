@@ -46,14 +46,6 @@ jobs:
             Copy-Item (Join-Path $source "docs/*") "docs/methos-ueditor/" -Recurse -Force
           }
 
-          New-Item -ItemType Directory -Force ".github/workflows" | Out-Null
-          foreach ($workflow in @("windows-build.yml", "windows-release.yml", "validate-ucc-compiler.yml", "source-archive.yml")) {
-            $from = Join-Path $source ".github/workflows/$workflow"
-            if (Test-Path -LiteralPath $from) {
-              Copy-Item -LiteralPath $from -Destination ".github/workflows/$workflow" -Force
-            }
-          }
-
           foreach ($file in @("README-ES.txt", "PROGRESO-METHOS.md", "THIRD-PARTY-NOTICES.txt", "Carpeta interface.u.zip", "Compilador  U.zip")) {
             $from = Join-Path $source $file
             if (Test-Path -LiteralPath $from) {
@@ -73,12 +65,12 @@ jobs:
           if (!(Test-Path -LiteralPath "interface.xdat")) { throw "La migración alteró o perdió el archivo XDAT original." }
           Write-Host "MIGRATION_CONTENT_CHECK=PASSED"
 
-      - name: Registrar y publicar la migración en Git
+      - name: Registrar y publicar los archivos de la aplicación en Git
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- src tests/MethosUEngine.Tests tools/PackageProbe tools/ProtectionPipelineSmoke installer docs/methos-ueditor reference-data .github/workflows/windows-build.yml .github/workflows/windows-release.yml .github/workflows/validate-ucc-compiler.yml .github/workflows/source-archive.yml README-ES.txt PROGRESO-METHOS.md THIRD-PARTY-NOTICES.txt "Carpeta interface.u.zip" "Compilador  U.zip"
+          git add -A -- src tests/MethosUEngine.Tests tools/PackageProbe tools/ProtectionPipelineSmoke installer docs/methos-ueditor reference-data README-ES.txt PROGRESO-METHOS.md THIRD-PARTY-NOTICES.txt "Carpeta interface.u.zip" "Compilador  U.zip"
           if ($LASTEXITCODE -ne 0) { throw "Git no pudo preparar los archivos de migración." }
           git diff --cached --stat
           git commit -m "Migrate Methos U Editor into unified Methos repository"
