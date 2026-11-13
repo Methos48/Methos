@@ -357,6 +357,23 @@ Check(manorSeedCastRepairs.Count == 1 &&
 Console.WriteLine("PASS: ManorSeedInfoChangeWnd redundant integer casts are normalized.");
 
 
+string olympiadEnemyMpSample = """
+class OlympiadTargetWnd extends UICommonAPI;
+var int DamageDealt;
+var int DamageReceived;
+function OnLoad()
+{
+    EnemyMPLost = 0;
+}
+""";
+string olympiadEnemyMpRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "OlympiadTargetWnd", olympiadEnemyMpSample, out IReadOnlyList<string> olympiadEnemyMpRepairs);
+Check(olympiadEnemyMpRepairs.Count == 1 &&
+      olympiadEnemyMpRepaired.Contains("var int EnemyMPLost;", StringComparison.Ordinal),
+    "OlympiadTargetWnd EnemyMPLost field was not restored.");
+Console.WriteLine("PASS: OlympiadTargetWnd missing enemy MP counter is restored.");
+
+
 string chatEnumSample = """
 class ChatWnd extends UIScript;
 function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
