@@ -447,9 +447,9 @@ public static class UccCompiler
             {
                 compilerOutput = AppendUccErrorSourceContext(compilerOutput, stagedClasses);
                 string[] diagnosticLines = compilerOutput
-                    .Split(new[] { "\\r\\n", "\\n" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                     .Where(line => Regex.IsMatch(line,
-                        @"\\bError\\b|Compile aborted|Failure -",
+                        @"\bError\b|Compile aborted|Failure -",
                         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                     .Take(30)
                     .ToArray();
