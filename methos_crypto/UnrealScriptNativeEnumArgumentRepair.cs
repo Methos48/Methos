@@ -138,7 +138,7 @@ public static class UnrealScriptNativeEnumArgumentRepair
 
         string repaired = Regex.Replace(
             source,
-            @"(?<target>(?:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*(?:\\s*\\[[^\\]]+\\])*)\\.eType)\\s*=\\s*(?<value>[0-2])\\b",
+            @"(?<target>(?:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*(?:\s*\[[^\]]+\])*)\.eType)\s*=\s*(?<value>[0-2])\b",
             match =>
             {
                 if (!int.TryParse(match.Groups["value"].Value, out int value) ||
