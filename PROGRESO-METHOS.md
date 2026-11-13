@@ -254,6 +254,6 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - Se actualizó el inventario de `reference-data/` para distinguir claramente el código activo, los datos de referencia y las dependencias UCC que aún requieren las pruebas.
 - Se consolidó en README y documentación que `Methos48/Methos`, rama `main`, es la única fuente oficial y activa. U y XDAT son módulos de la misma aplicación.
 - Se eliminaron instrucciones contradictorias que sugerían que la integración XDAT todavía dependía de extraer una aplicación Python externa o de overlays de mantenimiento.
-- **Pendiente administrativo externo:** `Methos48/Methos-Interface` permanece como repositorio vacío en GitHub y todavía existen ramas históricas inactivas en el repositorio oficial. No contienen el producto activo, pero no se han eliminado ni archivado porque las acciones disponibles en esta sesión no permiten administrar/eliminar repositorios o ramas.
+- **Pendiente administrativo de Methos:** permanecen ramas históricas inactivas en este repositorio. No se consideran líneas de desarrollo activas; antes de retirarlas hay que auditar sus commits únicos y conservar cualquier material técnico útil.
 - **Criterio de conservación:** se mantienen el historial Git, los archivos de referencia y las ubicaciones locales heredadas que protegen datos de usuario. No se borran datos útiles ni respaldos solo para ocultar nombres antiguos.
 - Esta limpieza no modifica la aplicación ni sus funciones; prepara la documentación para que el desarrollo futuro continúe exclusivamente en Methos.
