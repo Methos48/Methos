@@ -284,17 +284,17 @@ public static class UccCompiler
 
         var additions = new List<string>();
         foreach (Match declaration in Regex.Matches(referenceSource,
-            @"(?im)^\\s*var\\s+(?<type>[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?)\\s+(?<fields>[^;]+);"))
+            @"(?im)^\s*var\s+(?<type>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)\s+(?<fields>[^;]+);"))
         {
             string type = declaration.Groups["type"].Value;
             foreach (string rawField in declaration.Groups["fields"].Value.Split(','))
             {
                 Match field = Regex.Match(rawField.Trim(),
-                    @"^(?<name>[A-Za-z_]\\w*)(?<array>\\s*\\[\\s*\\d+\\s*\\])?$");
+                    @"^(?<name>[A-Za-z_]\w*)(?<array>\s*\[\s*\d+\s*\])?$");
                 if (!field.Success) continue;
                 string name = field.Groups["name"].Value;
-                if (!Regex.IsMatch(source, @"(?im)^\\s*var\\s+[^;]*\\b" + Regex.Escape(name) + @"\\b") &&
-                    Regex.IsMatch(source, @"\\b" + Regex.Escape(name) + @"\\b"))
+                if (!Regex.IsMatch(source, @"(?im)^\s*var\s+[^;]*\b" + Regex.Escape(name) + @"\b") &&
+                    Regex.IsMatch(source, @"\b" + Regex.Escape(name) + @"\b"))
                 {
                     string array = field.Groups["array"].Value;
                     additions.Add($"var {type} {name}{array};");
@@ -303,7 +303,7 @@ public static class UccCompiler
         }
 
         if (additions.Count == 0) return source;
-        Match firstFunction = Regex.Match(source, @"(?im)^\\s*function\\b");
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
         if (!firstFunction.Success) return source;
         source = source.Insert(firstFunction.Index,
             string.Join(Environment.NewLine, additions.Distinct(StringComparer.OrdinalIgnoreCase)) +
