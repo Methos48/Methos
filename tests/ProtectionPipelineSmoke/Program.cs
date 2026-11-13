@@ -546,6 +546,7 @@ function OnLoad()
     RecoveredName_4545 = 0;
     RecoveredName_4546 = 0;
     RecoveredName_4542 = false;
+    txt_ExpBarPercentValue = TextBoxHandle(GetHandle("SystemBarWnd.ExpText"));
 }
 """;
 string dunk3lSystemBarRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
@@ -554,6 +555,7 @@ Check(dunk3lSystemBarRepairs.Count == 1 &&
       dunk3lSystemBarRepaired.Contains("MethosRecoveredName_4562 = TextBoxHandle", StringComparison.Ordinal) &&
       dunk3lSystemBarRepaired.Contains("MethosRecoveredName_4561 = TextBoxHandle", StringComparison.Ordinal) &&
       dunk3lSystemBarRepaired.Contains("local int RecoveredName_4544, RecoveredName_4545, RecoveredName_4546;", StringComparison.Ordinal) &&
+      dunk3lSystemBarRepaired.Contains("var private TextBoxHandle txt_ExpBarPercentValue;", StringComparison.Ordinal) &&
       !dunk3lSystemBarRepaired.Contains("RecoveredName_4534", StringComparison.Ordinal),
     "Dunk3l SystemBarWnd recovered handles and state were not reconciled.");
 Console.WriteLine("PASS: Dunk3l SystemBarWnd fields are reconciled to declared handles and state.");
