@@ -1,25 +1,26 @@
 # Módulo XDAT de Methos
 
-Esta carpeta es la ubicación canónica del código Python XDAT mantenido en el repositorio.
+Esta carpeta contiene el código fuente canónico del módulo XDAT integrado en la única aplicación **Methos**.
 
-## Código
+## Componentes mantenidos
 
-- `xdat_core.py`: lectura, análisis, extracción XML y reconstrucción XDAT.
-- `encryption_detection.py`: identificación explícita de cabeceras y protocolos; no inventa claves ni afirma que un cifrado desconocido sea compatible.
-- `auto_pipeline.py`: despacho de decodificación/codificación y publicación transaccional.
+- `xdat_core.py`: lectura, análisis, extracción XML y reconstrucción XDAT ct0.
+- `encryption_detection.py`: identificación explícita de cabeceras y protocolos; no inventa claves ni declara compatible un cifrado desconocido.
+- `auto_pipeline.py`: lógica de despacho y publicación transaccional, mantenida como módulo interno y cubierta por pruebas.
 - `package_origin_metadata.py`: manifiesto de origen, hash y protocolo registrado.
-- `validate_dunk3l_smartcrypt.py`: validación específica del paquete de referencia.
+- `../..` `src/Methos.App/XdatBridge.py`: puente que carga el motor canónico desde Methos.exe.
+- `tests/` y `../../tests/test_*xdat*.py`: pruebas del motor y del pipeline.
 
-## Preparación del kit Windows
+## Regla de integración
 
-Los scripts de integración están en `maintenance/`. El workflow oficial los ejecuta sobre una copia temporal del kit XDAT histórico. No se debe ejecutar la modificación directamente sobre los archivos originales del ZIP.
+El workflow Windows **no extrae ni ejecuta la aplicación Python histórica**. Tampoco ejecuta, empaqueta o instala `l2encdec.exe`. El runtime de Methos se prepara directamente desde `tools/xdat/xdat_core.py` y el puente `XdatBridge.py`.
 
-## Fuente del motor en la compilación
-
-`tools/xdat/xdat_core.py` es ahora la fuente canónica del parser/compilador ct0. El workflow Windows la copia sobre la versión incluida en el kit histórico antes de aplicar las capas de integración y comprueba que el SHA-256 de la copia de trabajo coincide con el archivo versionado en Methos. Los cambios de `xdat_core.py` también disparan la validación Windows.
-
-El kit histórico todavía aporta la aplicación base (`app.py`), sus pruebas/fixtures y el binario de compatibilidad `l2encdec.exe`. Por tanto, el motor de formato ya tiene una fuente canónica, pero la migración completa del paquete XDAT no está cerrada hasta trasladar y validar esos componentes restantes. No borrar el ZIP ni afirmar que todo el paquete es autónomo antes de superar esa validación.
+El archivo ZIP de referencia que permanece en `reference-data/kits/` se usa exclusivamente como contenedor de fixtures binarios/XML para las pruebas de round-trip. `prepare_reference_fixtures.py` extrae únicamente `interface.xdat` y XML bajo las carpetas de referencia; rechaza rutas inseguras y no extrae aplicaciones, scripts, DLL ni ejecutables. No forma parte del runtime distribuido.
 
 ## Pruebas
 
-Las pruebas Python compartidas están en `/tests`; las pruebas específicas del motor XDAT están en `tools/xdat/tests`. Ejecutar las pruebas sobre copias temporales y mantener intactos los paquetes de referencia.
+En CI se compilan sintácticamente las fuentes canónicas y se ejecutan las pruebas de `tests/` y `tools/xdat/tests/` directamente desde el repositorio. Los fixtures se pasan mediante `XDAT_REFERENCE_ROOT`. La prueba compara la reconstrucción binaria con el archivo de referencia y verifica que una edición XML llegue al XDAT compilado.
+
+## Alcance funcional actual
+
+La integración en la aplicación utiliza el parser/compilador ct0 mediante el puente interno. La detección y el pipeline de protocolos cifrados se mantienen separados y sus variantes solo deben activarse en el runtime después de integrar y validar un motor compatible dentro de Methos. Un protocolo desconocido debe detenerse sin alterar el original.
