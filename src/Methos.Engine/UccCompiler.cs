@@ -568,6 +568,15 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             string.Join(Environment.NewLine + Environment.NewLine, additions) + Environment.NewLine + Environment.NewLine);
     }
 
+    // ChatFilterWnd's numeric chat-type switch is emitted as script.1, script.2,
+    // etc. by the decompiler. The matching Interlude implementation uses ordinals.
+    private static string NormalizeChatFilterWndCaseLabels(string className, string source)
+    {
+        if (!className.Equals("ChatFilterWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source, @"(?im)(\bcase\s+)script\.(\d+)(\s*:)", "$1$2$3");
+    }
+
     // OptionWnd's Berserker-specific checkbox controls the two PvP/PK count
     // text widgets exposed by DetailStatusWnd. Restore this missing UI handler.
     private static string RestoreOptionWndDualCountHandler(string className, string source,
@@ -942,6 +951,7 @@ function HandleHideLogo()
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
                 source = NormalizeShortcutWndKeySettingReference(className, source);
+                source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
