@@ -359,6 +359,15 @@ public static class UccCompiler
                     restoredSymbolicAssignments += symbolicAssignments;
                 }
 
+                // Restoring failed functions from the Interlude reference source can reintroduce
+                // UELib's UnknownFunction<N> native wrappers after the first normalization pass.
+                // Normalize again now that all reference-backed function bodies and call sites
+                // have been restored, before handing the staged source to UCC.
+                source = UnrealScriptNativeFunctionNormalizer.Normalize(
+                    source, nativeRegistryPath, out int restoredNativeCalls, out int unresolvedRestoredNativeCalls);
+                normalizedNativeCalls += restoredNativeCalls;
+                unresolvedNativeCalls += unresolvedRestoredNativeCalls;
+
                 source = UnrealScriptDecompilerDiagnosticCleaner.RemoveOrphanedSwitchDiagnostics(
                     source, out int switchDiagnostics);
                 removedSwitchDiagnostics += switchDiagnostics;
