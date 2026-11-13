@@ -175,6 +175,13 @@ function InitHandle()
     RecoveredName_2803 = ItemWindowHandle(GetHandle("QuestItem"));
     RecoveredName_2804 = ItemWindowHandle(GetHandle("EquipItem"));
 }
+function OnDropItem(string strTarget, ItemInfo Info)
+{
+    if(!isDragSrcInventory(Info.DragSrcName))
+    {
+        return;
+    }
+}
 function OnDropItemSource(string strTarget, ItemInfo Info)
 {
     if(!Class'NWindow.UIAPI_CHECKBOX'.static.IsChecked(RecoveredName_1435()))
@@ -192,12 +199,13 @@ function OnDropItemSource(string strTarget, ItemInfo Info)
 """;
 string inventoryHandleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "InventoryWnd", inventoryHandleSample, out IReadOnlyList<string> inventoryHandleRepairs);
-Check(inventoryHandleRepairs.Count == 3 &&
+Check(inventoryHandleRepairs.Count == 4 &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2802;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2803;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var ItemWindowHandle RecoveredName_2804;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("var string InventoryItem_1;", StringComparison.Ordinal) &&
       inventoryHandleRepaired.Contains("if (Info.DragSrcName != \"InventoryItem\" &&", StringComparison.Ordinal) &&
+      !inventoryHandleRepaired.Contains("isDragSrcInventory", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("RecoveredName_1266", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("IsChecked(", StringComparison.Ordinal) &&
       !inventoryHandleRepaired.Contains("RecoveredName_1455", StringComparison.Ordinal) &&
