@@ -18,9 +18,6 @@ jobs:
           repository: Methos48/Methos-U-Editor
           path: u-editor
           persist-credentials: false
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
       - name: Decompile Interface package and locate sound declarations
         shell: pwsh
         run: |
