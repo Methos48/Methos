@@ -295,6 +295,70 @@ jobs:
           } else {
             throw "Could not uniquely locate the incomplete integer return in InventoryWnd.IsLOrREar."
           }
+      - name: Normalize incomplete typed Animal returns
+        shell: pwsh
+        run: |
+          $typeDefaults = @{
+            int = "0"
+            bool = "false"
+            byte = "0"
+            float = "0.0"
+            string = '""'
+            WindowHandle = "None"
+            ItemWindowHandle = "None"
+            TextureHandle = "None"
+            ButtonHandle = "None"
+            EditBoxHandle = "None"
+            ComboBoxHandle = "None"
+            ListCtrlHandle = "None"
+            TreeHandle = "None"
+            TabHandle = "None"
+            StatusBarHandle = "None"
+            ProgressCtrlHandle = "None"
+            CheckboxHandle = "None"
+            RadioButtonHandle = "None"
+            SliderHandle = "None"
+            Shortcut = "None"
+          }
+          $signaturePattern = '(?im)^\s*function\s+(?<type>[A-Za-z_]\w*)\s+(?<name>[A-Za-z_]\w*)\s*\([^)]*\)\s*\{'
+          $total = 0
+          $unknown = @()
+          Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse | ForEach-Object {
+            $path = $_.FullName
+            $sourceText = [IO.File]::ReadAllText($path)
+            $matches = @([regex]::Matches($sourceText, $signaturePattern))
+            for ($m = $matches.Count - 1; $m -ge 0; $m--) {
+              $match = $matches[$m]
+              $typeName = $match.Groups["type"].Value
+              $functionName = $match.Groups["name"].Value
+              $openBrace = $sourceText.IndexOf('{', $match.Index)
+              $depth = 0
+              $closeBrace = -1
+              for ($i = $openBrace; $i -lt $sourceText.Length; $i++) {
+                if ($sourceText[$i] -eq '{') { $depth++ }
+                elseif ($sourceText[$i] -eq '}') {
+                  $depth--
+                  if ($depth -eq 0) { $closeBrace = $i; break }
+                }
+              }
+              if ($closeBrace -lt 0) { continue }
+              $body = $sourceText.Substring($openBrace + 1, $closeBrace - $openBrace - 1)
+              if ($body -notmatch '(?m)^\s*return\s*;') { continue }
+              if (!$typeDefaults.ContainsKey($typeName)) {
+                $unknown += "$($_.Name):$functionName<$typeName>"
+                continue
+              }
+              $updatedBody = [regex]::Replace($body, '(?m)(^\s*)return\s*;', ('$1return ' + $typeDefaults[$typeName] + ';'))
+              if ($updatedBody -ne $body) {
+                $sourceText = $sourceText.Substring(0, $openBrace + 1) + $updatedBody + $sourceText.Substring($closeBrace)
+                $total++
+                Write-Host "ANIMAL_TYPED_RETURN_NORMALIZED=$($_.Name).$functionName TYPE=$typeName DEFAULT=$($typeDefaults[$typeName])"
+              }
+            }
+            [IO.File]::WriteAllText($path, $sourceText, [Text.UTF8Encoding]::new($false))
+          }
+          Write-Host "ANIMAL_TYPED_RETURNS_NORMALIZED=$total"
+          if ($unknown.Count -gt 0) { Write-Host "ANIMAL_TYPED_RETURN_TYPES_REQUIRING_REVIEW=$($unknown -join ';')" }
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
