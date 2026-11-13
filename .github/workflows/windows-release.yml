@@ -16,6 +16,7 @@ on:
       - "tools/xdat/maintenance/auto_pipeline_overlay.py"
       - "tools/xdat/encryption_detection.py"
       - "tools/xdat/auto_pipeline.py"
+      - "tools/xdat/xdat_core.py"
       - ".github/workflows/windows-release.yml"
   pull_request:
     branches: [main]
