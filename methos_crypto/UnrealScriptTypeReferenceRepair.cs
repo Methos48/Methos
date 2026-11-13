@@ -59,6 +59,54 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+
+        // UELib emits numeric switch labels for enum locals. Interlude UCC
+        // requires labels to carry the same enum type as the switched value.
+        foreach (System.Text.RegularExpressions.Match declaration in
+                 System.Text.RegularExpressions.Regex.Matches(
+                     source, @"\\blocal\\s+(?:[A-Za-z_][A-Za-z0-9_]*\\.)*(E[A-Za-z0-9_]+)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*;"))
+        {
+            string enumType = declaration.Groups[1].Value;
+            string variable = declaration.Groups[2].Value;
+            string switchPattern = @"\\bswitch\\s*\\(\\s*" +
+                System.Text.RegularExpressions.Regex.Escape(variable) + @"\\s*\\)\\s*\\{";
+            var switchMatch = System.Text.RegularExpressions.Regex.Match(source, switchPattern);
+            if (!switchMatch.Success) continue;
+            int openBrace = source.IndexOf('{', switchMatch.Index + switchMatch.Length - 1);
+            int depth = 0;
+            int closeBrace = -1;
+            bool inString = false, inLineComment = false, inBlockComment = false, escaped = false;
+            for (int i = openBrace; i < source.Length; i++)
+            {
+                char ch = source[i], next = i + 1 < source.Length ? source[i + 1] : '\\0';
+                if (inLineComment) { if (ch == '\\n') inLineComment = false; continue; }
+                if (inBlockComment) { if (ch == '*' && next == '/') { inBlockComment = false; i++; } continue; }
+                if (inString)
+                {
+                    if (escaped) escaped = false;
+                    else if (ch == '\\\\') escaped = true;
+                    else if (ch == '"') inString = false;
+                    continue;
+                }
+                if (ch == '/' && next == '/') { inLineComment = true; i++; continue; }
+                if (ch == '/' && next == '*') { inBlockComment = true; i++; continue; }
+                if (ch == '"') { inString = true; continue; }
+                if (ch == '{') depth++;
+                else if (ch == '}' && --depth == 0) { closeBrace = i; break; }
+            }
+            if (closeBrace <= openBrace) continue;
+            string switchBody = source.Substring(openBrace + 1, closeBrace - openBrace - 1);
+            string repairedSwitch = System.Text.RegularExpressions.Regex.Replace(
+                switchBody, @"(?m)(\\bcase\\s+)([0-9]+)(\\s*:)",
+                "$1" + enumType + "($2)$3");
+            if (!string.Equals(switchBody, repairedSwitch, StringComparison.Ordinal))
+            {
+                source = source.Remove(openBrace + 1, switchBody.Length)
+                    .Insert(openBrace + 1, repairedSwitch);
+                applied.Add($"{className}.{variable} numeric switch labels -> {enumType} casts");
+            }
+        }
+
         repairs = applied;
         return source;
     }
