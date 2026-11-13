@@ -1,6 +1,6 @@
 using System.Text;
 using System.Security.Cryptography;
-using MethosUEngine;
+using Methos.Engine;
 
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {

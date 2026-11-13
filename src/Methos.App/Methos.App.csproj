@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Methos</AssemblyName>
+    <AssemblyTitle>Methos</AssemblyTitle>
+    <Product>Methos</Product>
+    <Company>Methos</Company>
+    <Description>Methos - herramienta unificada para archivos U y XDAT de Lineage II Interlude</Description>
+    <ApplicationIcon>Assets\Methos.ico</ApplicationIcon>
+    <RootNamespace>Methos.App</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Eliot.UELib" Version="1.13.7" />
+    <PackageReference Include="pythonnet" Version="3.0.5" />
+    <ProjectReference Include="../Methos.Engine/Methos.Engine.csproj" />
+  </ItemGroup>
+</Project>

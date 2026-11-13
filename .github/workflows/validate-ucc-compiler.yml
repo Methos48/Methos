@@ -86,7 +86,7 @@ jobs:
       - name: Ejecutar pruebas unitarias del motor y normalizadores
         shell: pwsh
         run: |
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release
+          dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release
           if ($LASTEXITCODE -ne 0) { throw "Fallaron las pruebas unitarias del motor o los normalizadores." }
 
       - name: Probar el backend UCC integrado en Methos U Engine
@@ -105,10 +105,10 @@ jobs:
           [System.IO.File]::WriteAllText($editedClass, $edited, [System.Text.UTF8Encoding]::new($false))
           Write-Host "EDITED_SOURCE=GMInventoryWnd.IsLOrREar return 0 -> return 1"
           $output = Join-Path $env:KIT "Testar\system\Interface-csharp.u"
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --ucc-compile $env:KIT $editedSourceDir $output
+          dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release -- --ucc-compile $env:KIT $editedSourceDir $output
           if ($LASTEXITCODE -ne 0) { throw "El backend UCC integrado en Methos U no pudo compilar." }
           & (Join-Path $env:KIT "ValidatePackage.ps1") -PackagePath $output
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --verify-function-return $output GMInventoryWnd IsLOrREar 1
+          dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release -- --verify-function-return $output GMInventoryWnd IsLOrREar 1
           if ($LASTEXITCODE -ne 0) { throw "El bytecode final no refleja la modificación de GMInventoryWnd.IsLOrREar." }
           $generatedHash = (Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash
           $originalHash = (Get-FileHash -LiteralPath (Join-Path $PWD "reference-data/Interface-UEditor.u") -Algorithm SHA256).Hash
@@ -128,7 +128,7 @@ jobs:
             Copy-Item -Path (Join-Path $sourceDir "*") -Destination $referenceDir -Recurse -Force
             Get-ChildItem -LiteralPath $sourceDir -File -Filter "*.uc" | Remove-Item -Force
           }
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --export-sources "reference-data/Interface-UEditor.u" $sourceDir
+          dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release -- --export-sources "reference-data/Interface-UEditor.u" $sourceDir
           if ($LASTEXITCODE -ne 0) { throw "No se pudieron extraer todas las clases de Interface.u." }
           $count = (Get-ChildItem -LiteralPath $sourceDir -File -Filter "*.uc").Count
           if ($count -lt 150) { throw "Se exportaron muy pocas clases ($count)." }
@@ -194,7 +194,7 @@ jobs:
         run: |
           $sourceDir = Join-Path $env:KIT "Interlude\Interface\Classes"
           $referenceDir = Join-Path $env:KIT "ReferenceClasses"
-          dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- --normalize-sources $env:KIT $sourceDir $referenceDir
+          dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release -- --normalize-sources $env:KIT $sourceDir $referenceDir
           if ($LASTEXITCODE -ne 0) { throw "No se pudieron normalizar las llamadas nativas de UnrealScript." }
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $env:KIT "Compilar.ps1")
           if ($LASTEXITCODE -ne 0) { throw "UCC no pudo recompilar las fuentes extraídas de Interface.u." }

@@ -137,7 +137,7 @@ jobs:
 
       - name: Probar motor independiente de paquetes UE2
         shell: pwsh
-        run: dotnet run --project tests/MethosUEngine.Tests/MethosUEngine.Tests.csproj -c Release -- "reference-data/Interface-UEditor.u" "reference-data/kits/Compilador-U.zip" "interlude-fixtures/Interface.u" "interlude-fixtures/Classes" "interlude-fixtures"
+        run: dotnet run --project tests/Methos.Engine.Tests/Methos.Engine.Tests.csproj -c Release -- "reference-data/Interface-UEditor.u" "reference-data/kits/Compilador-U.zip" "interlude-fixtures/Interface.u" "interlude-fixtures/Classes" "interlude-fixtures"
 
       - name: Publicar registro nativo de Core, Engine y NWindow
         uses: actions/upload-artifact@v4
@@ -150,13 +150,13 @@ jobs:
       - name: Crear icono oficial de Methos (M roja)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force src/MethosUEditor/Assets | Out-Null
-          ./installer/Create-MethosIcon.ps1 -OutputPath src/MethosUEditor/Assets/Methos.ico
+          New-Item -ItemType Directory -Force src/Methos.App/Assets | Out-Null
+          ./installer/Create-MethosIcon.ps1 -OutputPath src/Methos.App/Assets/Methos.ico
 
       - name: Publicar ejecutable autónomo x64
         shell: pwsh
         run: |
-          dotnet publish src/MethosUEditor/MethosUEditor.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish
+          dotnet publish src/Methos.App/Methos.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish
 
       - name: Incluir runtime UCC y fuentes originales verificadas de Interface
         shell: pwsh
@@ -237,7 +237,7 @@ jobs:
           $xdatProject = Get-ChildItem (Join-Path $env:RUNNER_TEMP "methos-xdat-kit") -Directory | Select-Object -First 1
           if (!$xdatProject) { throw "No se encuentra el código fuente XDAT extraído." }
           Copy-Item (Join-Path $xdatProject.FullName "xdat_core.py") (Join-Path $runtimeRoot "xdat_core.py") -Force
-          Copy-Item "src/MethosUEditor/XdatBridge.py" (Join-Path $runtimeRoot "xdat_bridge.py") -Force
+          Copy-Item "src/Methos.App/XdatBridge.py" (Join-Path $runtimeRoot "xdat_bridge.py") -Force
           foreach ($required in @("python312.dll", "python312.zip", "vcruntime140.dll", "xdat_core.py", "xdat_bridge.py")) {
             if (!(Test-Path (Join-Path $pythonRoot $required)) -and !(Test-Path (Join-Path $runtimeRoot $required))) {
               throw "Falta el componente Python embebido: $required."
