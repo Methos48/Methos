@@ -6,6 +6,7 @@ on:
     paths:
       - "reference-data/packages/**/interface.xdat"
       - "tools/xdat/**"
+      - "src/Methos.Engine/**"
       - ".github/workflows/package-xdat-edit-roundtrip.yml"
   workflow_dispatch:
 
