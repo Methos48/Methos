@@ -256,6 +256,44 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function OnDropItemSource(string strTarget, ItemInfo Info)", StringComparison.Ordinal))
+        {
+            // UELib can emit unbalanced parentheses for this recovered drag-source predicate.
+            const string malformedPredicate = "if((!((((((((Info.DragSrcName == \"InventoryItem\") || Info.DragSrcName == \"QuestItem\")) || Info.DragSrcName == InventoryItem_1)) || -1 != InStr(Info.DragSrcName, \"EquipItem\"))) || Info.DragSrcName == \"PetInvenWnd\")))";
+            const string correctedPredicate = "if (Info.DragSrcName != \"InventoryItem\" && Info.DragSrcName != \"QuestItem\" && Info.DragSrcName != InventoryItem_1 && InStr(Info.DragSrcName, \"EquipItem\") == -1 && Info.DragSrcName != \"PetInvenWnd\")";
+            if (source.Contains(malformedPredicate, StringComparison.Ordinal))
+            {
+                source = source.Replace(malformedPredicate, correctedPredicate, StringComparison.Ordinal);
+                applied.Add("InventoryWnd.OnDropItemSource malformed drag-source predicate normalized");
+            }
+
+            var missingFields = new (string Type, string Name)[]
+            {
+                ("ItemWindowHandle", "RecoveredName_2802"),
+                ("ItemWindowHandle", "RecoveredName_2803"),
+                ("ItemWindowHandle", "RecoveredName_2804"),
+                ("string", "InventoryItem_1")
+            };
+            var declarations = new List<string>();
+            foreach (var field in missingFields)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    source, @"(?m)^\s*var\s+(?:private\s+)?" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Type) + @"\s+" +
+                    System.Text.RegularExpressions.Regex.Escape(field.Name) + @"\s*;"))
+                    declarations.Add("var " + field.Type + " " + field.Name + ";");
+            }
+            if (declarations.Count > 0)
+            {
+                const string classAnchor = "class InventoryWnd extends UICommonAPI;";
+                source = source.Replace(classAnchor,
+                    classAnchor + Environment.NewLine + string.Join(Environment.NewLine, declarations),
+                    StringComparison.Ordinal);
+                applied.Add("InventoryWnd restored " + declarations.Count + " missing typed handle/state fields");
+            }
+        }
+
+        if (className.Equals("InventoryWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("function int EquipItemGetItemNum()", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2802.GetItemNum()", StringComparison.Ordinal) &&
             source.Contains("RecoveredName_2803.GetItemNum()", StringComparison.Ordinal))
