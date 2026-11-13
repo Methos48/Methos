@@ -76,7 +76,7 @@ The supplied Dunk3l files have now been validated independently of the still-pen
 - The original U was decoded and both layers were re-encoded byte for byte. The rebuilt U was then re-protected, decoded again, parsed as Unreal package version 126/0, and re-decompiled: 167/167 exported classes, zero failed classes, identical class-name set, 208 sanitized names restored.
 - The real `Interface.xdat` is 705,813 bytes. Its SmartCrypt and Lineage2Ver111 layers were rebuilt byte for byte; the exact custom 20-byte trailer was retained. XML round-trip: 169 windows and 8 shortcuts. The stored trailer checksum differs from the stock CRC, so the original trailer is preserved rather than replaced.
 - The UCC reference kit contains 169 `.uc` files and its full reference compilation passed. The actual Dunk3l package exports 167 classes; the rebuild intentionally preserves those 167 exports rather than adding unrelated stock reference classes.
-- GitHub Actions: [Dunk3l full round-trip #189](https://github.com/Methos48/Methos/actions/runs/43485104819) and [UCC validation #293](https://github.com/Methos48/Methos/actions/runs/43485104806), both SUCCESS.
+- GitHub Actions: [Dunk3l full round-trip #189](https://github.com/Methos48/Methos/actions/runs/43485104819) and [UCC validation run](https://github.com/Methos48/Methos/actions/runs/43485104806), both SUCCESS.
 
 For the U file, the terminal 20 bytes are part of the final Unreal export's serial range and remain inside the payload. XDAT uses a separate 20-byte custom trailer. This distinction is deliberate and is tested.
 
