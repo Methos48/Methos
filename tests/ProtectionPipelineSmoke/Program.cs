@@ -652,12 +652,12 @@ function AddTooltipItemBar(int minimum_width)
 """;
 string dunk3lToolTipWidthRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "ToolTip", dunk3lToolTipWidthSample, out IReadOnlyList<string> dunk3lToolTipWidthRepairs);
-Check(dunk3lToolTipWidthRepairs.Count == 1 &&
-      dunk3lToolTipWidthRepaired.Contains("function int getMaxWidth()", StringComparison.Ordinal) &&
+Check(dunk3lToolTipWidthRepairs.Count == 2 &&
+      dunk3lToolTipWidthRepaired.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal) &&
       dunk3lToolTipWidthRepaired.Contains("if(m_Tooltip.MinimumWidth > 0)", StringComparison.Ordinal) &&
       dunk3lToolTipWidthRepaired.Contains("return m_Tooltip.MinimumWidth;", StringComparison.Ordinal) &&
       dunk3lToolTipWidthRepaired.Contains("return TOOLTIP_MINIMUM_WIDTH;", StringComparison.Ordinal),
-    "Dunk3l ToolTip max-width helper was not restored.");
+    "Dunk3l ToolTip max-width helper was not restored and renamed.");
 Console.WriteLine("PASS: Dunk3l ToolTip max-width helper measures existing draw-list content.");
 
 string dunk3lToolTipBindingSample = """
