@@ -163,3 +163,16 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 - También se confirmó que `src/MethosUEditor/` conserva un nombre técnico histórico en carpetas y namespace; el ensamblado, producto, ventana e instalador visibles se llaman Methos. Renombrar esa estructura sin una migración completa de referencias no es una limpieza segura y no es necesario para que el usuario tenga una sola aplicación.
 - **Resultado de esta auditoría:** un solo producto y un solo repositorio activo, sí; desaparición de todos los restos históricos internos, no; dependencia XDAT histórica pendiente de eliminar mediante migración verificada.
 - **Siguiente y único bloqueo de la unificación:** comparar y migrar el kit XDAT histórico hacia `tools/xdat/` y el puente interno de Methos, conservando exactamente el comportamiento ya validado. Hasta superar esa comparación, no marcar el trabajo de unificación como 100 % finalizado.
+
+
+### 13-11-2026 — Estado de cierre de la organización estructural
+
+- La rama oficial sigue siendo `main`. La política de ramas históricas y experimentales está documentada en `docs/BRANCHES.md`; no se deben usar para lanzamientos.
+- La raíz quedó organizada: código, documentación, configuración, instalador, pruebas, herramientas y `reference-data/`. Los kits/archivos de cliente ya no están sueltos en la raíz.
+- Se eliminaron `methos_crypto/` y el smoke test duplicado bajo `tools/`. El motor C# canónico es `src/MethosUEngine/`; las pruebas están en `tests/`.
+- Se movieron 51 archivos de referencia conservando sus blobs Git originales y se actualizaron los workflows y herramientas que los consumen.
+- La automatización oficial Windows Release terminó correctamente en la rama `main`: run [43396508357](https://github.com/Methos48/Methos/actions/runs/43396508357). Publicó el instalador único `Methos-Setup.exe` y ejecutó instalación/arranque de Methos.
+- La validación del compilador UCC terminó correctamente: run [43396477953](https://github.com/Methos48/Methos/actions/runs/43396477953). El smoke del planificador/protecciones también terminó correctamente: run [43396477929](https://github.com/Methos48/Methos/actions/runs/43396477929).
+- **Validaciones pendientes, no ocultar:** la reconstrucción completa de la interfaz de referencia aún falla por incompatibilidad de tipo en `PartyWnd.uc` (`SetName`, parámetro 2). El round-trip Silent Dark aún falla por identificadores de función corruptos/control characters en fuentes decompiladas y una clase `ChatFilterWnd` mal formada. No se inventaron nombres ni se cambiaron comportamientos para forzar esas compilaciones.
+- **Pendiente de integración XDAT:** Windows Release todavía necesita el kit histórico `reference-data/kits/Methos-XDAT-Windows-Build-Kit.zip` para parte del runtime/código base. No retirar el kit hasta migrar esa función a `tools/xdat/` y validar extracción, reconstrucción, protección y round-trip.
+- Con esto queda organizada la estructura del repositorio para continuar el desarrollo en `main`; las limitaciones de compilación anteriores deben abordarse como tareas técnicas separadas, no como reorganización de carpetas.
