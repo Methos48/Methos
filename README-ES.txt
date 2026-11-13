@@ -129,3 +129,9 @@ está en docs/ARQUITECTURA.md.
 Algunas carpetas locales de caché y respaldos pueden conservar el nombre
 histórico "Methos U Editor" para mantener compatibilidad con datos de versiones
 anteriores. Ese nombre no representa una aplicación adicional.
+
+Documentación para mantenimiento:
+- docs/ARQUITECTURA.md: arquitectura y reglas generales.
+- docs/WORKFLOWS.md: automatizaciones y validaciones.
+- docs/ROOT-REFERENCES.md: inventario de paquetes y DLL de referencia conservados.
+- tools/xdat/README.md: organización del módulo XDAT.
