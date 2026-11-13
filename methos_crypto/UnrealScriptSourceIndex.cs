@@ -380,8 +380,8 @@ public static class UnrealScriptSourceIndex
                     {
                         if (tokens[i].Kind == TokenKind.Identifier &&
                             tokens[i].Text.Equals("break", StringComparison.OrdinalIgnoreCase) &&
-                            (i < 4 || !tokens[i - 1].Text.Equals(";", StringComparison.Ordinal) ||
-                             !tokens[i - 4].Text.Equals("return", StringComparison.OrdinalIgnoreCase)))
+                            (i < 3 || !tokens[i - 1].Text.Equals(";", StringComparison.Ordinal) ||
+                             !tokens[i - 3].Text.Equals("return", StringComparison.OrdinalIgnoreCase)))
                         {
                             allBreaksFollowReturns = false;
                             break;
