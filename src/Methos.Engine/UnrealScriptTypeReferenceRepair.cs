@@ -263,6 +263,29 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("AutoBuffWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("function HandleSkillList(string param)", StringComparison.Ordinal))
+        {
+            // The UELib call-site restorer can align calls by occurrence across the whole class.
+            // In this exact Dunk3l method, that may replace the constant 1323 with an unrelated
+            // local named ClassID. The matching Interlude source confirms the intended comparison.
+            var skillList = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(function => function.Name.Equals("HandleSkillList", StringComparison.OrdinalIgnoreCase));
+            if (skillList is not null)
+            {
+                string repairedBody = System.Text.RegularExpressions.Regex.Replace(
+                    skillList.Body,
+                    @"\\bUnknownFunction154\\s*\\(\\s*SkillID\\s*,\\s*ClassID\\s*\\)",
+                    "UnknownFunction154(SkillID, 1323)");
+                if (!string.Equals(skillList.Body, repairedBody, StringComparison.Ordinal))
+                {
+                    source = source.Remove(skillList.BodyOffset, skillList.BodyLength)
+                        .Insert(skillList.BodyOffset, repairedBody);
+                    applied.Add("AutoBuffWnd.HandleSkillList restored verified class ID constant 1323");
+                }
+            }
+        }
+
         if (className.Equals("PrivateShopWnd", StringComparison.OrdinalIgnoreCase) &&
             System.Text.RegularExpressions.Regex.IsMatch(
                 source, @"(?m)^\s*var\s+PrivateShopWnd\.PrivateShopType\s+m_type\s*;") &&
