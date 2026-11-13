@@ -310,3 +310,12 @@ Probar la carga de `Interface.u` reconstruido en una copia aislada del cliente I
 - En paralelo siguen ejecutándose las validaciones UCC de Interlude, motor Unreal, Silent Dark, protección y Windows Release. No se declaran aprobadas hasta revisar sus conclusiones y pasos finales.
 - La falla anterior `43414298020` queda identificada como workflow obsoleto que apuntaba a una ruta eliminada; fue corregida y sustituida por la ejecución exitosa indicada arriba.
 
+
+
+### 13-11-2026 — Recuperación de fuentes originales del kit Interlude
+
+- Se confirmó en `README.md` que `Methos48/Methos` es el único repositorio oficial y que `main` es la única rama activa. No se utilizará el repositorio histórico vacío `Methos-Interface` ni se creará un repositorio separado para XDAT.
+- Se recuperó un archivo ZIP con las 169 clases `.uc` originales incluidas en el kit de referencia UCC de Interlude. El ZIP entregado se verificó por integridad y contiene 169 archivos únicos.
+- Esta recuperación corresponde al **conjunto de fuentes de referencia del kit**. No debe confundirse con las clases exportadas de un `Interface.u` particular: el conjunto real de exports depende del paquete objetivo.
+- El archivo recuperado no es un `Interface.u` compilado y todavía no demuestra que las fuentes puedan recompilarse ni que el paquete funcione dentro del cliente.
+- No se ejecutó UCC en esta sesión. La siguiente validación debe realizarse en Windows usando el runtime del kit, y debe registrar por separado el paquete objetivo, el número de exports, los errores de compilación y el resultado de la re-descompilación.
