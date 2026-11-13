@@ -1,0 +1,41 @@
+name: Analyze Dunk3l protected interface inputs
+
+on:
+  push:
+    branches: [research/xdat-format-probe]
+    paths:
+      - ".github/workflows/analyze-dunk3l-interface.yml"
+      - "tools/analyze_dunk3l_interface.py"
+      - "interface.u"
+      - "interface.xdat"
+      - "Dunk3lFX_ByBALENCIAGA.u"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout originals
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+      - name: Download official L2EncDec reference engine
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'l2encdec-win32.zip'
+          Invoke-WebRequest -Uri 'https://github.com/ritsuwastaken/open-l2encdec/releases/download/1.5.1/l2encdec-1.5.1-win32.zip' -OutFile $archive
+          $dir = Join-Path $env:RUNNER_TEMP 'l2encdec'
+          Expand-Archive -LiteralPath $archive -DestinationPath $dir -Force
+          $engine = Get-ChildItem $dir -Recurse -File | Where-Object { $_.Name -ieq 'l2encdec.exe' } | Select-Object -First 1
+          if (!$engine) { throw 'No se encontró l2encdec.exe' }
+          "L2_ENGINE=$($engine.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Analyze original files without modifying them
+        shell: pwsh
+        run: |
+          python tools/analyze_dunk3l_interface.py "$env:L2_ENGINE"
