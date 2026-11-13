@@ -19,7 +19,7 @@ The Python xdat_core.py module is the XDAT schema layer, not the encryption laye
 | Format/layer | Active C# support | Verification and limits |
 |---|---|---|
 | SmartCrypt 1.5.2.2 (FF ED FA CE) | Detection and decode; profile reconstruction from the embedded 24-byte seed when the external-key flag is clear; encode when the full round-trip is verified | Real nested SmartCrypt + Lineage2Ver111 samples are tested. If the file requires an external key that is not available, Methos stops safely. |
-| Lineage2Ver111 with custom terminal bytes | Decode and encode while retaining the original per-file trailer profile | Real .u and .xdat layered samples have byte-identical round-trip coverage. Trailer bytes are preserved, not invented. |
+| Lineage2Ver111 with custom terminal bytes | Decode and encode while retaining the original per-file trailer profile | Real `.xdat` layered samples have byte-identical round-trip coverage. The current protection smoke workflow does not include a real protected `.u` fixture; do not generalize the XDAT result to every U package. Trailer bytes are preserved, not invented. |
 | Lineage2Ver413 | Standard codec implemented for decode/encode | Codec-level tests are present. Do not infer that every private-server 413 variant has been verified against a real client file. |
 | ActiveAntiCheatCrypt | Engine codec and key-profile support implemented | Synthetic RSA-2048/PKCS#1 v1.5 + RC4 tests pass. The GUI does not guess or automatically supply a matching private-key profile; without it, the file remains unavailable for decoding. |
 
@@ -36,7 +36,7 @@ Recognition is not decryption support. These files must remain unchanged until t
 
 ## Real-file verification
 
-tests/ProtectionPipelineSmoke and .github/workflows/protection-pipeline-smoke.yml exercise the active C# planner/runtime. The real Dunk3l samples validate the nested SmartCrypt 1.5.2.2 + custom Lineage2Ver111 path for both interface.u and interface.xdat, including exact byte-for-byte reconstruction of the original protected files.
+tests/ProtectionPipelineSmoke and .github/workflows/protection-pipeline-smoke.yml exercise the active C# planner/runtime. The real Dunk3l `interface.xdat` sample validates the nested SmartCrypt 1.5.2.2 + custom Lineage2Ver111 path, including exact byte-for-byte reconstruction of the original protected file. The smoke log explicitly skips the real `interface.u` fixture when it is absent; the separate Silent Dark UCC workflow validates package decompilation/compilation, not universal U encryption support.
 
 tools/xdat/validate_dunk3l_smartcrypt.py is an additional XDAT validation utility. Its results do not replace the C# application-path tests.
 
