@@ -578,6 +578,52 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             "$1ENameCtrlType(0)$2ETextAlign(1)$3", RegexOptions.IgnoreCase);
     }
 
+    // Berserker's UICommonAPI is missing the shared color-name converter used by
+    // StatusWnd, LoginWnd and other UI scripts. Restore its Interlude color table.
+    private static string RestoreUICommonAPIColorLookup(string className, string source,
+        out bool restored)
+    {
+        restored = false;
+        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) ||
+            Regex.IsMatch(source, @"(?im)^\s*function\s+Color\s+RecoveredName_98\s*\("))
+            return source;
+        const string function = @"
+function Color RecoveredName_98(string colorName)
+{
+    local Color result;
+    result.A = 255;
+    switch(colorName)
+    {
+        case ""Goldlite"": result.R = 240; result.G = 227; result.B = 200; break;
+        case ""BlueLite"": result.R = 0; result.G = 242; result.B = 255; break;
+        case ""RedLite"": result.R = 255; result.G = 80; result.B = 80; break;
+        case ""Grey"": result.R = 180; result.G = 180; result.B = 180; break;
+        case ""GreyLight"": result.R = 220; result.G = 220; result.B = 220; break;
+        case ""GreyDark"": result.R = 100; result.G = 100; result.B = 100; break;
+        case ""Yellow"": result.R = 255; result.G = 255; result.B = 0; break;
+        case ""Red"": result.R = 255; result.G = 0; result.B = 0; break;
+        case ""Blue"": result.R = 0; result.G = 0; result.B = 255; break;
+        case ""Green"": result.R = 0; result.G = 255; result.B = 0; break;
+        case ""Orange"": result.R = 230; result.G = 153; result.B = 77; break;
+        case ""System"": result.R = 176; result.G = 155; result.B = 121; break;
+        case ""Amber"": result.R = 218; result.G = 165; result.B = 32; break;
+        case ""White"": result.R = 255; result.G = 255; result.B = 255; break;
+        case ""Dim"": result.R = 177; result.G = 173; result.B = 172; break;
+        case ""Magenta"": result.R = 255; result.G = 0; result.B = 255; break;
+        case ""Brown"": result.R = 176; result.G = 155; result.B = 121; break;
+        case ""Black"": result.R = 0; result.G = 0; result.B = 0; break;
+        default: result.R = 255; result.G = 255; result.B = 255; break;
+    }
+    return result;
+}
+";
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, function + Environment.NewLine + Environment.NewLine);
+        restored = true;
+        return source;
+    }
+
     // The LoadingWnd server-age local is an enum; UELib exposes its underlying
     // byte cast, which UCC correctly rejects when assigned back to the enum.
     private static string NormalizeLoadingWndServerAgeEnum(string className, string source)
@@ -986,6 +1032,10 @@ function HandleHideLogo()
                 repairedIdentifiers += restoredOptionWndHandlers;
                 source = RestoreToolTipItemIcon(className, source, out bool restoredToolTipItemIcon);
                 if (restoredToolTipItemIcon) repairedIdentifiers++;
+                source = RestoreToolTipOptionHelpers(className, source, out int restoredToolTipOptionHelpers);
+                repairedIdentifiers += restoredToolTipOptionHelpers;
+                source = RestoreUICommonAPIColorLookup(className, source, out bool restoredColorLookup);
+                if (restoredColorLookup) repairedIdentifiers++;
                 if (restoredOptionWndHandlers > 0)
                 {
                     var allAvailableClassNames = sourceFiles
