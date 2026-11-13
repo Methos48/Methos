@@ -44,6 +44,8 @@ jobs:
           "DUNK3L_UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Descompilar, recompilar y verificar Interface.u Dunk3l
+        id: dunk3l_u
+        continue-on-error: true
         shell: pwsh
         run: |
           $input = Join-Path $PWD "reference-data/client/lineage2/interface.u"
@@ -56,10 +58,25 @@ jobs:
           Write-Host "DUNK3L_REBUILT_U_BYTES=$((Get-Item $output).Length)"
 
       - name: Descompilar, recompilar y verificar Interface.xdat Dunk3l
+        id: dunk3l_xdat
+        if: always()
+        continue-on-error: true
         shell: pwsh
         run: |
           python tools/xdat/validate_dunk3l_smartcrypt.py reference-data/client/lineage2/interface.xdat
           if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo XDAT de Dunk3l." }
+
+      - name: Confirmar resultados completos de U y XDAT
+        if: always()
+        shell: pwsh
+        run: |
+          $u = "${{ steps.dunk3l_u.outcome }}"
+          $xdat = "${{ steps.dunk3l_xdat.outcome }}"
+          Write-Host "DUNK3L_U_RESULT=$u"
+          Write-Host "DUNK3L_XDAT_RESULT=$xdat"
+          if ($u -ne "success" -or $xdat -ne "success") {
+            throw "La interfaz Dunk3l no superó ambos ciclos completos U y XDAT."
+          }
 
       - name: Publicar reconstrucción y fuentes Dunk3l
         if: always()
