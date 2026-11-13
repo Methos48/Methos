@@ -2,7 +2,7 @@
 
 **Última actualización:** 12-11-2026  
 **Proyecto:** Methos (editor de archivos de Lineage II Interlude)  
-**Repositorio de trabajo:** https://github.com/Methos48/Methos-U-Editor  
+**Repositorio de trabajo:** https://github.com/Methos48/Methos-XDAT  
 **Módulo complementario:** https://github.com/Methos48/Methos-XDAT
 
 Este documento es la bitácora permanente del proyecto. Cada sesión de trabajo debe actualizarlo con cambios reales, pruebas ejecutadas, resultados, problemas pendientes y el siguiente paso. No marcar una tarea como terminada sin una prueba que lo demuestre.
@@ -63,7 +63,7 @@ Consultar GitHub Actions de la rama principal para los commits recientes del lan
 ### 12-11-2026 — Instalador Methos Windows x64 generado y probado
 
 - **Resultado: compilación e instalación superadas.** GitHub Actions ejecutó el workflow `Methos U Editor - Windows Release` para el commit `05d379e99ad500432017f0d3cf973a57cc74d8ff`.
-- Ejecución: [Windows Release #438](https://github.com/Methos48/Methos-U-Editor/actions/runs/43234204448) — **SUCCESS**.
+- Ejecución: [Windows Release #438](https://github.com/Methos48/Methos-XDAT/actions/runs/43234204448) — **SUCCESS**.
 - Los 19 pasos principales finalizaron correctamente, incluidos:
   - generación del icono M roja;
   - publicación autónoma de Methos para Windows x64;
