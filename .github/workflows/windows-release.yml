@@ -273,7 +273,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force release | Out-Null
-          & $env:ISCC installer\Methos-U-Editor.iss
+          & $env:ISCC installer\Methos.iss
           if ($LASTEXITCODE -ne 0) { throw "Falló Inno Setup." }
 
       - name: Probar instalación silenciosa y arranque de Methos
