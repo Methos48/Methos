@@ -123,7 +123,7 @@ def main() -> int:
         rebuilt_lineage = bytearray(lineage[:HEADER_SIZE]) + encrypted_payload + bytearray(lineage[-TAIL_SIZE:])
     else:
         rebuilt_lineage = bytearray(lineage[:HEADER_SIZE]) + encrypted_payload
-    if rebuilt_lineage != lineage:
+    if not args.edit_roundtrip and rebuilt_lineage != lineage:
         raise ValueError("La recompilación de la capa Lineage2Ver111 no coincide byte por byte.")
 
     key6 = bytearray(seed[2:8])
@@ -141,8 +141,9 @@ def main() -> int:
         raise ValueError("La recompilación SmartCrypt no coincide byte por byte con el original.")
     if args.edit_roundtrip:
         verified_without_tail, verified_with_tail, *_ = decode_smartcrypt_and_111(bytes(rebuilt))
-        candidates = (verified_without_tail, verified_with_tail)
-        if not any(any(w.get("name") == edit_name for w in parse_xdat(candidate)["windows"]) for candidate in candidates):
+        verified_payload = verified_without_tail if label == "without-tail" else verified_with_tail
+        verified_windows = parse_xdat(verified_payload)["windows"]
+        if not any(w.get("name") == edit_name for w in verified_windows):
             raise ValueError(f"El cambio XDAT no sobrevivió a la relectura del archivo protegido: {edit_name}.")
         print(f"PASS: XDAT MODIFIED edit/compile/re-encrypt round-trip; window={edit_name}; markerPersisted=true.")
     if args.output:
