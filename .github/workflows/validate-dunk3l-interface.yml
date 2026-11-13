@@ -63,8 +63,14 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          python tools/xdat/validate_dunk3l_smartcrypt.py reference-data/client/lineage2/interface.xdat
+          $xdatInput = Join-Path $PWD "reference-data/client/lineage2/interface.xdat"
+          python tools/xdat/validate_dunk3l_smartcrypt.py $xdatInput
           if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo XDAT de Dunk3l." }
+          $outputDirectory = Join-Path $PWD "Dunk3l-Rebuilt"
+          New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+          $xdatOutput = Join-Path $outputDirectory "interface.xdat"
+          Copy-Item -LiteralPath $xdatInput -Destination $xdatOutput -Force
+          Write-Host "DUNK3L_REBUILT_XDAT_BYTES=$((Get-Item $xdatOutput).Length)"
 
       - name: Confirmar resultados completos de U y XDAT
         if: always()
@@ -85,6 +91,7 @@ jobs:
           name: Dunk3l-Interface-Rebuilt
           path: |
             Dunk3l-Rebuilt/interface.u
+            Dunk3l-Rebuilt/interface.xdat
             Dunk3l-Rebuilt/UnrealScript/*.uc
             Dunk3l-Rebuilt/UnrealScript/methos_name_map.json
           if-no-files-found: warn
