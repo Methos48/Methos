@@ -330,15 +330,15 @@ function TestDialog()
 """;
 string dialogArgumentRepaired = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
     "UICommonAPI", dialogArgumentSample, out IReadOnlyList<string> dialogArgumentRepairs);
-string dialogArgumentUntouched = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
-    "OtherClass", dialogArgumentSample, out IReadOnlyList<string> ignoredDialogArgumentRepairs);
+string dialogArgumentRepairedInOtherClass = UnrealScriptNativeEnumArgumentRepair.RepairKnownDialogTypeArguments(
+    "EventMatchGMWnd", dialogArgumentSample, out IReadOnlyList<string> otherDialogArgumentRepairs);
 Check(dialogArgumentRepairs.Count == 1 &&
       dialogArgumentRepaired.Contains("DialogShow(DIALOG_Block, \"message\")", StringComparison.Ordinal) &&
       dialogArgumentRepaired.Contains("DialogShow(99, \"unknown\")", StringComparison.Ordinal) &&
-      ignoredDialogArgumentRepairs.Count == 0 &&
-      dialogArgumentUntouched == dialogArgumentSample,
-    "UICommonAPI DialogShow enum argument was not restored safely.");
-Console.WriteLine("PASS: UICommonAPI DialogShow uses the verified EDialogType identifier.");
+      otherDialogArgumentRepairs.Count == 1 &&
+      dialogArgumentRepairedInOtherClass.Contains("DialogShow(DIALOG_Block, \"message\")", StringComparison.Ordinal),
+    "DialogShow enum arguments must be restored safely in all recovered interface classes.");
+Console.WriteLine("PASS: DialogShow uses the verified EDialogType identifier across interface classes.");
 
 
 var dialogDefaultActionSample = """
