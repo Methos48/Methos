@@ -262,6 +262,34 @@ Console.WriteLine("PASS: numeric enum switch labels are cast without changing st
 
 
 
+string dialogBoxEnumSwitchSample = """
+class DialogBox extends UICommonAPI;
+var UICommonAPI.DialogDefaultAction m_defaultAction;
+function DoDefaultAction()
+{
+    switch(m_defaultAction)
+    {
+        case 1:
+            HandleOK();
+            break;
+        case 2:
+            HandleCancel();
+            break;
+        case 0:
+            HandleCancel();
+            break;
+    }
+}
+""";
+string dialogBoxEnumSwitchRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "DialogBox", dialogBoxEnumSwitchSample, out IReadOnlyList<string> dialogBoxEnumSwitchRepairs);
+Check(dialogBoxEnumSwitchRepairs.Count == 1 &&
+      dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(1):", StringComparison.Ordinal) &&
+      dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(2):", StringComparison.Ordinal) &&
+      dialogBoxEnumSwitchRepaired.Contains("case DialogDefaultAction(0):", StringComparison.Ordinal),
+    "DialogBox numeric switch labels were not cast to DialogDefaultAction.");
+Console.WriteLine("PASS: DialogBox enum switch labels are restored for UCC.");
+
 var interfaceSoundSample = """
 class SoundSample extends UIScript;
 function Test()
