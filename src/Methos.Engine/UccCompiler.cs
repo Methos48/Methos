@@ -426,6 +426,24 @@ function onActiveTex(bool bActive, int nIndex)
             "GetClassIconCustom(", RegexOptions.IgnoreCase);
     }
 
+    // UELib emits integer ordinals for this recovered enum switch, while
+    // Interlude UCC requires the declared enum labels.
+    private static string NormalizeEventMatchObserverMessageModeSwitch(string className, string source)
+    {
+        if (!className.Equals("EventMatchObserverWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source,
+            @"switch\s*\(\s*m_MsgMode\s*\)\s*\{(?<body>[^{}]*)\}",
+            match =>
+            {
+                string body = match.Groups["body"].Value;
+                body = Regex.Replace(body, @"(?m)(\bcase\s+)0(\s*:)", "$1MESSAGEMODE_LeftRight$2");
+                body = Regex.Replace(body, @"(?m)(\bcase\s+)1(\s*:)", "$1MESSAGEMODE_Off$2");
+                body = Regex.Replace(body, @"(?m)(\bcase\s+)2(\s*:)", "$1MESSAGEMODE_Normal$2");
+                return "switch(m_MsgMode){" + body + "}";
+            }, RegexOptions.IgnoreCase);
+    }
+
     // The bytecode decompiler can emit int(Type) for an IntProperty in ActionWnd.
     // Interlude UCC rejects that redundant self-cast; remove only this proven-invalid cast
     // in the temporary staged source, preserving the user's extracted source unchanged.
@@ -584,6 +602,7 @@ function onActiveTex(bool bActive, int nIndex)
                 source = NormalizeActionWndIntPropertyCasts(className, source, out int actionWndCastRepairs);
                 repairedIdentifiers += actionWndCastRepairs;
                 source = NormalizeClanWndClassIconCall(className, source);
+                source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 if (Path.GetFileName(file).Equals("InventoryWnd.uc", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] diagnosticLines = source.Replace("\r\n", "\n").Split('\n');
