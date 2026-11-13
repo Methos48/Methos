@@ -518,6 +518,37 @@ function HandleHideLogo()
         return source;
     }
 
+    // Recover two OptionWnd handlers directly from the exact Interlude reference class.
+    // These routines control only client-side logo visibility and shortcut keycap textures.
+    private static string RestoreOptionWndReferenceHandlers(string className, string source,
+        string referenceSource, out int restoredCount)
+    {
+        restoredCount = 0;
+        if (!className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+
+        var recovered = new List<string>();
+        foreach (string functionName in new[] { "HandleHideLogo", "SetShortcutTransparencyNum" })
+        {
+            if (Regex.IsMatch(source, @"(?im)^\\s*function\\s+" + Regex.Escape(functionName) + @"\\s*\\("))
+                continue;
+            Match function = Regex.Match(referenceSource,
+                @"(?ims)^\\s*function\\s+" + Regex.Escape(functionName) +
+                @"\\s*\\([^)]*\\)[^\\{]*\\{.*?^\\s*\\}");
+            if (!function.Success) continue;
+            recovered.Add(function.Value.Trim());
+        }
+
+        if (recovered.Count == 0) return source;
+        Match firstFunction = Regex.Match(source, @"(?im)^\\s*function\\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index,
+            string.Join(Environment.NewLine + Environment.NewLine, recovered) +
+            Environment.NewLine + Environment.NewLine);
+        restoredCount = recovered.Count;
+        return source;
+    }
+
     // IsKeyDown consumes Interactions.EInputKey; restore the enum identifiers
     // for the Win32-compatible ordinal values emitted by the bytecode decompiler.
     private static string NormalizeInventoryKeyEnums(string className, string source)
@@ -769,6 +800,17 @@ function HandleHideLogo()
                 source = RestoreOptionWndDualCountHandler(className, source,
                     out bool restoredDualCountHandler);
                 if (restoredDualCountHandler) repairedIdentifiers++;
+                source = RestoreOptionWndReferenceHandlers(className, source, referenceSource,
+                    out int restoredOptionWndHandlers);
+                repairedIdentifiers += restoredOptionWndHandlers;
+                if (restoredOptionWndHandlers > 0)
+                {
+                    source = UnrealScriptNativeFunctionNormalizer.Normalize(
+                        source, nativeRegistryPath, out int optionWndNormalizedCalls,
+                        out int optionWndUnresolvedCalls);
+                    normalizedNativeCalls += optionWndNormalizedCalls;
+                    unresolvedNativeCalls += optionWndUnresolvedCalls;
+                }
                 source = RestoreOptionWndLogoHandler(className, source,
                     out bool restoredLogoHandler);
                 if (restoredLogoHandler) repairedIdentifiers++;
