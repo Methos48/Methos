@@ -263,6 +263,52 @@ Check(autoBuffSkillListRepairs.Count == 1 &&
     "AutoBuffWnd.HandleSkillList did not restore the verified 1323 class ID constant.");
 Console.WriteLine("PASS: AutoBuffWnd.HandleSkillList restores Dunk3l's verified 1323 class ID constant.");
 
+string callsiteCurrentSample = """
+class AutoBuffWnd extends UICommonAPI;
+function OnTimer(int Index)
+{
+    if(UnknownFunction154(Index, 4448))
+    {
+        return;
+    }
+}
+function RemoveBuff(int Id)
+{
+    if(UnknownFunction154(Index, 1))
+    {
+        return;
+    }
+}
+""";
+string callsiteReferenceSample = """
+class AutoBuffWnd extends UICommonAPI;
+function RemoveBuff(int Id)
+{
+    if(UnknownFunction154(Index, Id))
+    {
+        return;
+    }
+}
+function OnTimer(int Index)
+{
+    if(UnknownFunction154(Index, 4448))
+    {
+        return;
+    }
+}
+""";
+string callsiteRestored = UnrealScriptCallsiteArgumentRestorer.RestoreSymbolicArguments(
+    callsiteCurrentSample, callsiteReferenceSample, out int callsiteRestoreCount);
+Check(callsiteRestoreCount == 1 &&
+      callsiteRestored.Contains("function OnTimer(int Index)" + Environment.NewLine +
+          "{" + Environment.NewLine +
+          "    if(UnknownFunction154(Index, 4448))", StringComparison.Ordinal) &&
+      callsiteRestored.Contains("function RemoveBuff(int Id)" + Environment.NewLine +
+          "{" + Environment.NewLine +
+          "    if(UnknownFunction154(Index, Id))", StringComparison.Ordinal),
+    "Call-site restoration crossed function boundaries and replaced an unrelated argument.");
+Console.WriteLine("PASS: UnrealScript call-site restoration is isolated to matching functions.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
