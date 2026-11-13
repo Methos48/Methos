@@ -2,7 +2,7 @@ name: Validate Methos Unreal package engine
 on:
   push:
     paths:
-      - "methos_crypto/**"
+      - "src/MethosUEngine/**"
       - "Compilador  U.zip"
       - "reference-data/**"
       - "interface.u"
