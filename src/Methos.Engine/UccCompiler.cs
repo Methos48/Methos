@@ -264,10 +264,10 @@ public static class UccCompiler
             @"(?im)^\s*var\s+ItemInfo\s+Potion\s*\[\s*\d+\s*\]\s*;");
         if (!declaration.Success) return source;
 
-        Match classLine = Regex.Match(source, @"(?m)^\s*class\s+\w+\b[^;]*;[\t ]*\r?\n?");
-        if (!classLine.Success) return source;
-        source = source.Insert(classLine.Index + classLine.Length,
-            declaration.Value.Trim() + Environment.NewLine);
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index,
+            declaration.Value.Trim() + Environment.NewLine + Environment.NewLine);
         restored = true;
         return source;
     }
@@ -315,9 +315,9 @@ function InsertPotion(ItemInfo a_ItemInfo)
     return;
 }
 ";
-        Match classLine = Regex.Match(source, @"(?m)^\s*class\s+\w+\b[^;]*;[\t ]*\r?\n?");
-        if (!classLine.Success) return source;
-        source = source.Insert(classLine.Index + classLine.Length, dispatcher + Environment.NewLine);
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
+        if (!firstFunction.Success) return source;
+        source = source.Insert(firstFunction.Index, dispatcher + Environment.NewLine + Environment.NewLine);
         restored = true;
         return source;
     }
