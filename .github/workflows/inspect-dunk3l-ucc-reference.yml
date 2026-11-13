@@ -23,7 +23,7 @@ jobs:
         with:
           name: dunk3l-u-decompiled-source-diagnostic
           run-id: 43226478867
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: target-source
       - uses: actions/setup-dotnet@v4
         with:
