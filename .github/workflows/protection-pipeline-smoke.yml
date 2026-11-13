@@ -2,7 +2,7 @@ name: Methos protection planner smoke tests
 on:
   push:
     paths:
-      - 'methos_crypto/**'
+      - 'src/MethosUEngine/**'
       - 'Engine.u'
       - 'interface.u'
       - 'interface.xdat'
