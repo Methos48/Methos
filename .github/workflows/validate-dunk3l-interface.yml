@@ -1,7 +1,7 @@
 name: Dunk3l Interface U and XDAT full round-trip
 on:
   push:
-    branches: [main]
+    branches: [main, test/dunk3l-edit-roundtrip]
     paths:
       - "reference-data/client/lineage2/interface.u"
       - "reference-data/client/lineage2/interface.xdat"
@@ -52,7 +52,7 @@ jobs:
           $output = Join-Path $PWD "Dunk3l-Rebuilt/interface.u"
           $sources = Join-Path $PWD "Dunk3l-Rebuilt/UnrealScript"
           if (!(Test-Path -LiteralPath $input)) { throw "Falta el Interface.u de referencia Dunk3l." }
-          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --dunk3l-u-rebuild $env:DUNK3L_UCC_ROOT $input $output $sources
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --dunk3l-u-edit-roundtrip $env:DUNK3L_UCC_ROOT $input $output $sources
           if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo U de Dunk3l." }
           if (!(Test-Path -LiteralPath $output)) { throw "No se generó el Interface.u reconstruido." }
           Write-Host "DUNK3L_REBUILT_U_BYTES=$((Get-Item $output).Length)"
@@ -64,12 +64,12 @@ jobs:
         shell: pwsh
         run: |
           $xdatInput = Join-Path $PWD "reference-data/client/lineage2/interface.xdat"
-          python tools/xdat/validate_dunk3l_smartcrypt.py $xdatInput
-          if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo completo XDAT de Dunk3l." }
           $outputDirectory = Join-Path $PWD "Dunk3l-Rebuilt"
           New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
           $xdatOutput = Join-Path $outputDirectory "interface.xdat"
-          Copy-Item -LiteralPath $xdatInput -Destination $xdatOutput -Force
+          python tools/xdat/validate_dunk3l_smartcrypt.py $xdatInput --edit-roundtrip --output $xdatOutput
+          if ($LASTEXITCODE -ne 0) { throw "Falló el ciclo modificado completo XDAT de Dunk3l." }
+          if (!(Test-Path -LiteralPath $xdatOutput)) { throw "No se generó el Interface.xdat modificado." }
           Write-Host "DUNK3L_REBUILT_XDAT_BYTES=$((Get-Item $xdatOutput).Length)"
 
       - name: Confirmar resultados completos de U y XDAT
