@@ -309,6 +309,24 @@ Check(callsiteRestoreCount == 1 &&
     "Call-site restoration crossed function boundaries and replaced an unrelated argument.");
 Console.WriteLine("PASS: UnrealScript call-site restoration is isolated to matching functions.");
 
+string shortcutSkillTitleSample = """
+class Shortcut extends UICommonAPI;
+function LoadData()
+{
+    Skilltitle = GetHandle("MagicSkillWnd");
+}
+function OpenSkills()
+{
+    Skilltitle.SetWindowTitle("Active Skills");
+}
+""";
+string shortcutSkillTitleRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "Shortcut", shortcutSkillTitleSample, out IReadOnlyList<string> shortcutSkillTitleRepairs);
+Check(shortcutSkillTitleRepairs.Count == 1 &&
+      shortcutSkillTitleRepaired.Contains("var WindowHandle Skilltitle;", StringComparison.Ordinal),
+    "Shortcut.Skilltitle WindowHandle declaration was not restored.");
+Console.WriteLine("PASS: Shortcut.Skilltitle WindowHandle declaration is restored.");
+
 string privateShopEnumSample = """
 class PrivateShopWnd extends UICommonAPI;
 enum PrivateShopType
