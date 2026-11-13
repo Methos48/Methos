@@ -559,7 +559,7 @@ public static class UnrealScriptTypeReferenceRepair
              className.Equals("HoldIgnoreTargetWnd", StringComparison.OrdinalIgnoreCase)) &&
             Regex.IsMatch(source, @"(?<!Methos)RecoveredName_255\(", RegexOptions.CultureInvariant))
         {
-            source = Regex.Replace(source, @"(?<!Methos)RecoveredName_255\(", "MethosRecoveredName_255(", RegexOptions.CultureInvariant);
+            source = Regex.Replace(source, @"(?<!Methos)RecoveredName_255\(", "MethosRecoveredName_218(", RegexOptions.CultureInvariant);
             applied.Add(className + " custom message calls preserved through UICommonAPI helper");
         }
 
