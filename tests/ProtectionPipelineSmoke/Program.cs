@@ -270,12 +270,11 @@ function OnLoad()
 string silentOverlayColorRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "Interface_by_SILENT", silentOverlayColorSample, out IReadOnlyList<string> silentOverlayColorRepairs);
 Check(silentOverlayColorRepairs.Count == 1 &&
-      silentOverlayColorRepaired.Contains("local Color whiteColor;", StringComparison.Ordinal) &&
-      silentOverlayColorRepaired.Contains("whiteColor.R = 255;", StringComparison.Ordinal) &&
-      silentOverlayColorRepaired.Contains("whiteColor.A = 255;", StringComparison.Ordinal) &&
-      silentOverlayColorRepaired.Contains("SetTextColor(\"OKTUBRE INTERFACE\", whiteColor)", StringComparison.Ordinal),
-    "Silent interface overlay white color was not restored as RGBA.");
-Console.WriteLine("PASS: Silent interface overlay uses a valid explicit white RGBA color.");
+      silentOverlayColorRepaired.Contains("MethosRecoveredName_85(\"white\")", StringComparison.Ordinal) &&
+      !silentOverlayColorRepaired.Contains("RecoveredName_98", StringComparison.Ordinal),
+    "Silent interface overlay color helper was not redirected to inherited Color API.");
+Console.WriteLine("PASS: Silent interface overlay uses the inherited Color API.");
+
 
 
 string recoveredColorHelperSample = """
