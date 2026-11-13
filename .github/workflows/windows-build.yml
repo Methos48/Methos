@@ -1,4 +1,4 @@
-name: Methos - Análisis y compilación Windows
+name: Methos - Análisis de paquetes U (Windows)
 
 on:
   workflow_dispatch:
