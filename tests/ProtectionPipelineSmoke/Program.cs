@@ -585,6 +585,22 @@ Check(partyMatchWaitListQuoteRepairs.Count == 1 &&
 Console.WriteLine("PASS: PartyMatchWaitListWnd quote literals are emitted as Chr(34) for UCC.");
 
 
+string partyWndSetNameSample = """
+class PartyWnd extends UICommonAPI;
+function UpdatePlayerName()
+{
+    m_PlayerName[idx].SetName("", 0, 2);
+}
+""";
+string partyWndSetNameRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "PartyWnd", partyWndSetNameSample, out IReadOnlyList<string> partyWndSetNameRepairs);
+Check(partyWndSetNameRepairs.Count == 1 &&
+      partyWndSetNameRepaired.Contains(
+          "m_PlayerName[idx].SetName(\"\", UIEventManager.ENameCtrlType(0), UIEventManager.ETextAlign(2));",
+          StringComparison.Ordinal),
+    "PartyWnd SetName arguments were not cast to the actual NWindow enum parameter types.");
+Console.WriteLine("PASS: PartyWnd.SetName arguments use the declared NWindow enum types.");
+
 string enumSwitchSample = """
 class ChatWnd extends UIScript;
 function Test()
