@@ -562,13 +562,18 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("Interface_by_SILENT", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal))
+            source.Contains("Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))", StringComparison.Ordinal) &&
+            source.Contains("local OptionWnd script;", StringComparison.Ordinal))
         {
             source = source.Replace(
-                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
-                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", RecoveredName_98(\"white\"))",
+                "local OptionWnd script;",
+                "local OptionWnd script;\n\tlocal Color MethosSilentTextColor;",
                 StringComparison.Ordinal);
-            applied.Add("Silent branding text color call restored with textbox handle and color arguments");
+            source = source.Replace(
+                "Class'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"OKTUBRE INTERFACE\", RecoveredName_98(\"white\"))",
+                "MethosSilentTextColor = RecoveredName_98(\"white\");\n\tClass'NWindow.UIAPI_TEXTBOX'.static.SetTextColor(\"Interface_by_SILENT.www_silentl2_com\", MethosSilentTextColor)",
+                StringComparison.Ordinal);
+            applied.Add("Silent branding text color call uses a typed local Color and the textbox handle");
         }
 
         if (className.Equals("LogoWnd", StringComparison.OrdinalIgnoreCase) &&
