@@ -679,6 +679,21 @@ Check(dunk3lToolTipBindingRepairs.Count == 1 &&
     "Dunk3l ToolTip max-width helper was not renamed consistently for UCC.");
 Console.WriteLine("PASS: Dunk3l ToolTip max-width helper has a collision-free symbol.");
 
+string dunk3lToolTipDeclarationOnlySample = """
+class ToolTip extends UICommonAPI;
+function int getMaxWidth()
+{
+    return TOOLTIP_MINIMUM_WIDTH;
+}
+""";
+string dunk3lToolTipDeclarationOnlyRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipDeclarationOnlySample, out IReadOnlyList<string> dunk3lToolTipDeclarationOnlyRepairs);
+Check(dunk3lToolTipDeclarationOnlyRepairs.Count == 1 &&
+      dunk3lToolTipDeclarationOnlyRepaired.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal) &&
+      !dunk3lToolTipDeclarationOnlyRepaired.Contains("function int getMaxWidth()", StringComparison.Ordinal),
+    "Dunk3l ToolTip helper declaration was not renamed when its decompiled call site was absent.");
+Console.WriteLine("PASS: Dunk3l ToolTip helper is renamed even when UELib omits its call site.");
+
 
 
 
