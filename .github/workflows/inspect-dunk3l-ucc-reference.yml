@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "tests/ProtectionPipelineSmoke/Program.cs"
+      - "Compilador  U.zip"
       - ".github/workflows/inspect-dunk3l-ucc-reference.yml"
   workflow_dispatch:
 permissions:
@@ -14,11 +15,6 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: Methos48/Methos-U-Editor
-          path: u-editor
-          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: dunk3l-u-decompiled-source-diagnostic
