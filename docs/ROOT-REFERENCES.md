@@ -7,7 +7,7 @@ La raíz todavía contiene insumos de clientes Lineage II, kits de compilación 
 | Archivo | Uso conocido |
 |---|---|
 | `Compilador  U.zip` | Kit UCC/Interlude usado por workflows de compilación y validación Unreal. |
-| `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` | Kit histórico del que el workflow Windows extrae la aplicación fuente y el motor XDAT para preparar el runtime. Es una dependencia pendiente de migrar. |
+| `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip` | Paquete histórico utilizado temporalmente solo para extraer el fixture `xdat completo/interface.xdat` en CI. No aporta código al ejecutable ni al runtime XDAT. Pendiente migrar ese fixture a `reference-data/` para poder retirar el ZIP. |
 | `Carpeta interface.u.zip` | Paquete de fuentes Unreal de referencia; revisar su consumidor exacto antes de moverlo. |
 | `engine.zip`, `system.zip` | Archivos del cliente usados por workflows de inspección de runtime, DLL y protección. |
 
