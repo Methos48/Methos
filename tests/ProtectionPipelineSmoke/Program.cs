@@ -258,6 +258,32 @@ Check(trailingReturnRepairs.SequenceEqual(new[] { "GetValue" }) &&
     "Unreachable bare return repair must affect only non-void functions with a preceding value return.");
 Console.WriteLine("PASS: unreachable trailing bare returns are removed without changing void functions.");
 
+var recoveredBoolSwitchSample = """
+class BoolSwitchSample extends Object;
+function bool NoblesseCele(int SkillID)
+{
+    switch(SkillID)
+    {
+        case 1323:
+        case 408:
+        case 1418:
+            return true;
+        default:
+            return false;
+            break;
+    }
+    return;
+}
+""";
+var boolSwitchRepair = UnrealScriptSourceIndex.RemoveRedundantTrailingReturns(recoveredBoolSwitchSample);
+Check(boolSwitchRepair.Repairs.Any(repair => repair.FunctionName == "NoblesseCele") &&
+      boolSwitchRepair.Source.Contains("default:", StringComparison.Ordinal) &&
+      boolSwitchRepair.Source.Contains("return false;", StringComparison.Ordinal) &&
+      !boolSwitchRepair.Source.Contains("    return;\n}", StringComparison.Ordinal),
+    "Recovered bool switch functions must replace UELib's invalid bare trailing return with a false fallback.");
+Console.WriteLine("PASS: recovered bool switch trailing returns are normalized to a valid false fallback.");
+
+
 static void Check(bool value, string message)
 {
     if (!value) throw new Exception(message);
