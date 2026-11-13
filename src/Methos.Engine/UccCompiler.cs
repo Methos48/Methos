@@ -321,7 +321,7 @@ public static class UccCompiler
     private static string NormalizeShortcutWndKeySettingReference(string className, string source)
     {
         if (!className.Equals("ShortcutWnd", StringComparison.OrdinalIgnoreCase) ||
-            !Regex.IsMatch(source, @"(?im)^\\s*var\\s+NPHRN_KeyWnd\\s+NPHRN_KeyWnd\\s*;"))
+            !Regex.IsMatch(source, @"(?im)^\s*var\s+NPHRN_KeyWnd\s+NPHRN_KeyWnd\s*;"))
             return source;
         source = source.Replace("InterfaceAI_KeySettingWnd", "NPHRN_KeyWnd",
             StringComparison.OrdinalIgnoreCase);
