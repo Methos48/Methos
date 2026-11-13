@@ -281,7 +281,7 @@ public static class UccCompiler
         restoredCount = 0;
         var additions = new List<string>();
         foreach (Match declaration in Regex.Matches(referenceSource,
-            @"(?im)^\s*var\s+(?<type>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)\s+(?<fields>[^;]+);"))
+            @"(?im)^\s*var\s+(?<type>array\s*<\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?\s*>|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)\s+(?<fields>[^;]+);"))
         {
             string type = declaration.Groups["type"].Value;
             foreach (string rawField in declaration.Groups["fields"].Value.Split(','))
@@ -290,7 +290,8 @@ public static class UccCompiler
                     @"^(?<name>[A-Za-z_]\w*)(?<array>\s*\[\s*\d+\s*\])?$");
                 if (!field.Success) continue;
                 string name = field.Groups["name"].Value;
-                bool knownType = availableClassNames.Contains(type) ||
+                bool knownType = Regex.IsMatch(type, @"^array\s*<\s*[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?\s*>$", RegexOptions.IgnoreCase) ||
+                    availableClassNames.Contains(type) ||
                     type.EndsWith("Handle", StringComparison.OrdinalIgnoreCase) ||
                     new[] { "int", "float", "bool", "string", "name", "byte", "object", "class",
                         "ItemInfo", "SkillInfo", "UserInfo", "Rect", "Vector", "Rotator", "Color" }
