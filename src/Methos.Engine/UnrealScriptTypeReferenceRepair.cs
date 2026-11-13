@@ -357,6 +357,33 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("TradeWnd", StringComparison.OrdinalIgnoreCase))
+        {
+            var tradeFunction = UnrealScriptSourceIndex.ParseFunctions(source)
+                .FirstOrDefault(item => item.Name.Equals("HandleTradeAddItem", StringComparison.OrdinalIgnoreCase));
+            if (tradeFunction is not null)
+            {
+                string body = source.Substring(tradeFunction.BodyOffset, tradeFunction.BodyLength);
+                const string declarationPairPattern =
+                    @"(?m)^(?<indent1>[ \t]*)local\s+ItemInfo\s+ItemInfo\s*;[ \t]*\r?\n(?<indent2>[ \t]*)local\s+ItemInfo\s+tempInfo\s*;";
+                var declarationPair = System.Text.RegularExpressions.Regex.Match(
+                    body, declarationPairPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (declarationPair.Success)
+                {
+                    string newline = declarationPair.Value.Contains("\r\n", StringComparison.Ordinal)
+                        ? "\r\n"
+                        : "\n";
+                    string reordered = declarationPair.Groups["indent1"].Value + "local ItemInfo tempInfo;" +
+                        newline + declarationPair.Groups["indent2"].Value + "local ItemInfo ItemInfo;";
+                    string updatedBody = body.Remove(declarationPair.Index, declarationPair.Length)
+                        .Insert(declarationPair.Index, reordered);
+                    source = source.Remove(tradeFunction.BodyOffset, tradeFunction.BodyLength)
+                        .Insert(tradeFunction.BodyOffset, updatedBody);
+                    applied.Add("TradeWnd.HandleTradeAddItem reordered same-type locals to avoid type-name shadowing");
+                }
+            }
+        }
+
         if ((className.Equals("ManorCropInfoChangeWnd", StringComparison.OrdinalIgnoreCase) ||
              className.Equals("ManorSeedInfoChangeWnd", StringComparison.OrdinalIgnoreCase)) &&
             source.Contains("string(int(1))", StringComparison.Ordinal))
