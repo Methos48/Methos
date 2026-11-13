@@ -6,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../methos_crypto/MethosCrypto.csproj" />
+    <ProjectReference Include="../../src/MethosUEngine/MethosUEngine.csproj" />
   </ItemGroup>
 </Project>
