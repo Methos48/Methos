@@ -738,9 +738,11 @@ function HandleHideLogo()
 
                 string className = Path.GetFileNameWithoutExtension(file);
                 string referencePath = Path.Combine(referenceClasses, Path.GetFileName(file));
+                string referenceSource = File.Exists(referencePath)
+                    ? File.ReadAllText(referencePath)
+                    : string.Empty;
                 if (File.Exists(referencePath))
                 {
-                    string referenceSource = File.ReadAllText(referencePath);
                     source = RestoreAutoPotionsWndPotionArray(className, source, referenceSource,
                         out bool restoredPotionArray);
                     if (restoredPotionArray) repairedIdentifiers++;
