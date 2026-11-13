@@ -530,17 +530,17 @@ function HandleHideLogo()
         var recovered = new List<string>();
         foreach (string functionName in new[] { "HandleHideLogo", "SetShortcutTransparencyNum" })
         {
-            if (Regex.IsMatch(source, @"(?im)^\\s*function\\s+" + Regex.Escape(functionName) + @"\\s*\\("))
+            if (Regex.IsMatch(source, @"(?im)^\s*function\s+" + Regex.Escape(functionName) + @"\s*\("))
                 continue;
             Match function = Regex.Match(referenceSource,
-                @"(?ims)^\\s*function\\s+" + Regex.Escape(functionName) +
-                @"\\s*\\([^)]*\\)[^\\{]*\\{.*?^\\s*\\}");
+                @"(?ims)^\s*function\s+" + Regex.Escape(functionName) +
+                @"\s*\([^)]*\)[^\{]*\{.*?^\s*\}");
             if (!function.Success) continue;
             recovered.Add(function.Value.Trim());
         }
 
         if (recovered.Count == 0) return source;
-        Match firstFunction = Regex.Match(source, @"(?im)^\\s*function\\b");
+        Match firstFunction = Regex.Match(source, @"(?im)^\s*function\b");
         if (!firstFunction.Success) return source;
         source = source.Insert(firstFunction.Index,
             string.Join(Environment.NewLine + Environment.NewLine, recovered) +
