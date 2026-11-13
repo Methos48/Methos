@@ -568,6 +568,16 @@ function AddTooltipItemOptionETC2(string TitleID, string Content, bool bTitle, b
             string.Join(Environment.NewLine + Environment.NewLine, additions) + Environment.NewLine + Environment.NewLine);
     }
 
+    // UIAPI_NAMECTRL.SetName takes ENameCtrlType and ETextAlign, not integers.
+    private static string NormalizeNameControlEnumArguments(string className, string source)
+    {
+        if (!className.Equals("StatusCustomWnd", StringComparison.OrdinalIgnoreCase))
+            return source;
+        return Regex.Replace(source,
+            @"(UIAPI_NAMECTRL'\.static\.SetName\([^,]+,[^,]+,\s*)0(\s*,\s*)1(\s*\))",
+            "$1ENameCtrlType(0)$2ETextAlign(1)$3", RegexOptions.IgnoreCase);
+    }
+
     // The LoadingWnd server-age local is an enum; UELib exposes its underlying
     // byte cast, which UCC correctly rejects when assigned back to the enum.
     private static string NormalizeLoadingWndServerAgeEnum(string className, string source)
@@ -964,6 +974,7 @@ function HandleHideLogo()
                 source = NormalizeShortcutWndKeySettingReference(className, source);
                 source = NormalizeChatFilterWndCaseLabels(className, source);
                 source = NormalizeLoadingWndServerAgeEnum(className, source);
+                source = NormalizeNameControlEnumArguments(className, source);
                 source = NormalizeEventMatchObserverMessageModeSwitch(className, source);
                 source = NormalizeTextBoxAlignEnum(className, source);
                 source = RestoreInventoryWndItemOrderArray(className, source,
