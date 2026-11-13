@@ -280,7 +280,7 @@ public static class UccCompiler
                     for (int lineIndex = 0; lineIndex < diagnosticLines.Length; lineIndex++)
                     {
                         string diagnosticLine = diagnosticLines[lineIndex];
-                        if (diagnosticLine.Contains("MethosRecovered", StringComparison.Ordinal) ||
+                        if (diagnosticLine.Contains("RecoveredFunction", StringComparison.Ordinal) ||
                             (diagnosticLine.Contains("function", StringComparison.OrdinalIgnoreCase) &&
                              diagnosticLine.Any(ch => char.IsControl(ch) && ch is not '\r' and not '\n' and not '\t')))
                             stagedSourceDiagnostics.Add($"InventoryWnd.uc:{lineIndex + 1}: {diagnosticLine}");
