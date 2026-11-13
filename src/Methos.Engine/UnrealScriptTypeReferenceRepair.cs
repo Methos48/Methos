@@ -612,18 +612,19 @@ public static class UnrealScriptTypeReferenceRepair
         }
 
         if (className.Equals("ToolTip", StringComparison.OrdinalIgnoreCase) &&
-            source.Contains("function int getMaxWidth()", StringComparison.Ordinal))
+            (source.Contains("function int getMaxWidth()", StringComparison.Ordinal) ||
+             (source.Contains("function int MethosTooltipGetMaxWidth()", StringComparison.Ordinal) &&
+              System.Text.RegularExpressions.Regex.IsMatch(source, @"\bgetMaxWidth\s*\("))))
         {
-            // The recovered helper may be emitted without its original call site when
-            // UELib cannot reconstruct the enclosing nested expression. Rename the
-            // declaration even in that case: the inherited UI API already exposes a
-            // similarly named symbol and Interlude UCC can reject the local binding.
-            // Replacing the whole identifier also preserves any call sites if present.
+            // Rename the original helper and any call sites restored in a later pass.
+            // The declaration may already have been renamed by package decompilation,
+            // while UCC staging can subsequently restore AddCrossLine from the reference
+            // source with its original getMaxWidth() call.
             source = System.Text.RegularExpressions.Regex.Replace(
                 source, @"\bgetMaxWidth\b", "MethosTooltipGetMaxWidth",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase |
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-            applied.Add("ToolTip max-width helper renamed to avoid inherited UCC symbol binding collision");
+            applied.Add("ToolTip max-width helper and restored call sites use the collision-free UCC symbol");
         }
 
         if (className.Equals("TargetStatusWnd", StringComparison.OrdinalIgnoreCase) &&
