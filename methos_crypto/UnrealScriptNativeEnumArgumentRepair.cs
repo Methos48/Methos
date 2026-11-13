@@ -61,4 +61,54 @@ public static class UnrealScriptNativeEnumArgumentRepair
         repairs = applied;
         return repaired;
     }
+
+    private static readonly IReadOnlyDictionary<int, string> DialogTypeNames =
+        new Dictionary<int, string>
+        {
+            [0] = "DIALOG_OKCancel",
+            [1] = "DIALOG_OK",
+            [2] = "DIALOG_OKCancelInput",
+            [3] = "DIALOG_OKInput",
+            [4] = "DIALOG_Warning",
+            [5] = "DIALOG_Notice",
+            [6] = "DIALOG_NumberPad",
+            [7] = "DIALOG_Progress",
+            [8] = "DIALOG_Block",
+            [9] = "DIALOG_Silent"
+        };
+
+    /// <summary>
+    /// Restores the EDialogType identifier for numeric DialogShow calls made
+    /// inside UICommonAPI itself. UCC requires the enum identifier for this
+    /// same-class call even though the decompiler emits the underlying byte.
+    /// </summary>
+    public static string RepairKnownDialogTypeArguments(
+        string className, string source, out IReadOnlyList<string> repairs)
+    {
+        ArgumentNullException.ThrowIfNull(className);
+        ArgumentNullException.ThrowIfNull(source);
+        var applied = new List<string>();
+        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
+        {
+            repairs = applied;
+            return source;
+        }
+
+        string repaired = Regex.Replace(
+            source,
+            @"(?<![A-Za-z0-9_])DialogShow\\s*\\(\\s*(?<value>\\d+)\\s*,",
+            match =>
+            {
+                if (!int.TryParse(match.Groups["value"].Value, out int value) ||
+                    !DialogTypeNames.TryGetValue(value, out string? enumName))
+                    return match.Value;
+                applied.Add($"{value} -> {enumName}");
+                return Regex.Replace(match.Value, @"(?<=\\()\\s*\\d+", enumName);
+            },
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        repairs = applied;
+        return repaired;
+    }
+
 }
