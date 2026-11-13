@@ -47,6 +47,98 @@ if (args.Length > 0 && args[0] == "--inspect-decompile")
     return;
 }
 
+if (args.Length > 0 && args[0] == "--interface-u-edit-roundtrip")
+{
+    if (args.Length != 5)
+        throw new ArgumentException("Usage: --interface-u-edit-roundtrip <uccRuntimeRoot> <protectedPackage.u> <outputProtected.u> <sourceOutputDirectory>");
+    string runtimeRoot = Path.GetFullPath(args[1]);
+    string inputPath = Path.GetFullPath(args[2]);
+    string outputPath = Path.GetFullPath(args[3]);
+    string sourceDirectory = Path.GetFullPath(args[4]);
+    byte[] original = File.ReadAllBytes(inputPath);
+    var inspection = ProtectionPipelinePlanner.InspectFullPipeline(original, inputPath);
+    if (!inspection.IsPlaintextCandidate || !inspection.Plan.CanDecode)
+        throw new InvalidDataException($"Interface.u protection cannot be decoded safely: {inspection.Plan.Status}; {inspection.Plan.Explanation}");
+    if (inspection.Plan.Layers.Any(layer => !layer.EncodeAvailable))
+        throw new InvalidDataException("At least one detected protection layer has no verified encoder; refusing to modify this Interface.u.");
+    byte[] originalPlain = inspection.DecodedPayload;
+    var originalIndex = UnrealPackageIndex.Parse(originalPlain);
+    string temporaryPackage = Path.Combine(Path.GetTempPath(), "Methos-Interface-U-" + Guid.NewGuid().ToString("N") + ".u");
+    try
+    {
+        File.WriteAllBytes(temporaryPackage, originalPlain);
+        UnrealPackageDecompileResult decompiled = UnrealPackageDecompiler.DecompileToFolder(
+            temporaryPackage, sourceDirectory);
+        if (decompiled.FailedCount != 0 || decompiled.ExportedCount != decompiled.ClassCount)
+            throw new InvalidDataException($"Interface.u decompilation incomplete: {decompiled.ExportedCount}/{decompiled.ClassCount}, errors={decompiled.FailedCount}.");
+
+        string[] sourceFiles = Directory.GetFiles(sourceDirectory, "*.uc", SearchOption.TopDirectoryOnly);
+        string? selectedSource = sourceFiles.FirstOrDefault(file =>
+            Path.GetFileNameWithoutExtension(file).Equals("ToolTip", StringComparison.OrdinalIgnoreCase));
+        selectedSource ??= sourceFiles.OrderBy(file => Path.GetFileName(file), StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+        if (selectedSource is null)
+            throw new InvalidDataException("No UnrealScript class source was exported for the edit probe.");
+        const string editProbe = "MethosRoundTripProbe_20261113";
+        string source = File.ReadAllText(selectedSource);
+        int classEnd = source.IndexOf(';');
+        if (classEnd < 0 || !source.TrimStart().StartsWith("class ", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException($"Selected class source has no recognizable class declaration: {Path.GetFileName(selectedSource)}.");
+        if (source.Contains(editProbe, StringComparison.Ordinal))
+            throw new InvalidDataException("The U edit marker already exists; expected a clean original source.");
+        source = source.Insert(classEnd + 1, Environment.NewLine + "var string " + editProbe + ";" + Environment.NewLine);
+        File.WriteAllText(selectedSource, source, new UTF8Encoding(false));
+        Console.WriteLine($"EDITED_CLASS={Path.GetFileNameWithoutExtension(selectedSource)}; MARKER={editProbe}");
+
+        UccCompileResult compiled = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
+        byte[] compiledPackage = UnrealNameSanitizer.RestoreOriginalNames(compiled.PackageBytes, sourceDirectory);
+        var compiledIndex = UnrealPackageIndex.Parse(compiledPackage);
+        if (!compiledIndex.Names.Contains(editProbe, StringComparer.Ordinal))
+            throw new InvalidDataException($"UCC output does not contain the edited class marker {editProbe}.");
+
+        byte[] rebuiltProtected;
+        if (inspection.Plan.Layers.Count == 0)
+        {
+            rebuiltProtected = compiledPackage;
+        }
+        else
+        {
+            if (inspection.SmartCryptProfile is not null && inspection.Lineage2CustomTailProfile is not null)
+            {
+                var lineageCodec = new Lineage2Ver111CustomTailCodec(inspection.Lineage2CustomTailProfile);
+                var smartCodec = new SmartCrypt1522Codec(inspection.SmartCryptProfile);
+                byte[] lineage = lineageCodec.Encode(compiledPackage, Path.GetFileName(inputPath));
+                rebuiltProtected = smartCodec.Encode(lineage, Path.GetFileName(inputPath));
+                byte[] verifiedLineage = smartCodec.Decode(rebuiltProtected, Path.GetFileName(inputPath));
+                if (!verifiedLineage.AsSpan().SequenceEqual(lineage))
+                    throw new InvalidDataException("SmartCrypt verification failed after Interface.u recompilation.");
+                byte[] verifiedPackage = lineageCodec.Decode(verifiedLineage, Path.GetFileName(inputPath));
+                if (!verifiedPackage.AsSpan().SequenceEqual(compiledPackage))
+                    throw new InvalidDataException("Lineage2 verification failed after Interface.u recompilation.");
+            }
+            else
+            {
+                throw new NotSupportedException("This Interface.u protection chain has no complete, verified re-encoder.");
+            }
+        }
+
+        var finalInspection = ProtectionPipelinePlanner.InspectFullPipeline(rebuiltProtected, inputPath);
+        if (!finalInspection.IsPlaintextCandidate || !finalInspection.DecodedPayload.AsSpan().SequenceEqual(compiledPackage))
+            throw new InvalidDataException("Reopening the rebuilt protected Interface.u did not reproduce the compiled package.");
+        var finalIndex = UnrealPackageIndex.Parse(finalInspection.DecodedPayload);
+        if (!finalIndex.Names.Contains(editProbe, StringComparer.Ordinal))
+            throw new InvalidDataException("The edited class marker did not persist after protection and reopening.");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        File.WriteAllBytes(outputPath, rebuiltProtected);
+        Console.WriteLine($"PASS: INTERFACE U MODIFIED edit/compile/protect/reopen round-trip; marker={editProbe}; persisted=true; original={originalIndex.Summary.Version}/{originalIndex.Summary.LicenseeVersion}; compiled={finalIndex.Summary.Version}/{finalIndex.Summary.LicenseeVersion}; classes={decompiled.ExportedCount}; protection={inspection.Plan.Status}; bytes={rebuiltProtected.Length}.");
+    }
+    finally
+    {
+        try { if (File.Exists(temporaryPackage)) File.Delete(temporaryPackage); } catch { }
+    }
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--ucc-decompile")
 {
     if (args.Length is < 3 or > 4)
