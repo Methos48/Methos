@@ -168,13 +168,13 @@ if (args.Length >= 4 && args[0] == "--ucc-compile")
     UccCompileResult result = UccCompiler.CompileInterface(runtimeRoot, sourceDirectory);
     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
     File.WriteAllBytes(outputPath, result.PackageBytes);
-    var originalIndex = UnrealPackageIndex.Open("Interface.u");
+    var originalIndex = UnrealPackageIndex.Open("reference-data/Interface-UEditor.u");
     if (result.NameCount != originalIndex.Names.Count ||
         result.ImportCount != originalIndex.Imports.Count ||
         result.ExportCount != originalIndex.Exports.Count)
         throw new Exception("UCC output table counts differ from the original Interface.u.");
 
-    using var originalPackage = UnrealLoader.LoadPackage("Interface.u", FileAccess.Read);
+    using var originalPackage = UnrealLoader.LoadPackage("reference-data/Interface-UEditor.u", FileAccess.Read);
     using var uccBackendPackage = UnrealLoader.LoadPackage(outputPath, FileAccess.Read);
     originalPackage.InitializePackage();
     uccBackendPackage.InitializePackage();
