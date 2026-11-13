@@ -156,17 +156,15 @@ jobs:
           $referenceText = [IO.File]::ReadAllText($referenceFile)
           $functionName = "GetClassIconToClan"
           if ($sourceText -notmatch ('(?im)^\s*function\s+[^\r\n]*\b' + $functionName + '\s*\(')) {
-            $pattern = '(?ms)^\s*function\s+[^\r\n]*\b' + [regex]::Escape($functionName) + '\s*\([^)]*\)\s*\{.*?^\s*\}'
-            $match = [regex]::Match($referenceText, $pattern)
-            if (!$match.Success) { throw "Exact reference function $functionName was not found in ClanWnd.uc." }
-            $sourceText = $sourceText.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine + $match.Value.Trim() + [Environment]::NewLine
-            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
-            Write-Host "ANIMAL_RESTORED_FUNCTION=$functionName"
+            $referenceFiles = @(Get-ChildItem -LiteralPath (Join-Path $env:ANIMAL_UCC_ROOT "Interlude") -Filter "*.uc" -File -Recurse)
+            $matches = @($referenceFiles | Select-String -SimpleMatch -Pattern $functionName -Context 2,20)
+            Write-Host "===== GLOBAL REFERENCE SEARCH: $functionName ====="
+            $matches | ForEach-Object { Write-Host ("FILE=" + $_.Path + " LINE=" + $_.LineNumber); Write-Host $_.Context.PreContext; Write-Host $_.Line; Write-Host $_.Context.PostContext }
+            if ($matches.Count -eq 0) { throw "Function $functionName was not found in any Interlude reference source." }
+            Write-Host "ANIMAL_GLOBAL_REFERENCE_MATCHES=$($matches.Count)"
           } else {
             Write-Host "ANIMAL_FUNCTION_ALREADY_PRESENT=$functionName"
           }
-          Write-Host "===== REFERENCE FUNCTION ====="
-          Select-String -LiteralPath $referenceFile -SimpleMatch -Pattern $functionName -Context 3,24
 
       - name: Compile unmodified Animal sources
         shell: pwsh
