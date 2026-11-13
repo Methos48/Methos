@@ -313,7 +313,8 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
-        if (className.Equals("ManorCropInfoChangeWnd", StringComparison.OrdinalIgnoreCase) &&
+        if ((className.Equals("ManorCropInfoChangeWnd", StringComparison.OrdinalIgnoreCase) ||
+             className.Equals("ManorSeedInfoChangeWnd", StringComparison.OrdinalIgnoreCase)) &&
             source.Contains("string(int(1))", StringComparison.Ordinal))
         {
             source = source.Replace("string(int(1))", "string(1)", StringComparison.Ordinal);
