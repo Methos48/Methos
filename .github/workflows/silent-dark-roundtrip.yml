@@ -8,7 +8,7 @@ on:
       - "reference-data/packages/silent-dark/**"
       - ".github/workflows/silent-dark-roundtrip.yml"
       - "src/Methos.Engine/**"
-      - "src/Methos.Engine/**"
+      - "src/Methos.App/**"
       - "reference-data/ucc-runtime/System/**"
       - "tools/xdat/**"
   workflow_dispatch:
@@ -55,15 +55,19 @@ jobs:
           Expand-Archive -LiteralPath "reference-data/packages/silent-dark/Carpeta-interface-u.zip" -DestinationPath "$env:RUNNER_TEMP\silent-u" -Force
           New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\ucc-kit\Interlude\System" | Out-Null
           Copy-Item "reference-data\ucc-runtime\System\*" "$env:RUNNER_TEMP\ucc-kit\Interlude\System" -Recurse -Force
-          $src = Join-Path $env:RUNNER_TEMP "silent-u\Carpeta interface.u"
+          $referenceSources = Join-Path $env:RUNNER_TEMP "silent-u\Carpeta interface.u"
           $kit = Join-Path $env:RUNNER_TEMP "ucc-kit"
-          if (!(Test-Path $src)) { throw "Silent Dark .uc source folder missing" }
+          $package = (Resolve-Path "reference-data\packages\silent-dark\Interface.u").Path
+          if (!(Test-Path $referenceSources)) { throw "Silent Dark .uc reference folder missing" }
           if (!(Test-Path "$kit\Interlude\System\ucc.exe")) { throw "UCC runtime missing" }
-          $count = @(Get-ChildItem $src -Filter "*.uc" -File -Recurse).Count
-          if ($count -lt 100) { throw "Unexpectedly few Silent Dark .uc sources: $count" }
-          "SILENT_U_SOURCES=$src" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $count = @(Get-ChildItem $referenceSources -Filter "*.uc" -File -Recurse).Count
+          if ($count -lt 100) { throw "Unexpectedly few Silent Dark reference .uc sources: $count" }
+          "SILENT_U_SOURCES=$referenceSources" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SILENT_U_REFERENCE_SOURCES=$referenceSources" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SILENT_U_PACKAGE=$package" | Out-File -FilePath $env:GITHUB_ENV -Append
           "UCC_KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "SILENT_DARK_UC_SOURCE_COUNT=$count"
+          Write-Host "SILENT_DARK_REFERENCE_SOURCE_COUNT=$count"
+          Write-Host "SILENT_DARK_PACKAGE=$package"
           $diagnostics = Join-Path $env:RUNNER_TEMP "SilentDark-Diagnostics"
           New-Item -ItemType Directory -Force $diagnostics | Out-Null
           $offender = Get-ChildItem -LiteralPath $src -Filter "AutoSkillWnd.uc" -File -Recurse | Select-Object -First 1
@@ -144,45 +148,67 @@ jobs:
           using UELib;
           using UELib.Core;
           var cli = Environment.GetCommandLineArgs().Skip(1).ToArray();
-          if (cli.Length != 4) throw new ArgumentException("Expected mode, runtime, sources/package, output");
+          if (cli.Length < 4 || cli.Length > 5) throw new ArgumentException("Expected mode, runtime, source/package, output, and optional reference sources");
           if (cli[0] == "compile") {
               try {
                   var result = UccCompiler.CompileInterface(cli[1], cli[2]);
-                  File.WriteAllBytes(cli[3], result.PackageBytes);
+                  byte[] restored = UnrealNameSanitizer.RestoreOriginalNames(result.PackageBytes, cli[2]);
+                  File.WriteAllBytes(cli[3], restored);
                   File.WriteAllText(cli[3] + ".log", result.CompilerOutput);
-                  Console.WriteLine($"UCC_COMPILE_OK bytes={result.PackageBytes.Length} profile={result.ProfileDescription} names={result.NameCount} imports={result.ImportCount} exports={result.ExportCount}");
+                  Console.WriteLine($"UCC_COMPILE_OK bytes={restored.Length} profile={result.ProfileDescription} names={result.NameCount} imports={result.ImportCount} exports={result.ExportCount}");
               } catch (Exception ex) {
                   File.WriteAllText(cli[3] + ".log", ex.ToString());
                   throw;
               }
           } else if (cli[0] == "decompile") {
               Directory.CreateDirectory(cli[3]);
-              using var package = UnrealLoader.LoadPackage(cli[2], FileAccess.Read);
-              package.InitializePackage();
-              var classes = package.Objects.OfType<UClass>().Where(o => (int)o > 0).ToList();
-              int ok = 0, failed = 0;
-              foreach (var obj in classes) {
-                  try {
-                      var source = obj.Decompile();
-                      var name = obj.Name?.ToString() ?? $"Class_{ok}";
-                      var safe = string.Concat(name.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch));
-                      File.WriteAllText(Path.Combine(cli[3], safe + ".uc"), source);
-                      ok++;
-                  } catch (Exception ex) { failed++; Console.WriteLine($"DECOMPILE_WARNING {obj.Name}: {ex.Message}"); }
+              byte[] protectedBytes = File.ReadAllBytes(cli[2]);
+              var inspection = ProtectionPipelinePlanner.InspectFullPipeline(protectedBytes, cli[2]);
+              if (!inspection.IsPlaintextCandidate || !inspection.Plan.CanDecode)
+                  throw new InvalidDataException($"Silent Dark package cannot be decoded safely: {inspection.Plan.Status}; {inspection.Plan.Explanation}");
+              string plainPath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-" + Guid.NewGuid().ToString("N") + ".u");
+              string registryPath = Path.Combine(Path.GetTempPath(), "Methos-SilentDark-Natives-" + Guid.NewGuid().ToString("N") + ".json");
+              try {
+                  File.WriteAllBytes(plainPath, inspection.DecodedPayload);
+                  NativeFunctionRegistryBuilder.Build(cli[1], registryPath);
+                  var result = UnrealPackageDecompiler.DecompileToFolder(
+                      plainPath, cli[3], cli.Length == 5 ? cli[4] : null, registryPath);
+                  Console.WriteLine($"UELIB_DECOMPILE classes={result.ClassCount} exported={result.ExportedCount} failed={result.FailedCount} sanitizedNames={result.SanitizedNameCount}");
+                  foreach (string error in result.Errors.Take(20)) Console.WriteLine("DECOMPILE_WARNING " + error);
+                  if (result.ExportedCount < 100 || result.FailedCount > 0)
+                      throw new Exception("Methos decompile validation failed");
+              } finally {
+                  if (File.Exists(plainPath)) File.Delete(plainPath);
+                  if (File.Exists(registryPath)) File.Delete(registryPath);
               }
-              Console.WriteLine($"UELIB_DECOMPILE classes={classes.Count} ok={ok} failed={failed}");
-              if (ok < 100 || failed > 0) throw new Exception("Decompile validation failed");
           } else throw new ArgumentException("Unknown mode");
           '@ | Set-Content (Join-Path $h "Program.cs")
           dotnet build (Join-Path $h "RoundTrip.csproj") --configuration Release
           if ($LASTEXITCODE -ne 0) { throw "Methos test harness build failed" }
           "HARNESS_PROJECT=$h\RoundTrip.csproj" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Decompile original Silent Dark package with Methos name recovery
+        shell: pwsh
+        run: |
+          $generated = Join-Path $env:RUNNER_TEMP "SilentDark-Generated-Sources"
+          dotnet run --project $env:HARNESS_PROJECT --configuration Release --no-build -- decompile $env:UCC_KIT $env:SILENT_U_PACKAGE $generated $env:SILENT_U_REFERENCE_SOURCES
+          if ($LASTEXITCODE -ne 0) { throw "Methos could not decompile the original Silent Dark Interface.u" }
+          $classes = @(Get-ChildItem $generated -Filter "*.uc" -File).Count
+          if ($classes -lt 100) { throw "Methos generated too few Silent Dark classes: $classes" }
+          if (!(Test-Path (Join-Path $generated "methos_name_map.json"))) { throw "Methos reversible name map was not generated" }
+          "SILENT_U_GENERATED_SOURCES=$generated" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "METHOS_GENERATED_SILENT_DARK_CLASSES=$classes"
+          $inventory = Join-Path $generated "InventoryWnd.uc"
+          if (Test-Path $inventory) {
+            Select-String -LiteralPath $inventory -Pattern "function MethosRecoveredName_|function !" | ForEach-Object { Write-Host $_.Line }
+            Get-Content -LiteralPath $inventory | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP "SilentDark-InventoryWnd-Generated.uc")
+          }
+
       - name: Compile Silent Dark Interface.u using Methos UCC pipeline
         shell: pwsh
         run: |
           $out = Join-Path $env:RUNNER_TEMP "SilentDark-Compiled-Interface.u"
-          dotnet run --project $env:HARNESS_PROJECT --configuration Release --no-build -- compile $env:UCC_KIT $env:SILENT_U_SOURCES $out
+          dotnet run --project $env:HARNESS_PROJECT --configuration Release --no-build -- compile $env:UCC_KIT $env:SILENT_U_GENERATED_SOURCES $out
           if ($LASTEXITCODE -ne 0) { throw "Silent Dark UCC compile failed" }
           if (!(Test-Path $out) -or (Get-Item $out).Length -lt 65536) { throw "Compiled Silent Dark Interface.u missing or invalid" }
           "SILENT_U_OUTPUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
