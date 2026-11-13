@@ -34,6 +34,19 @@ jobs:
           "KIT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
           "SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "REFERENCE_UC_CLASSES=$($classes.Count)"
+      - name: Inspect SetName API signatures in the matching UCC kit
+        shell: pwsh
+        run: |
+          $apiFiles = @(Get-ChildItem -LiteralPath $env:KIT -Filter "*.uc" -File -Recurse)
+          $signatures = @($apiFiles | Select-String -Pattern '^\s*(?:native(?:\s*\([^)]*\))?\s+)?function\s+.*\bSetName\s*\(')
+          if ($signatures.Count -eq 0) {
+            Write-Host "No UnrealScript SetName declaration found in the kit sources."
+            Write-Host "Available NWindow source files:"
+            Get-ChildItem -LiteralPath $env:KIT -Directory -Recurse | Where-Object { $_.Name -match "NWindow|Window" } | Select-Object -ExpandProperty FullName
+          } else {
+            $signatures | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+          }
+
       - name: Compile the full Interface.u source set using Methos UccCompiler
         shell: pwsh
         run: |
