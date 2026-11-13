@@ -128,3 +128,5 @@ Con la migración y la compilación automatizada confirmadas, continuar la valid
 
 - **Auditoría adicional de dependencias:** `src/MethosUEngine/` es el motor compilado por el proyecto .NET. `methos_crypto/` contiene variantes históricas/experimentales y no debe confundirse con la carpeta que compila la aplicación. Asimismo, `tools/xdat/xdat_core.py` está versionado, pero el workflow de lanzamiento todavía extrae el motor XDAT del ZIP histórico `Methos_XDAT_Windows_Build_Kit_v1.0 (1).zip`. Esta duplicación quedó documentada como pendiente; no se borró el ZIP ni se afirmó que `tools/xdat` ya sea la única fuente efectiva del instalador.
 - **Compatibilidad de datos:** se mantienen rutas antiguas de caché y respaldos bajo `%LOCALAPPDATA%` para no romper datos existentes; sus nombres históricos no representan programas separados.
+
+- Se retiró también el workflow temporal `.github/workflows/migrate-unified.yml`: la migración del repositorio ya está completada y no debe repetirse como tarea activa.
