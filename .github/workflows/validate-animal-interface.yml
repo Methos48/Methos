@@ -617,7 +617,7 @@ jobs:
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $env:ANIMAL_CLEAN_OUTPUT $reopened "$env:ANIMAL_UCC_ROOT/Interlude/Interface/Classes"
           if ($LASTEXITCODE -ne 0) { throw "Animal clean rebuilt package could not be reopened." }
           $count = @(Get-ChildItem -LiteralPath $reopened -Filter "*.uc" -File).Count
-          if ($count -ne 159) { throw "Clean rebuilt package reopened with $count classes, expected 159." }
+          if ($count -ne 160) { throw "Clean rebuilt package reopened with $count classes, expected 160 (159 original exports plus the restored missing class)." }
           Write-Host "PASS: ANIMAL_CLEAN_REOPENED_CLASSES=$count"
 
       - name: Create an isolated real-edit test source copy
