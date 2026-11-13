@@ -69,14 +69,6 @@ jobs:
           $apiDir = Join-Path $env:RUNNER_TEMP "NWindow-API"
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile (Join-Path $env:UCC_ROOT "Interlude/System/NWindow.u") $apiDir
           if ($LASTEXITCODE -ne 0) { Write-Warning "NWindow API source export was incomplete; continuing with Berserker diagnostic." }
-      - name: Export Interactions enum definitions for compiler diagnostics
-        shell: pwsh
-        run: |
-          $interactionDir = Join-Path $env:RUNNER_TEMP "Interactions-API"
-          $interactionPackage = Join-Path $env:UCC_ROOT "Interlude/System/Interactions.u"
-          if (!(Test-Path -LiteralPath $interactionPackage)) { throw "Interlude Interactions.u is missing." }
-          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $interactionPackage $interactionDir
-          if ($LASTEXITCODE -ne 0) { throw "Could not export Interactions.u enum definitions." }
       - name: Decode, modify, compile, re-encode and reopen Berserker Interface.u
         shell: pwsh
         run: |
@@ -103,7 +95,6 @@ jobs:
           path: |
             ${{ runner.temp }}/Berserker-U-RoundTrip
             ${{ runner.temp }}/NWindow-API
-            ${{ runner.temp }}/Interactions-API
             ${{ runner.temp }}/Reference-Interface-Classes
           if-no-files-found: warn
           retention-days: 14
