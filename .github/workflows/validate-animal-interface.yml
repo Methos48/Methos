@@ -147,6 +147,27 @@ jobs:
             Write-Host "ANIMAL_REFERENCE_CLASS_ALREADY_PRESENT=$className"
           }
 
+      - name: Restore missing Animal ClanWnd helper from exact reference
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "ClanWnd.uc"
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/ClanWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $referenceText = [IO.File]::ReadAllText($referenceFile)
+          $functionName = "GetClassIconToClan"
+          if ($sourceText -notmatch ('(?im)^\s*function\s+[^\r\n]*\b' + $functionName + '\s*\(')) {
+            $pattern = '(?ms)^\s*function\s+[^\r\n]*\b' + [regex]::Escape($functionName) + '\s*\([^)]*\)\s*\{.*?^\s*\}'
+            $match = [regex]::Match($referenceText, $pattern)
+            if (!$match.Success) { throw "Exact reference function $functionName was not found in ClanWnd.uc." }
+            $sourceText = $sourceText.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine + $match.Value.Trim() + [Environment]::NewLine
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_FUNCTION=$functionName"
+          } else {
+            Write-Host "ANIMAL_FUNCTION_ALREADY_PRESENT=$functionName"
+          }
+          Write-Host "===== REFERENCE FUNCTION ====="
+          Select-String -LiteralPath $referenceFile -SimpleMatch -Pattern $functionName -Context 3,24
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
