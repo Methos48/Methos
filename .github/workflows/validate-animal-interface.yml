@@ -112,6 +112,27 @@ jobs:
           Select-String -LiteralPath $referenceFile -SimpleMatch -Pattern "function int GetItemType" -Context 0,35
           Write-Host "===== RESTORED SOURCE FUNCTIONS ====="
           Select-String -LiteralPath $sourceFile -SimpleMatch -Pattern "function int GetItemType","function InsertPotion"
+      - name: Diagnose unresolved Animal class references
+        shell: pwsh
+        run: |
+          $typeName = "InterfaceAI_KeySettingWnd"
+          $sourceRoot = $env:ANIMAL_SOURCES
+          $referenceRoot = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes"
+          Write-Host "===== DECLARATIONS IN DECOMPILED SOURCES ====="
+          Get-ChildItem -LiteralPath $sourceRoot -Filter "*.uc" -File | Select-String -SimpleMatch -Pattern "class InterfaceAI_KeySettingWnd","class InterfaceAI_KeySettingWnd extends"
+          Write-Host "===== DECLARATIONS IN ORIGINAL REFERENCE SOURCES ====="
+          if (Test-Path -LiteralPath $referenceRoot) {
+            Get-ChildItem -LiteralPath $referenceRoot -Filter "*.uc" -File | Select-String -SimpleMatch -Pattern "class InterfaceAI_KeySettingWnd","class InterfaceAI_KeySettingWnd extends"
+          }
+          Write-Host "===== RELATED CLASS FILES ====="
+          Get-ChildItem -LiteralPath $sourceRoot -Filter "*InterfaceAI*" -File | Select-Object -ExpandProperty Name
+          Get-ChildItem -LiteralPath $referenceRoot -Filter "*InterfaceAI*" -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+          Write-Host "===== TYPE REFERENCES ====="
+          Get-ChildItem -LiteralPath $sourceRoot -Filter "*.uc" -File | Select-String -SimpleMatch -Pattern "InterfaceAI_KeySettingWnd" -Context 2,2
+          Write-Host "===== CLASS NAME MAP MATCHES ====="
+          $map = Join-Path $sourceRoot "methos_name_map.json"
+          if (Test-Path -LiteralPath $map) { Select-String -LiteralPath $map -SimpleMatch -Pattern "InterfaceAI_KeySettingWnd" }
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
