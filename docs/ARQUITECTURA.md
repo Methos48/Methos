@@ -55,11 +55,11 @@ El único workflow oficial de distribución es `.github/workflows/windows-releas
 
 Los demás workflows realizan pruebas, inspecciones o investigación. No deben crear un segundo producto ni instaladores independientes.
 
-## Repositorios y ramas históricos
+## Organización de ramas de Methos
 
-El repositorio oficial es exclusivamente `Methos48/Methos`. El repositorio auxiliar `Methos48/Methos-Interface` tiene su rama principal sin archivos de producto, pero el repositorio todavía existe en GitHub. Las ramas `migration/*`, `research/*` y `work/*` que permanezcan visibles en el repositorio oficial son referencias históricas, no ramas activas.
-
-No continuar trabajo en esas ubicaciones. Su eliminación definitiva es una tarea administrativa de GitHub; no se debe confundir el hecho de que estén vacías o inactivas con que hayan sido borradas.
+- `main` es la única rama activa para desarrollar, integrar, validar y distribuir Methos.
+- Las ramas `migration/*`, `research/*` y `work/*` que sigan visibles son referencias históricas. No son líneas de producto ni deben recibir desarrollo nuevo.
+- Antes de eliminar una rama histórica, se debe revisar si contiene commits o archivos únicos que deban conservarse. No eliminar referencias sin esa auditoría.
 
 ## Compatibilidad de datos locales
 
