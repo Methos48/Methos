@@ -508,6 +508,23 @@ jobs:
           Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*NWindow*" -File -Recurse | Select-Object -ExpandProperty FullName | Select-Object -First 80
           Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*Interface*" -File -Recurse | Select-Object -ExpandProperty FullName | Select-Object -First 80
 
+      - name: Restore Animal StatusCustomWnd name control enums
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "StatusCustomWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $oldCall = 'Class''NWindow.UIAPI_NAMECTRL''.static.SetName("StatusCustomWnd.UserName", UserInfo.Name, 0, 1);'
+          $newCall = 'Class''NWindow.UIAPI_NAMECTRL''.static.SetName("StatusCustomWnd.UserName", UserInfo.Name, NCT_Normal, TA_Center);'
+          if ($sourceText.Contains($oldCall)) {
+            $sourceText = $sourceText.Replace($oldCall, $newCall)
+            [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+            Write-Host "ANIMAL_RESTORED_NAMECTRL_ENUMS=NCT_Normal,TA_Center"
+          } elseif ($sourceText.Contains($newCall)) {
+            Write-Host "ANIMAL_NAMECTRL_ENUMS_ALREADY_RESTORED=true"
+          } else {
+            throw "Expected StatusCustomWnd SetName call was not found; refusing a broad replacement."
+          }
+
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
