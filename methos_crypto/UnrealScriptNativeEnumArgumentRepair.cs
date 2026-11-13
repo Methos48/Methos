@@ -111,4 +111,46 @@ public static class UnrealScriptNativeEnumArgumentRepair
         return repaired;
     }
 
+    private static readonly IReadOnlyDictionary<int, string> DrawItemTypeNames =
+        new Dictionary<int, string>
+        {
+            [0] = "DIT_BLANK",
+            [1] = "DIT_TEXT",
+            [2] = "DIT_TEXTURE"
+        };
+
+    /// <summary>
+    /// Restores typed DrawItemInfo.eType enum assignments in UICommonAPI.
+    /// The values are defined by UIEventManager.EDrawItemType in the
+    /// verified Interlude native API source.
+    /// </summary>
+    public static string RepairKnownDrawItemTypeAssignments(
+        string className, string source, out IReadOnlyList<string> repairs)
+    {
+        ArgumentNullException.ThrowIfNull(className);
+        ArgumentNullException.ThrowIfNull(source);
+        var applied = new List<string>();
+        if (!className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase))
+        {
+            repairs = applied;
+            return source;
+        }
+
+        string repaired = Regex.Replace(
+            source,
+            @"(?<target>(?:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*(?:\\s*\\[[^\\]]+\\])*)\\.eType)\\s*=\\s*(?<value>[0-2])\\b",
+            match =>
+            {
+                if (!int.TryParse(match.Groups["value"].Value, out int value) ||
+                    !DrawItemTypeNames.TryGetValue(value, out string? enumName))
+                    return match.Value;
+                applied.Add($"{match.Groups["target"].Value}: {value} -> {enumName}");
+                return $"{match.Groups["target"].Value} = UIEventManager.{enumName}";
+            },
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        repairs = applied;
+        return repaired;
+    }
+
 }
