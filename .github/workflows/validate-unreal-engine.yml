@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - "methos_crypto/**"
+      - "Compilador  U.zip"
+      - "reference-data/**"
+      - "interface.u"
       - "tests/ProtectionPipelineSmoke/**"
       - ".github/workflows/validate-unreal-engine.yml"
   workflow_dispatch:
@@ -14,11 +17,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: Methos48/Methos-U-Editor
-          path: u-editor
-          persist-credentials: false
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
