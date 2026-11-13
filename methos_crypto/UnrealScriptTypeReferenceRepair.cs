@@ -263,7 +263,7 @@ public static class UnrealScriptTypeReferenceRepair
             string normalizedPredicate = System.Text.RegularExpressions.Regex.Replace(
                 source,
                 @"(?m)^(?<indent>[ \t]*)if\s*\(.*Info\.DragSrcName\s*==\s*""PetInvenWnd"".*\)\s*$",
-                "\${indent}" + correctedPredicate,
+                "${indent}" + correctedPredicate,
                 System.Text.RegularExpressions.RegexOptions.CultureInvariant);
             if (!string.Equals(source, normalizedPredicate, StringComparison.Ordinal))
             {
