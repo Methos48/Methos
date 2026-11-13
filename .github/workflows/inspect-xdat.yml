@@ -99,6 +99,19 @@ jobs:
           PY
 
 
+      - name: Generate Animal texture dependency inventory
+        shell: bash
+        run: |
+          python tools/xdat/report_animal_texture_dependencies.py "$RUNNER_TEMP/animal-xdat-texture-dependencies"
+
+      - name: Publish Animal texture dependency inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-XDAT-Texture-Dependencies
+          path: ${{ runner.temp }}/animal-xdat-texture-dependencies
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Generate detailed Animal InventoryWnd analysis
         shell: bash
         run: |
