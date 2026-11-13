@@ -286,6 +286,21 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("Shortcut", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("Skilltitle", StringComparison.Ordinal) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(
+                source, @"(?m)^\\s*var\\s+WindowHandle\\s+Skilltitle\\s*;"))
+        {
+            const string classAnchor = "class Shortcut extends UICommonAPI;";
+            if (source.Contains(classAnchor, StringComparison.Ordinal))
+            {
+                source = source.Replace(classAnchor,
+                    classAnchor + Environment.NewLine + "var WindowHandle Skilltitle;",
+                    StringComparison.Ordinal);
+                applied.Add("Shortcut.Skilltitle WindowHandle field restored from Interlude reference");
+            }
+        }
+
         if (className.Equals("PrivateShopWnd", StringComparison.OrdinalIgnoreCase) &&
             System.Text.RegularExpressions.Regex.IsMatch(
                 source, @"(?m)^\s*var\s+PrivateShopWnd\.PrivateShopType\s+m_type\s*;") &&
