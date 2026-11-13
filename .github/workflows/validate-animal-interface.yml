@@ -391,6 +391,30 @@ jobs:
           Get-ChildItem -LiteralPath $env:ANIMAL_SOURCES -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)SetAlign\s*\(' | ForEach-Object { Write-Host ($_.Path + ":" + $_.LineNumber + ": " + $_.Line.Trim()) }
           Write-Host "===== TEXT ALIGN ENUM REFERENCES IN UCC KIT ====="
           Get-ChildItem -LiteralPath $env:ANIMAL_UCC_ROOT -Filter "*.uc" -File -Recurse | Select-String -Pattern '(?i)TA_Left|TA_Center|TA_Right|enum.*Align|ETextAlign' -Context 1,2 | Select-Object -First 100
+      - name: Restore Animal TargetStatusWnd alignment enum
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "TargetStatusWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          $oldCalls = @(
+            'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("TargetStatusWnd.txtHP", 2);',
+            'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("TargetStatusWnd.txtMP", 2);'
+          )
+          $newCalls = @(
+            'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("TargetStatusWnd.txtHP", TA_Center);',
+            'Class''NWindow.UIAPI_TEXTBOX''.static.SetAlign("TargetStatusWnd.txtMP", TA_Center);'
+          )
+          $changed = 0
+          for ($i=0; $i -lt $oldCalls.Count; $i++) {
+            if ($sourceText.Contains($oldCalls[$i])) {
+              $sourceText = $sourceText.Replace($oldCalls[$i], $newCalls[$i])
+              $changed++
+            } elseif (!$sourceText.Contains($newCalls[$i])) {
+              throw "Expected TargetStatusWnd SetAlign call was not found."
+            }
+          }
+          [IO.File]::WriteAllText($sourceFile, $sourceText, [Text.UTF8Encoding]::new($false))
+          Write-Host "ANIMAL_TARGET_ALIGN_ENUMS_RESTORED=$changed"
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
