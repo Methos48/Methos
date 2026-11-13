@@ -646,9 +646,17 @@ function int Split(string strInput, string delim, out array<string> arrToken)
     local int arrSize;
     if ( (InStr(strInput, delim) > 0) )
     {
+        byte(arrToken)
+        arrToken.Length
+        1
+        arrToken[(arrToken.Length - 1)] = Left(strInput, InStr(strInput, delim));
         arrSize++;
         goto JL0000;
     }
+    byte(arrToken)
+    arrToken.Length
+    1
+    arrToken[(arrToken.Length - 1)] = strInput;
     return arrSize;
 }
 function void JoinArray(array<string> StringArray)
@@ -710,7 +718,11 @@ function string StrToLower(string Source)
 """;
 string uiCommonMissingGotoLabelRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
     "UICommonAPI", uiCommonMissingGotoLabelSample, out IReadOnlyList<string> uiCommonLabelRepairs);
-Check(uiCommonLabelRepairs.Count == 6 &&
+int uiCommonArrayAppendCount = uiCommonMissingGotoLabelRepaired
+    .Split("arrToken.Length = arrToken.Length + 1;", StringSplitOptions.None).Length - 1;
+Check(uiCommonLabelRepairs.Count == 7 &&
+      uiCommonArrayAppendCount == 2 &&
+      !uiCommonMissingGotoLabelRepaired.Contains("byte(arrToken)", StringComparison.Ordinal) &&
       uiCommonMissingGotoLabelRepaired.IndexOf("JL0000:", StringComparison.Ordinal) <
           uiCommonMissingGotoLabelRepaired.IndexOf("if ( (InStr(strInput, delim) > 0) )", StringComparison.Ordinal) &&
       uiCommonMissingGotoLabelRepaired.IndexOf("JL0007:", StringComparison.Ordinal) <
