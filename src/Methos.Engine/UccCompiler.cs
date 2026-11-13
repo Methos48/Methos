@@ -116,7 +116,21 @@ public static class UccCompiler
 
             string[] lines = File.ReadAllLines(sourcePath);
             int first = Math.Max(1, errorLine - 8);
-            int last = Math.Min(lines.Length, errorLine + 8);
+            int last = Math.Min(lines.Length, errorLine + 120);
+            int braceDepth = 0;
+            bool openedBody = false;
+            bool inBlockComment = false;
+            for (int index = errorLine - 1; index < lines.Length; index++)
+            {
+                int delta = CountCodeBraces(lines[index], ref inBlockComment);
+                braceDepth += delta;
+                if (delta > 0) openedBody = true;
+                if (openedBody && braceDepth <= 0)
+                {
+                    last = index + 1;
+                    break;
+                }
+            }
             var excerpt = new StringBuilder();
             for (int lineNumber = first; lineNumber <= last; lineNumber++)
             {
