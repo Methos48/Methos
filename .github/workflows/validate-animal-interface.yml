@@ -95,7 +95,7 @@ jobs:
           Write-Host "===== DECOMPILED source tail ====="
           Get-Content -LiteralPath (Join-Path $env:ANIMAL_SOURCES "AutoPotionsWnd.uc") | Select-Object -Last 90
           Write-Host "===== ALL REFERENCE DECLARATIONS / USES ====="
-          Get-ChildItem -LiteralPath (Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes") -Filter "*.uc" -Recurse | Select-String -Pattern "\\bGetItemType\\s*\\(" -Context 2,4
+          Get-ChildItem -LiteralPath (Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes") -Filter "*.uc" -Recurse | Select-String -SimpleMatch -Pattern "GetItemType(" -Context 2,4
           Write-Host "===== REFERENCE CLASS TOP ====="
           Get-Content -LiteralPath $referenceFile | Select-Object -First 100
 
