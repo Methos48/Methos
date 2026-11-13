@@ -14,6 +14,12 @@ public static class UnrealScriptTypeReferenceRepair
         ArgumentNullException.ThrowIfNull(source);
         var applied = new List<string>();
 
+        if (source.Contains("RecoveredName_98(", StringComparison.Ordinal))
+        {
+            source = source.Replace("RecoveredName_98(", "MethosRecoveredName_85(", StringComparison.Ordinal);
+            applied.Add(className + " unresolved color-name helper -> inherited MethosRecoveredName_85");
+        }
+
         if (className.Equals("DialogBox", StringComparison.OrdinalIgnoreCase))
         {
             if (source.Contains("var UICommonAPI.EDialogType m_type;", StringComparison.Ordinal) &&
