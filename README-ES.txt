@@ -112,3 +112,20 @@ Estas pruebas automáticas no sustituyen una comprobación final dentro del clie
 real de Lineage II Interlude. Antes de usar un paquete modificado en el juego,
 conserva el archivo original y valida el resultado en una copia de prueba del
 cliente.
+
+
+ORGANIZACIÓN DEL PROYECTO
+------------------------
+Methos es una sola aplicación con dos módulos internos (U y XDAT), no dos
+programas separados. El único ejecutable principal es Methos.exe y el único
+instalador es Methos-Setup.exe.
+
+El repositorio oficial y único es:
+https://github.com/Methos48/Methos
+
+El mapa de carpetas, motores, herramientas, pruebas y reglas de mantenimiento
+está en docs/ARQUITECTURA.md.
+
+Algunas carpetas locales de caché y respaldos pueden conservar el nombre
+histórico "Methos U Editor" para mantener compatibilidad con datos de versiones
+anteriores. Ese nombre no representa una aplicación adicional.
