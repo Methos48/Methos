@@ -59,6 +59,7 @@ public static class UnrealPackageDecompiler
             try
             {
                 string source = item.Decompile();
+                source = UnrealScriptSourceIndex.CommentDecompilerStackTraceLines(source);
                 string objectName = item.Name?.ToString() ?? $"Object_{exported}";
                 string safeName = string.Concat(objectName.Select(character =>
                     Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
