@@ -242,6 +242,23 @@ Check(privateShopEnumRepairs.Count == 1 &&
     "PrivateShopWnd numeric default was not restored to the declared PT_None enum value.");
 Console.WriteLine("PASS: PrivateShopWnd default uses its declared PT_None enum value.");
 
+string optionWndExistingLoginFieldSample = """
+class OptionWnd extends UICommonAPI;
+var bool Log;
+var bool bLoginInitialized;
+function OnLoad()
+{
+    startMe(bLoginInitialized);
+}
+""";
+string optionWndExistingLoginFieldRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "OptionWnd", optionWndExistingLoginFieldSample, out IReadOnlyList<string> optionWndExistingLoginFieldRepairs);
+Check(optionWndExistingLoginFieldRepairs.Count == 0 &&
+      System.Text.RegularExpressions.Regex.Matches(
+          optionWndExistingLoginFieldRepaired, @"(?m)^\s*var\s+bool\s+bLoginInitialized\s*;").Count == 1,
+    "OptionWnd existing bLoginInitialized field was duplicated by the repair.");
+Console.WriteLine("PASS: OptionWnd existing bLoginInitialized field is preserved without duplication.");
+
 string enumParameterSwitchSample = """
 class GMSnoopWnd extends UICommonAPI;
 function Color GetColorByType(UIEventManager.EChatType a_Type)
