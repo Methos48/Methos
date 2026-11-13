@@ -40,7 +40,7 @@ public static class UnrealScriptTypeReferenceRepair
 
         if (className.Equals("ChatWnd", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("ChatFilterBtn = ButtonHandle(", StringComparison.Ordinal) &&
-            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\\s*var\\s+ButtonHandle\\s+ChatFilterBtn\\s*;"))
+            !System.Text.RegularExpressions.Regex.IsMatch(source, @"(?m)^\s*var\s+ButtonHandle\s+ChatFilterBtn\s*;"))
         {
             const string handleAnchor = "var EditBoxHandle ChatEditBox;";
             if (source.Contains(handleAnchor, StringComparison.Ordinal))
