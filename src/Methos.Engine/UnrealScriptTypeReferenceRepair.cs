@@ -545,9 +545,8 @@ public static class UnrealScriptTypeReferenceRepair
             applied.Add("ManorCropInfoChangeWnd redundant int literal casts removed for UCC");
         }
 
-        // RecoveredName_255 is a real UICommonAPI helper, not the native AddSystemMessage
-        // token that happens to share its numeric suffix. Give the helper a collision-free
-        // source name and preserve its custom notification styling.
+        // Keep the legacy UEditor helper repair separate from Dunk3l's recovered helper index.
+        // Dunk3l's LogoWnd call is rebound below to the actual UICommonAPI message helper.
         if (className.Equals("UICommonAPI", StringComparison.OrdinalIgnoreCase) &&
             source.Contains("function RecoveredName_255(string MessageText)", StringComparison.Ordinal))
         {
