@@ -248,6 +248,16 @@ jobs:
             $reference = Get-Content -LiteralPath $referenceFile
             for ($n=3224; $n -lt [Math]::Min(3245,$reference.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$reference[$n]) }
           } else { Write-Host "ANIMAL_REFERENCE_INVENTORYWND_NOT_FOUND" }
+      - name: Inspect Animal InventoryWnd function boundary
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $source = Get-Content -LiteralPath $sourceFile
+          Write-Host "===== INVENTORY FUNCTION HEADER AND BODY ====="
+          for ($n=3190; $n -lt [Math]::Min(3238,$source.Length); $n++) { Write-Host ("{0}: {1}" -f ($n+1),$source[$n]) }
+          Write-Host "===== REFERENCE INVENTORY FUNCTION NAMES ====="
+          $referenceFile = Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/InventoryWnd.uc"
+          Select-String -LiteralPath $referenceFile -Pattern '^\s*function\b' | Select-Object -Last 25
       - name: Compile unmodified Animal sources
         shell: pwsh
         run: |
