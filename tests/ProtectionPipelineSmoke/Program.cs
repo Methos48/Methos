@@ -143,6 +143,33 @@ Check(dialogTypeRepairs.Count == 2 &&
     "Dunk3l DialogBox enum type references were not reconciled with its declared fields.");
 Console.WriteLine("PASS: Dunk3l DialogBox enum references are reconciled to the declared UICommonAPI types.");
 
+string chatEnumSample = """
+class ChatWnd extends UIScript;
+function UIEventManager.EChatType GetChatTypeByTabIndex(int Index)
+{
+    local UIEventManager.EChatType Type;
+    Type = 0;
+    switch(m_chatType)
+    {
+        case 0:
+            Type = 0;
+            break;
+        case 1:
+            Type = 8;
+            break;
+    }
+    return Type;
+}
+""";
+string chatEnumRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ChatWnd", chatEnumSample, out IReadOnlyList<string> chatEnumRepairs);
+Check(chatEnumRepairs.Count == 1 &&
+      chatEnumRepaired.Contains("Type = EChatType(0);", StringComparison.Ordinal) &&
+      chatEnumRepaired.Contains("Type = EChatType(8);", StringComparison.Ordinal),
+    "ChatWnd EChatType numeric assignments were not restored as enum casts.");
+Console.WriteLine("PASS: ChatWnd chat-tab values are explicitly cast to EChatType.");
+
+
 var interfaceSoundSample = """
 class SoundSample extends UIScript;
 function Test()
