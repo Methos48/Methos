@@ -750,6 +750,24 @@ Check(dunk3lToolTipAlreadyRenamedRepairs.Count == 0 &&
     "Dunk3l ToolTip helper was restored a second time after its safe rename.");
 Console.WriteLine("PASS: ToolTip repair does not append a second helper after the safe rename.");
 
+string dunk3lToolTipRestoredCallsiteSample = """
+class ToolTip extends UICommonAPI;
+function int MethosTooltipGetMaxWidth()
+{
+    return TOOLTIP_MINIMUM_WIDTH;
+}
+function AddCrossLine()
+{
+    m_Info.u_nTextureWidth = getMaxWidth();
+}
+""";
+string dunk3lToolTipRestoredCallsiteRepaired = UnrealScriptTypeReferenceRepair.RepairKnownMismatchedEnumReferences(
+    "ToolTip", dunk3lToolTipRestoredCallsiteSample, out IReadOnlyList<string> dunk3lToolTipRestoredCallsiteRepairs);
+Check(dunk3lToolTipRestoredCallsiteRepairs.Count == 1 &&
+      dunk3lToolTipRestoredCallsiteRepaired.Contains("m_Info.u_nTextureWidth = MethosTooltipGetMaxWidth();", StringComparison.Ordinal),
+    "Dunk3l ToolTip restored AddCrossLine call site still references the old helper name.");
+Console.WriteLine("PASS: ToolTip repair renames AddCrossLine call sites restored after decompilation.");
+
 
 
 
