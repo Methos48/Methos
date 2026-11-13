@@ -573,12 +573,12 @@ public static class UnrealScriptTypeReferenceRepair
             bool isOptionBranding = className.Equals("OptionWnd", StringComparison.OrdinalIgnoreCase);
             source = Regex.Replace(
                 source,
-                @"(?is)(function\\s+respect\\s*\\(\\s*\\)\\s*\\{)",
-                "$1\\n\\tlocal Color MethosSilentVersionColor;",
+                @"(?is)(function\s+respect\s*\(\s*\)\s*\{)",
+                "$1\n\tlocal Color MethosSilentVersionColor;",
                 1);
             string colorSetup = isOptionBranding
-                ? "MethosSilentVersionColor.R = 255;\\n\\tMethosSilentVersionColor.G = 255;\\n\\tMethosSilentVersionColor.B = 255;\\n\\tMethosSilentVersionColor.A = 255;\\n\\t"
-                : "MethosSilentVersionColor.R = 240;\\n\\tMethosSilentVersionColor.G = 227;\\n\\tMethosSilentVersionColor.B = 200;\\n\\tMethosSilentVersionColor.A = 255;\\n\\t";
+                ? "MethosSilentVersionColor.R = 255;\n\tMethosSilentVersionColor.G = 255;\n\tMethosSilentVersionColor.B = 255;\n\tMethosSilentVersionColor.A = 255;\n\t"
+                : "MethosSilentVersionColor.R = 240;\n\tMethosSilentVersionColor.G = 227;\n\tMethosSilentVersionColor.B = 200;\n\tMethosSilentVersionColor.A = 255;\n\t";
             string originalCall = isOptionBranding
                 ? "CR.SetNameWithColor(\"INTERFACE OKTUBRE\", NCT_Normal, TA_Center, RecoveredName_98(\"white\"))"
                 : "CR.SetNameWithColor(SilentInterfaceVersion(), NCT_Normal, TA_Center, RecoveredName_98(\"Goldlite\"))";
