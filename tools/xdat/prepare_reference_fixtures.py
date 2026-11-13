@@ -71,7 +71,12 @@ def main() -> int:
         with zipfile.ZipFile(fixture_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             for item in sorted(output.rglob("*")):
                 if item.is_file():
-                    zf.write(item, item.relative_to(output).as_posix())
+                    relative_name = item.relative_to(output).as_posix()
+                    entry = zipfile.ZipInfo(relative_name, date_time=(1980, 1, 1, 0, 0, 0))
+                    entry.compress_type = zipfile.ZIP_DEFLATED
+                    entry.create_system = 3
+                    entry.external_attr = 0o100644 << 16
+                    zf.writestr(entry, item.read_bytes())
 
     print(f"Fixtures XDAT extraídos: interface.xdat=1, XML={parts_count}")
     if args.zip_out:
