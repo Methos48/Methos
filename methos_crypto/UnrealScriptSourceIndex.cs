@@ -352,55 +352,20 @@ public static class UnrealScriptSourceIndex
                 continue;
             }
 
-            // Some recovered switch functions have an exhaustive default branch
-            // and a redundant bare Return after the switch. Remove it only when the
-            // switch is the immediately preceding statement, has a default, and
-            // every emitted Break is itself unreachable after a Return.
-            if (tokens[lastReturn - 1].Text == "}")
+            // UELib can emit a valueless trailing Return after a switch
+            // even when every branch (including default) already returns.
+            // Remove only this terminal statement, and only for non-void
+            // functions with a preceding switch, a default arm and multiple returns.
+            if (!function.ReturnType.Equals("void", StringComparison.OrdinalIgnoreCase) &&
+                tokens[lastReturn - 1].Text == "}" &&
+                tokens.Take(lastReturn).Any(token => token.Text.Equals("switch", StringComparison.OrdinalIgnoreCase)) &&
+                tokens.Take(lastReturn).Any(token => token.Text.Equals("default", StringComparison.OrdinalIgnoreCase)) &&
+                tokens.Take(lastReturn).Count(token => token.Text.Equals("return", StringComparison.OrdinalIgnoreCase)) >= 2)
             {
-                int switchClose = lastReturn - 1;
-                int switchDepth = 0;
-                int switchOpen = -1;
-                for (int i = switchClose; i >= 0; i--)
-                {
-                    if (tokens[i].Text == "}") switchDepth++;
-                    else if (tokens[i].Text == "{" && --switchDepth == 0)
-                    {
-                        switchOpen = i;
-                        break;
-                    }
-                }
-
-                if (switchOpen > 0)
-                {
-                    bool hasDefault = tokens.Skip(switchOpen + 1).Take(switchClose - switchOpen - 1)
-                        .Any(token => token.Kind == TokenKind.Identifier && token.Text.Equals("default", StringComparison.OrdinalIgnoreCase));
-                    bool allBreaksFollowReturns = true;
-                    for (int i = switchOpen + 1; i < switchClose; i++)
-                    {
-                        if (tokens[i].Kind == TokenKind.Identifier &&
-                            tokens[i].Text.Equals("break", StringComparison.OrdinalIgnoreCase) &&
-                            (i < 3 || !tokens[i - 1].Text.Equals(";", StringComparison.Ordinal) ||
-                             !tokens[i - 3].Text.Equals("return", StringComparison.OrdinalIgnoreCase)))
-                        {
-                            allBreaksFollowReturns = false;
-                            break;
-                        }
-                    }
-
-                    if (hasDefault && allBreaksFollowReturns)
-                    {
-                        int switchKeyword = switchOpen - 1;
-                        while (switchKeyword >= 0 && tokens[switchKeyword].Text != "switch") switchKeyword--;
-                        if (switchKeyword >= 0)
-                        {
-                            int switchStart = function.BodyOffset + tokens[lastReturn].Start;
-                            int switchEnd = function.BodyOffset + tokens[lastReturn + 1].End;
-                            edits.Add((switchStart, switchEnd - switchStart, function.Name, function.Line, string.Empty));
-                            continue;
-                        }
-                    }
-                }
+                int trailingReturnStart = function.BodyOffset + tokens[lastReturn].Start;
+                int trailingReturnEnd = function.BodyOffset + tokens[lastReturn + 1].End;
+                edits.Add((trailingReturnStart, trailingReturnEnd - trailingReturnStart, function.Name, function.Line, string.Empty));
+                continue;
             }
 
             int[] depths = new int[tokens.Count];
