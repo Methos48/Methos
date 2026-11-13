@@ -357,6 +357,16 @@ public static class UnrealScriptTypeReferenceRepair
             }
         }
 
+        if (className.Equals("PartyWnd", StringComparison.OrdinalIgnoreCase) &&
+            source.Contains("m_PlayerName[idx].SetName(\"\", 0, 2);", StringComparison.Ordinal))
+        {
+            source = source.Replace(
+                "m_PlayerName[idx].SetName(\"\", 0, 2);",
+                "m_PlayerName[idx].SetName(\"\", UIEventManager.ENameCtrlType(0), UIEventManager.ETextAlign(2));",
+                StringComparison.Ordinal);
+            applied.Add("PartyWnd.SetName arguments cast to the declared UIEventManager enums");
+        }
+
         if ((className.Equals("PartyMatchOutWaitListWnd", StringComparison.OrdinalIgnoreCase) ||
              className.Equals("PartyMatchWaitListWnd", StringComparison.OrdinalIgnoreCase)) &&
             source.Contains("UnknownFunction112(UnknownFunction112(\"\"\",", StringComparison.Ordinal))
