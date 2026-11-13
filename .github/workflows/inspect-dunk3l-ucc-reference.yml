@@ -1,0 +1,43 @@
+name: Inspect Dunk3l UCC reference source
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-dunk3l-ucc-reference.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Methos48/Methos-U-Editor
+          path: u-editor
+          persist-credentials: false
+      - name: Extract exact Interlude reference source
+        shell: pwsh
+        run: |
+          $archive = Join-Path $PWD "u-editor\Compilador  U.zip"
+          $root = Join-Path $env:RUNNER_TEMP "dunk3l-ucc-reference"
+          Expand-Archive -LiteralPath $archive -DestinationPath $root -Force
+          $kit = Join-Path $root "Compilador  U"
+          $classes = Join-Path $kit "Interlude\Interface\Classes"
+          $reference = Join-Path $classes "UICommonAPI.uc"
+          if (!(Test-Path $reference)) { throw "UICommonAPI.uc missing from exact Interlude source kit" }
+          $diagnostic = Join-Path $env:RUNNER_TEMP "Dunk3l-UCC-Reference"
+          New-Item -ItemType Directory -Force $diagnostic | Out-Null
+          Copy-Item $reference (Join-Path $diagnostic "UICommonAPI-reference.uc")
+          Write-Host "REFERENCE_SOURCE=$reference"
+          Write-Host "REFERENCE_BYTES=$((Get-Item $reference).Length)"
+          Write-Host "REFERENCE_STRTOLOWER_MATCHES:"
+          Select-String -Path $reference -Pattern "StrToLower|function string" -Context 0,6 | Select-Object -First 40 | ForEach-Object { Write-Host $_.ToString() }
+          Write-Host "REFERENCE_NFUN_COUNT=$((Select-String -Path $reference -Pattern '__NFUN_' -AllMatches).Matches.Count)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dunk3l-UCC-Reference-Source
+          path: \${{ runner.temp }}/Dunk3l-UCC-Reference/UICommonAPI-reference.uc
+          if-no-files-found: error
+          retention-days: 7
