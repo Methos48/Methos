@@ -52,6 +52,35 @@ public static class UnrealScriptFailedFunctionRepair
         foreach (var edit in edits.OrderByDescending(item => item.Start))
             result = result.Remove(edit.Start, edit.Length).Insert(edit.Start, edit.Replacement);
 
+        // UELib can omit an entire function without leaving a failed-function placeholder.
+        // Restore only missing functions that are actually called by another decompiled
+        // function, and only from the matching class in the exact Interlude reference kit.
+        var functionsAfterRepair = ReadFunctions(result);
+        var currentBodies = functionsAfterRepair.Values.Select(function => function.Body).ToArray();
+        var missingCalledFunctions = referenceFunctions.Values
+            .Where(reference => !functionsAfterRepair.ContainsKey(reference.Name))
+            .Where(reference => currentBodies.Any(body =>
+                Regex.IsMatch(body,
+                    @"\b" + Regex.Escape(reference.Name) + @"\s*\(",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)))
+            .OrderBy(reference => reference.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (missingCalledFunctions.Length > 0)
+        {
+            string newline = result.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+            string addition = string.Join(newline + newline,
+                missingCalledFunctions.Select(function => function.Text.Trim()));
+            Match defaultProperties = Regex.Match(result, @"(?im)^\s*defaultproperties\b");
+            int insertionPoint = defaultProperties.Success ? defaultProperties.Index : result.Length;
+            string prefix = insertionPoint > 0 && !char.IsWhiteSpace(result[insertionPoint - 1])
+                ? newline + newline
+                : newline;
+            result = result.Insert(insertionPoint, prefix + addition + newline);
+            restored.AddRange(missingCalledFunctions.Select(function =>
+                function.Name + " (missing called function)"));
+        }
+
         restoredFunctions = restored;
         return result;
     }
