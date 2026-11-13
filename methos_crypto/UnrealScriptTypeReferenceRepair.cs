@@ -272,6 +272,13 @@ public static class UnrealScriptTypeReferenceRepair
                 applied.Add("InventoryWnd.OnDropItemSource malformed drag-source predicate normalized");
             }
 
+            const string unresolvedDragHelper = "if(!isDragSrcInventory(Info.DragSrcName))";
+            if (source.Contains(unresolvedDragHelper, StringComparison.Ordinal))
+            {
+                source = source.Replace(unresolvedDragHelper, correctedPredicate, StringComparison.Ordinal);
+                applied.Add("InventoryWnd missing isDragSrcInventory helper inlined with equivalent source-name filter");
+            }
+
             // This branch belongs to High Five bracelet/talisman UI, not the Interlude client.
             // Remove the recovered, unresolved callback as a unit; the normal Interlude equipment
             // slots and all supported item-update logic below remain intact.
