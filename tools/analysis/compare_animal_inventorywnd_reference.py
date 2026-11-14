@@ -35,8 +35,14 @@ def lex(s):
     return re.findall(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[A-Za-z_]\w*|\d+|==|!=|<=|>=|&&|\|\||\S', s)
 
 animal_path, ref_path, out_path = map(Path, sys.argv[1:])
-animal = extract(animal_path.read_text(encoding="utf-8-sig"))
-reference = extract(ref_path.read_text(encoding="utf-8-sig"))
+def read_source(path: Path):
+    raw = path.read_bytes()
+    if raw.startswith((bytes.fromhex("FFFE"), bytes.fromhex("FEFF"))):
+        return raw.decode("utf-16")
+    return raw.decode("utf-8-sig")
+
+animal = extract(read_source(animal_path))
+reference = extract(read_source(ref_path))
 anonymous = [f for f in animal if re.fullmatch(r"function\d+|MethosRecoveredName_\d+", f["name"], re.I)]
 matches = []
 for target in anonymous:
