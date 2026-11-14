@@ -19,10 +19,14 @@ It is a research catalogue, not a claim that every listed archive has been downl
 | Sample | Evidence / known contents | Status | Source |
 |---|---|---|---|
 | Interlude C6 XDAT 2-row bars | `InterfaceXdatC6.zip`, 52.41 KB; forum post explicitly identifies Interlude `interface.xdat` | Attachment exists but forum currently denies guest download; not acquired | [Zone-Game attachment thread](https://forum.zone-game.info/showthread.php?tid=44315) |
-| Interlude pair (unknown client) | MediaFire links to `interface.u` and `interface.xdat`; discussion says U is obfuscated, but does not establish SmartCrypt conclusively | Links located; files not acquired; protection not independently verified | [MaxCheaters thread](https://maxcheaters.com/topic/245142-decrypt-interfaceuxdat-interlude/) |
+| Interlude pair (unknown client) | MediaFire links to `interface.u` and `interface.xdat`; forum respondent says U appears obfuscated, but author only reports inability to read the files with tools. No SmartCrypt proof | Links located; files not acquired; protection not independently verified | [MaxCheaters thread](https://maxcheaters.com/topic/245142-decrypt-interfaceuxdat-interlude/) |
 | Ares Interlude Interface | Author says both files were decrypted/editable; `Interface.u` has obfuscation | Thread located; binary download link not yet extracted/verified | [MaxCheaters Ares Interlude](https://maxcheaters.com/topic/242437-ares-interlude-interface/) |
 | Interlude P162+ source-rich U | Forum request seeks `Interface.u` for protocol 162+ with full sources; later reply says a source was found/translated, but no direct archive is attached in indexed content | Lead only; no binary acquired | [Zone-Game P162+ discussion](https://forum.zone-game.info/showthread.php?tid=44082) |
 | Interlude P196 source | Reply in the P162+ discussion points to an Interface/NWindow source for protocol 196 | Lead only; locate the linked attachment in the forum thread | [Zone-Game P162+ discussion](https://forum.zone-game.info/showthread.php?tid=44082) |
+
+## Additional Interlude-labelled candidate
+
+| GK Global / Rusacis Interlude | `interfacegk.rar`; post describes retail `Interface.xdat` with GK interface, `Interface.u` UnrealScript and XML; follow-up provides compiled `Interface.u` and Interlude compiler RAR | Interlude-labelled archive link located; download attempt failed; contents and compatibility not inspected | [MaxCheaters thread](https://maxcheaters.com/topic/249411-gk-global-interface-rusacis-l2royale/) · [RAR](https://www.mediafire.com/file/g8sucve4j3gbxit/interfacegk.rar/file) |
 
 ## Other client-interface archives (chronicle not yet verified)
 
@@ -56,7 +60,7 @@ Therefore **no newly sourced binary archive is claimed to be stored in this repo
 
 ## Next acquisition sequence
 
-1. Obtain the Interlude C6 XDAT attachment and the candidate Interlude U/XDAT pairs.
+1. Obtain the Interlude C6 XDAT attachment, GK Global/Rusacis package, and the candidate Interlude U/XDAT pairs.
 2. Obtain the P162+/P196 source-rich interface package if the forum attachment remains available.
 3. Obtain the L2JBaylee RAR archives and verify each against its published SHA-256.
 4. Extract into separate immutable folders under `reference-data/interfaces/<chronicle-or-label>/original/`.
