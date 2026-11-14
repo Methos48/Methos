@@ -402,3 +402,23 @@ La coincidencia de evento, firma y operación en dos referencias distintas hace 
 También se volvió a confirmar que Animal `function26(ItemInfo)` y `IsArrow(ItemInfo)` son duplicados funcionales, mientras que Silent Dark conserva solo la versión nombrada `IsArrow`. Esto no demuestra que el identificador original de `function26` fuese `IsArrow`, ya que Animal mantiene ambas declaraciones.
 
 No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
+
+## Decimonovena pasada: cruce de eventos y firmas en la variante Silent Dark (2026-11-14)
+
+Se contrastaron los cuerpos completos y los despachos de `OnEvent` de Animal y Silent Dark, no solo la similitud automática.
+
+### `function30(string)` — candidato `HandleAddItem(string)`
+
+Ambos paquetes despachan el evento 2600 con el parámetro string a la función que procesa el alta de un objeto. En Silent Dark, esa función se llama `HandleAddItem(string)`; su cuerpo comienza con `ParamToItemInfo`, después enruta equipo a `EquipItemUpdate`, quest items a su panel y el resto al inventario. Animal `function30(string)` hace exactamente la misma secuencia inicial y añade las rutas de clasificación hacia paneles adicionales mediante `function31` y `function32`. Esto eleva `HandleAddItem(string)` a candidato de alta confianza para el nombre original de `function30`.
+
+No se renombra todavía: Animal ya contiene otra función llamada `HandleAddItem(ItemInfo)`, que actúa como filtro booleano para una categoría. La coexistencia de dos funciones con ese nombre requiere confirmar que el compilador/paquete Animal admite esa sobrecarga o que el segundo nombre también está anonimizado/alterado. No se fuerza una colisión de nombres.
+
+### `function44(int)` — candidato `IsLOrREar(int)`
+
+El cuerpo de Animal `function44` obtiene cuatro IDs con `GetAccessoryServerID` y compara los dos primeros, devolviendo -1/1/0. En Silent Dark, `IsLOrREar(int)` realiza la misma comparación con las variables explícitas `LEar/REar`; `IsLOrRFinger(int)` compara las dos últimas salidas. Esto refuerza que `function44` corresponde semánticamente al helper de orejas.
+
+Animal, sin embargo, ya contiene una función nombrada `IsLOrREar(int)` que compara las salidas tercera y cuarta (los IDs de dedos bajo el contrato nativo), mientras que su `IsLOrRFinger(int)` también compara esas salidas. `function44` no tiene llamadas internas identificadas. Se registra la contradicción y el candidato, pero no se renombra ni se cambia el flujo de `EarItemUpdate`/ `FingerItemUpdate` sin confirmar el contrato en el runtime Animal.
+
+### Resultado
+
+Los eventos 2600 y 2630, sus firmas y los cuerpos de Silent Dark aportan candidatos mucho más fuertes para `function30` y `function37` que la comparación por similitud sola. La coincidencia semántica de `function44` con `IsLOrREar` también queda respaldada por la segunda variante. Los tres identificadores se conservan en la fuente Animal hasta resolver las colisiones/contradicciones del propio paquete. No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
