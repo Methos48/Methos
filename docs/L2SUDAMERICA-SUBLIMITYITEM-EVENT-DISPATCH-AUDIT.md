@@ -141,7 +141,8 @@ Resultado directo:
 - `SublimityShortcut extends SublimityItem`: 3 funciones exportadas; registra 25002.
 - `SublimityShortcutWnd extends SublimityItem`: 34 funciones exportadas; registra 650, 631, 630, 640 y 90.
 - No aparece otra clase con `extends SublimityItem` entre las 150 fuentes examinadas.
-- Ninguna de las funciones declaradas en esas dos derivadas coincide por nombre con los hooks saneados `MethosRecoveredName_###` declarados por SublimityItem. La excepción aparente es `MethosRecoveredName_737` en SublimityShortcut: ese nombre sí coincide, pero el inventario de funciones de SublimityItem también contiene 737; por tanto, la búsqueda automática debe tratarlo como un override candidato, no como cero overrides.
+- `SublimityShortcut` declara `MethosRecoveredName_737`, que también existe en la base con la misma firma de dos enteros. Es un candidato claro a override. No se debe contar como función independiente sin revisar los flags y el índice de función exportado.
+- En `SublimityShortcutWnd` no se observó una coincidencia nominal exacta con los hooks de la base en el inventario textual; falta verificar los flags de función y el dispatch.
 
 ### Corrección importante sobre el alcance
 
