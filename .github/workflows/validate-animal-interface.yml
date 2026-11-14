@@ -61,6 +61,12 @@ jobs:
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-package-assets $env:ANIMAL_INPUT
           if ($LASTEXITCODE -ne 0) { throw "Animal package asset-reference inspection failed." }
 
+      - name: Inspect original InventoryWnd function3 bytecode
+        shell: pwsh
+        run: |
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-function-bytecode $env:ANIMAL_INPUT InventoryWnd function3
+          if ($LASTEXITCODE -ne 0) { throw "InventoryWnd.function3 bytecode inspection failed." }
+
       - name: Decode original Animal Interface.u to UnrealScript
         shell: pwsh
         run: |
