@@ -40,7 +40,18 @@ if (args.Length > 0 && args[0] == "--self-test-compact-index")
         Console.WriteLine("PASS CompactIndex truncated continuation rejected");
     }
 
-    Console.WriteLine($"COMPACT_INDEX_SELF_TEST=PASS; VECTORS={vectors.Length + 1}");
+    try
+    {
+        int position = 0;
+        _ = UnrealPackageIndex.DecodeCompactIndex(new byte[] { 0x80 }, ref position);
+        throw new InvalidDataException("CompactIndex accepted negative zero.");
+    }
+    catch (InvalidDataException exception) when (exception.Message.Contains("cero negativo", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine("PASS CompactIndex negative zero rejected");
+    }
+
+    Console.WriteLine($"COMPACT_INDEX_SELF_TEST=PASS; VECTORS={vectors.Length + 2}");
     return;
 }
 
