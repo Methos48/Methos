@@ -230,3 +230,10 @@ La recompilación UCC de una versión modificada y su carga real en cliente sigu
 ## Ampliación de alcance: Chat y mensajes del sistema — 2026-11-14
 
 Se incorporó una auditoría separada para `ChatWnd`, `SystemMsgWnd` y `CustomDamageWnd`: [L2SUDAMERICA-CHAT-SYSTEM-AUDIT.md](L2SUDAMERICA-CHAT-SYSTEM-AUDIT.md). Se verificaron sus fuentes UnrealScript y XML del artefacto del workflow 43579091099. La lista de mensajes del sistema es `SystemMsgWnd.SystemMsgList`, conectada directamente desde `ChatWnd`; los números flotantes de daño pertenecen a `CustomDamageWnd`, un componente distinto. No se han modificado archivos del cliente.
+
+
+## Base de conocimiento exhaustiva U/XDAT
+
+Se creó el documento maestro [L2SUDAMERICA-INTERFACE-KNOWLEDGE-BASE.md](L2SUDAMERICA-INTERFACE-KNOWLEDGE-BASE.md). Define el modelo de análisis para cada archivo `.u` y `.xdat`: cabeceras, FNames, imports/exports, clases, bytecode, funciones, eventos, propiedades, dependencias, ventanas, controles, recursos, anclajes, callbacks, persistencia y pruebas. Incluye inventario cuantitativo, estados normalizados, reglas de preservación y prioridades de investigación.
+
+La meta es documentar todas las clases y ventanas, no solo las ya solicitadas. Los hallazgos de otras interfaces se usarán como comparación independiente y nunca como prueba automática de cómo funciona L2Sudamerica.
