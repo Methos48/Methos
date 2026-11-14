@@ -7,9 +7,8 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-FUNCTION = re.compile(
-    r"(?im)^\s*function\s+(?:(?:[A-Za-z_]\w*)\s+)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{"
-)
+from unrealscript_functions import extract_functions as extract
+
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
 
@@ -18,37 +17,6 @@ def read_source(path: Path) -> str:
     if raw.startswith((bytes.fromhex("FFFE"), bytes.fromhex("FEFF"))):
         return raw.decode("utf-16")
     return raw.decode("utf-8-sig", errors="replace")
-
-
-def extract(source: str) -> list[dict]:
-    result = []
-    for match in FUNCTION.finditer(source):
-        start = source.find("{", match.start(), match.end())
-        depth, quote, escaped = 0, None, False
-        for index in range(start, len(source)):
-            char = source[index]
-            if quote:
-                if escaped:
-                    escaped = False
-                elif char == "\\":
-                    escaped = True
-                elif char == quote:
-                    quote = None
-            elif char in ("'", '"'):
-                quote = char
-            elif char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    result.append({
-                        "name": match.group(1),
-                        "params": match.group(2).strip(),
-                        "signature": match.group(0).split("{")[0].strip(),
-                        "body": source[start + 1:index],
-                    })
-                    break
-    return result
 
 
 def tokens(source: str) -> list[str]:
