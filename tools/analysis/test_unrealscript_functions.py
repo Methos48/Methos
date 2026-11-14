@@ -32,7 +32,7 @@ function Real()
         source = "a/* comment\nmore */b // tail\nc"
         masked = mask_comments(source)
         self.assertEqual(len(masked), len(source))
-        self.assertEqual(masked.count("\\n"), source.count("\\n"))
+        self.assertEqual(masked.count("\n"), source.count("\n"))
         self.assertEqual(masked[0], "a")
         self.assertEqual(masked[-1], "c")
 
