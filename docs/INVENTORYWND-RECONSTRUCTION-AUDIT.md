@@ -337,3 +337,13 @@ Se amplió la búsqueda externa y apareció una implementación pública de clas
 **Conclusión:** la referencia externa no autoriza traducir los valores 0/1/2 de Animal a etiquetas concretas ni identificar el subtipo 6. Se mantienen ambas cuestiones abiertas. Tampoco se ha inferido que la categoría de recetas de otra interfaz use los mismos números que Animal, aunque el valor 5 sí está confirmado por la asignación directa de `RecipeBookWnd` en las fuentes Animal.
 
 No se modificó `InventoryWnd.uc`, no se renombraron helpers y no se alteró ningún comportamiento. La siguiente vía de mayor valor es extraer y comparar las clases `InventoryWnd` de los otros paquetes ya guardados en el repositorio, buscando coincidencias de bytecode y nombres de campos/eventos antes de acudir a referencias genéricas adicionales.
+
+## Decimoquinta pasada: comparación cruzada de paquetes almacenados (2026-11-14)
+
+Se amplió el workflow `validate-animal-interface.yml` para extraer `InventoryWnd.uc` directamente de los paquetes originales Berserker, L2Sudamérica y Silent Dark usando el mismo UCC Interlude y el descompilador del proyecto. Los archivos recuperados y los listados de funciones se publicarán como artefacto `Cross-Package-InventoryWnd` junto con la validación Animal.
+
+La ejecución quedó encolada al registrar esta modificación:
+- Run `43564397510`: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43564397510)
+- Commit del workflow: `19af06d23a2e2e5ef810b3e94592d300f6d66f1a`.
+
+El paso es deliberadamente tolerante a fallos por paquete: registra si una extracción individual no puede completarse, sin ocultar los resultados de las demás. No cambia ni recompila los paquetes de referencia, no sustituye la fuente Animal y no renombra funciones. La comparación semántica se hará después de inspeccionar los archivos efectivamente extraídos; una coincidencia de otro cliente solo será evidencia comparativa, no prueba automática del nombre original Animal.
