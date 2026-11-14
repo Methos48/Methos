@@ -6,7 +6,7 @@ from pathlib import Path
 if len(sys.argv) != 4:
     raise SystemExit("Usage: compare_animal_inventorywnd_reference.py <animal.uc> <reference.uc> <output.json>")
 
-from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as lex
+from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as lex, count_parameters
 
 animal_path, ref_path, out_path = map(Path, sys.argv[1:])
 def read_source(path: Path):
@@ -24,7 +24,7 @@ for target in anonymous:
         score = SequenceMatcher(None, a, b, autojunk=False).ratio() if a and b else 0.0
         ranked.append({"candidate": candidate["name"], "signature": candidate["signature"],
                        "token_similarity": round(score, 4),
-                       "same_parameter_count": len([x for x in target["params"].split(",") if x.strip()]) == len([x for x in candidate["params"].split(",") if x.strip()])})
+                       "same_parameter_count": count_parameters(target["params"]) == count_parameters(candidate["params"])})
     ranked.sort(key=lambda x: (x["token_similarity"], x["same_parameter_count"]), reverse=True)
     matches.append({"animal_function": target["name"], "animal_signature": target["signature"],
                     "body_token_count": len(a), "candidates": ranked[:5]})
