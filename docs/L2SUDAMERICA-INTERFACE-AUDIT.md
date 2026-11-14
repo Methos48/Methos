@@ -188,3 +188,29 @@ Los CSV incluyen clase, línea de origen, tipo, identificador seguro y FName ori
 - Extractor reproducible: `tools/l2sa_audit/extract_interface_inventory.py`.
 - Auditoría específica de la clase: [L2SUDAMERICA-INVENTORYWND-AUDIT.md](L2SUDAMERICA-INVENTORYWND-AUDIT.md).
 - Workflow y artefactos de esta ejecución: https://github.com/Methos48/Methos/actions/runs/43579091099.
+
+
+## Verificación del paquete de trabajo recuperado — 2026-11-14
+
+Se materializó desde la biblioteca de archivos el archivo L2Sudamerica-Interface-Decodificada.zip (1,300,504 bytes) para inspeccionar sus contenidos. El ZIP contiene 341 archivos:
+
+- Decoded-Binaries/Interface.u: 987,230 bytes; SHA-256 877a6873fecfcb141b603010524f4601634ab5f31de5ae3371a1705b76f5dbc9.
+- Decoded-Binaries/interface.xdat: 940,353 bytes; SHA-256 ce63c0c1972812621d4553b7e2dba8041bd917e3c1d220a25cdd11599777bafb.
+- 150 fuentes UnrealScript .uc.
+- 169 XML de ventanas y 8 XML de shortcuts.
+- Inventarios CSV/JSON e informes de verificación.
+
+Los SHA-256 de los dos binarios descifrados coinciden con los valores registrados en Verification-Reports/. Esto verifica la integridad de los derivados contenidos en el ZIP respecto de sus informes; no sustituye la repetición independiente del descifrado desde los originales protegidos.
+
+### Estado después de inspeccionar el ZIP
+
+- [x] Archivo ZIP recuperado y abierto correctamente.
+- [x] Conteo de archivos y fuentes .uc comprobado.
+- [x] Hashes SHA-256 de los dos binarios descifrados recalculados y coincidentes con los informes.
+- [x] Conteos XDAT de ventanas y shortcuts comprobados.
+- [ ] Repetir el proceso completo desde los originales protegidos en el entorno actual.
+- [ ] Recompilar Interface.u con UCC y validar el paquete resultante.
+- [ ] Editar y reconstruir XDAT desde XML con una prueba controlada en el entorno actual.
+- [ ] Reproteger ambos derivados y comprobar round-trip protegido exacto.
+
+Nota de alcance: la inspección actual confirma los artefactos históricos empaquetados, pero no prueba que una interfaz editada haya sido recompilada ni que el cliente L2Sudamerica la haya cargado correctamente. Los originales versionados permanecen intactos.
