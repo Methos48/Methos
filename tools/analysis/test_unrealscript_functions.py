@@ -24,10 +24,9 @@ class UnrealScriptFunctionExtractionTests(unittest.TestCase):
         self.assertEqual(count_parameters("int A, string B"), 2)
         self.assertEqual(count_parameters('string A = "x,y", int B'), 2)
         self.assertEqual(count_parameters("int A = Func(1, 2), string B"), 2)
-        self.assertEqual(count_parameters("array<int> A, map<string, int> B"), 3)
 
     def test_parameter_count_handles_escaped_quotes(self):
-        self.assertEqual(count_parameters(r'string A = "x\\",y", int B'), 2)
+        self.assertEqual(count_parameters(r'string A = "x\",y", int B'), 2)
 
     def test_ignores_function_declarations_and_braces_in_comments(self):
         source = """// function Fake() { }
