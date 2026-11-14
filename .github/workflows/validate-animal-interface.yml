@@ -106,6 +106,14 @@ jobs:
               Write-Host "CROSS_PACKAGE_MISSING=$($package.Name)"
               continue
             }
+            $bytes = [IO.File]::ReadAllBytes($input)
+            $header = [Convert]::ToHexString($bytes[0..([Math]::Min(3, $bytes.Length - 1))])
+            Write-Host "CROSS_PACKAGE_HEADER_$($package.Name.ToUpper())=$header"
+            if ($header -eq "FFEDFACE") {
+              Write-Host "CROSS_PACKAGE_PROTECTED_NPKSCRYPT=$($package.Name)"
+              Write-Host "CROSS_PACKAGE_DECOMPILE_SKIPPED=$($package.Name): key-state/profile not yet verified; original bytes preserved."
+              continue
+            }
             $output = Join-Path $root $package.Name
             New-Item -ItemType Directory -Path $output -Force | Out-Null
             Write-Host "===== DECOMPILING $($package.Name) ====="
