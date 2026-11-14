@@ -256,3 +256,8 @@ Nueva ficha: [L2SUDAMERICA-DIALOGBOX-AUDIT.md](L2SUDAMERICA-DIALOGBOX-AUDIT.md).
 ## 18. Auditoría del sistema de shortcuts
 
 Nueva ficha: [L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md](L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md). Documenta ShortcutWnd y Shortcut: cinco barras/páginas, 12 slots por página, diez páginas, orientación horizontal/vertical, panel joypad, expansión, bloqueo/movimiento, persistencia y comandos globales de UI. Incluye eventos 590–660 y riesgos de no confundir índice global ShortcutID con slot local. Análisis estático; sin cambios ni pruebas en cliente.
+
+
+### Addendum a la auditoría 17 — bindings y teclas rápidas
+
+La ficha de Shortcut fue ampliada con el cruce de `Shortcut.uc` e `InterfaceAI_KeySettingWnd.uc`: tres bindings independientes (teclas 1–12, QWERTY y F1–F12), paneles configurables por INI, comandos `/useshortcut` y `/useshortcutforce`, y la frontera no reconstruida de `NWindow.ShortcutAPI`. También se registraron dos puntos que requieren prueba/bytecode: la rama Force de Bind3 y etiquetas duplicadas en el switch de comandos. No se atribuye a “force” capacidad de saltarse restricciones del servidor.
