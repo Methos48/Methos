@@ -999,3 +999,35 @@ La trazabilidad textual de los dos candidatos queda confirmada:
 - Henna: evento 2630 → wrapper string renombrado; evento 260 → handler original conservado.
 
 No se combinaron aún ambos cambios ni se modificó producción. El siguiente paso es revisar el inventario del repositorio para localizar el compilador/entorno compatible o una prueba previa de sobrecarga en el mismo dialecto de UnrealScript.
+
+
+## Cuadragésima sexta pasada: evidencia binaria del paquete HennaCandidate (2026-11-14)
+
+Se volvió a inspeccionar el ZIP de validación y sus tres paquetes Unreal compilados. Apareció evidencia adicional que permite avanzar más allá del análisis textual.
+
+### Inventario de paquetes
+
+| Paquete | Bytes | SHA-256 |
+|---|---:|---|
+| 'Interface-clean.u' | 3,338,657 | 'b9a443ac57cc39e9099e2ab47683c95070852379ec4a178b9fead8c79e17a255' |
+| 'Interface-edited-test.u' | 3,338,801 | '9096389fc5457e97bc8d4b67312781b4965c0fa272cd4bf3fb8d4360bf6ce756' |
+| 'InventoryWnd-HennaCandidate.u' | 3,338,681 | 'b4b99ab61d90241e68c9c8afcf86edfc11e6af8694f4ab992967493652cbe1eb' |
+
+### Comprobación de nombres en los paquetes
+
+Se inspeccionaron las cadenas ASCII imprimibles de cada paquete:
+- 'Interface-clean.u': contiene 'function37' y 'function30'; no contiene 'HandleAddHennaInfo'.
+- 'Interface-edited-test.u': conserva el mismo conjunto relevante de nombres que el paquete limpio; tampoco contiene 'HandleAddHennaInfo'.
+- 'InventoryWnd-HennaCandidate.u': contiene 'HandleAddHennaInfo', conserva 'function30' y ya no contiene 'function37'.
+
+Esto demuestra que el artefacto incluye un paquete binario separado que incorpora el renombrado HennaCandidate, no solo el archivo fuente .uc. La diferencia de tamaño frente al paquete limpio es de 24 bytes.
+
+### Qué demuestra y qué no
+
+- **Sí demuestra:** existe un paquete Unreal serializado distinto con el nuevo nombre 'HandleAddHennaInfo' en sus cadenas, y sin la cadena 'function37'.
+- **No demuestra:** que el paquete se haya cargado correctamente en el cliente, que el evento 2630 haya despachado al wrapper correcto en runtime, ni que la interfaz haya pasado pruebas funcionales. La presencia de una cadena no prueba por sí sola la tabla de referencias ni el comportamiento.
+- No hay .exe, .dll, .bat, .cmd, .ps1 ni compilador dentro del ZIP. Tampoco hay registro de ejecución del paquete en cliente.
+
+### Conclusión
+
+La validación de Henna avanza de «candidato fuente no compilado» a **«paquete candidato compilado/serializado presente, sin prueba de runtime»**. Se mantiene 'Interface-clean.u' como referencia y no se sustituye el paquete de producción. El candidato AddItem sigue sin un paquete binario propio identificable en el artefacto.
