@@ -60,38 +60,53 @@ jobs:
           echo "$code" > l2sudamerica-audit/interface-u-exit-code.txt
           exit 0
 
-      - name: Parse and round-trip interface.xdat
+      - name: Decode SmartCrypt and Lineage2Ver111 layers for both originals
         shell: bash
         run: |
-          mkdir -p l2sudamerica-audit/interface-xdat
+          mkdir -p l2sudamerica-audit/decoded-u l2sudamerica-audit/decoded-xdat
+          dotnet run --project tools/L2SudamericaProbe/L2SudamericaProbe.csproj --configuration Release -- \
+            reference-data/packages/l2sudamerica/Interface.u \
+            l2sudamerica-audit/decoded-u u \
+            2>&1 | tee l2sudamerica-audit/decoded-u/probe.log
+          dotnet run --project tools/L2SudamericaProbe/L2SudamericaProbe.csproj --configuration Release -- \
+            reference-data/packages/l2sudamerica/interface.xdat \
+            l2sudamerica-audit/decoded-xdat xdat \
+            2>&1 | tee l2sudamerica-audit/decoded-xdat/probe.log
+
+      - name: Parse decoded XDAT candidates and verify round-trip
+        shell: bash
+        run: |
           python - <<'PY'
           from pathlib import Path
           import hashlib, sys, traceback
           sys.path.insert(0, "tools/xdat")
           from xdat_core import decompile_to_folder, parse_xdat, compile_from_folder
-          source = Path("reference-data/packages/l2sudamerica/interface.xdat")
-          data = source.read_bytes()
+          root = Path("l2sudamerica-audit/decoded-xdat")
+          candidates = sorted(root.glob("*.decoded"))
           report = []
-          report.append(f"SIZE={len(data)}")
-          report.append(f"SHA256={hashlib.sha256(data).hexdigest()}")
-          try:
-              parsed = parse_xdat(data)
-              report.append(f"PARSE_OK type={type(parsed).__name__}")
-              out = Path("l2sudamerica-audit/interface-xdat/xml")
-              windows, shortcuts = decompile_to_folder(data, out)
-              report.append(f"DECOMPILE_OK windows={windows} shortcuts={shortcuts}")
-              rebuilt, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(out, original_data=data)
-              exact = rebuilt == data
-              report.append(f"ROUNDTRIP_EXACT={exact} rebuilt_bytes={len(rebuilt)} windows={rebuilt_windows} shortcuts={rebuilt_shortcuts}")
-              if not exact:
-                  raise SystemExit("XDAT round-trip did not reproduce exact original bytes")
-          except Exception:
-              report.append("XDAT_ERROR")
-              report.append(traceback.format_exc())
-              Path("l2sudamerica-audit/interface-xdat/report.txt").write_text("\\n".join(report)+"\\n", encoding="utf-8")
-              raise
-          Path("l2sudamerica-audit/interface-xdat/report.txt").write_text("\\n".join(report)+"\\n", encoding="utf-8")
+          successes = []
+          for source in candidates:
+              data = source.read_bytes()
+              report.append(f"CANDIDATE={source.name} SIZE={len(data)} SHA256={hashlib.sha256(data).hexdigest()}")
+              try:
+                  parsed = parse_xdat(data)
+                  out = root / (source.stem + "-xml")
+                  windows, shortcuts = decompile_to_folder(data, out)
+                  rebuilt, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(out, original_data=data)
+                  exact = rebuilt == data
+                  report.append(f"PARSE_OK type={type(parsed).__name__} windows={windows} shortcuts={shortcuts}")
+                  report.append(f"ROUNDTRIP_EXACT={exact} rebuilt_bytes={len(rebuilt)} windows={rebuilt_windows} shortcuts={rebuilt_shortcuts}")
+                  if not exact:
+                      raise ValueError("XDAT candidate round-trip differs")
+                  successes.append(source.name)
+              except Exception:
+                  report.append("CANDIDATE_REJECTED")
+                  report.append(traceback.format_exc())
+          report.append("VALID_XDAT_CANDIDATES=" + ",".join(successes))
+          (root / "xdat-candidate-report.txt").write_text("\\n".join(report)+"\\n", encoding="utf-8")
           print("\\n".join(report))
+          if not successes:
+              raise SystemExit("No decoded candidate passed XDAT parsing and exact round-trip.")
           PY
 
       - name: Publish audit outputs
