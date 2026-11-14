@@ -330,3 +330,47 @@ No se debe trasladar la lógica de la clase Shortcut a SublimityShortcut ni asum
 | Relación entre ambos sistemas | No demostrada |
 
 **Próxima tarea técnica:** resolver los intrínsecos `__NFUN_154__` y `__NFUN_132__` desde el registro nativo y buscar referencias de los índices saneados en el mapa de nombres del paquete. Después, analizar los exports de SublimityShortcut y SublimityItem a nivel serializado. No se ha compilado ni ejecutado el cliente.
+
+
+## Addendum F — inferencia contextual de los intrínsecos 154 y 132
+
+Se hizo un barrido de los 151 fuentes UC del artefacto original. El resultado cuantitativo:
+- `__NFUN_154__`: 1.041 llamadas distribuidas en 95 archivos.
+- `__NFUN_132__`: 238 llamadas distribuidas en 41 archivos.
+
+No se dispone todavía de Core.u/Engine.u/NWindow.u del mismo runtime para generar y consultar el registro nativo exacto. Por eso las identificaciones siguientes son inferencias contextuales fuertes, no resolución por nombre del registro.
+
+### 1. Token 154: comparación de igualdad (candidato muy fuerte)
+
+En RecipeBuyListWnd, el evento `MethosRecoveredName_3518` se compara contra constantes 780, 790 y 210 para seleccionar ramas distintas del dispatcher. En otros lugares se compara un ID o longitud con un entero. En CustomEtcWnd se utiliza para probar pertenencia de un entero a valores discretos.
+
+La interpretación que mejor explica todos esos contextos es igualdad (`==`). Debe confirmarse con el descriptor nativo del runtime, porque el token 154 no se ha resuelto por su registro.
+
+### 2. Token 132: OR lógico (candidato muy fuerte)
+
+En CustomEtcWnd se agrupan pruebas de igualdad de IDs para activar una misma categoría; por ejemplo, dos IDs de texto comparados por separado y unidos en una condición. También se combinan grupos mayores de comparaciones para seleccionar un comportamiento. La interpretación más consistente es OR lógico (`||`).
+
+En SublimityShortcut, el método 1576 combina tres pruebas de token 154 con valores 16, 17 y 18 mediante token 132. Si las inferencias anteriores se confirman, el método devuelve true cuando el argumento es 16, 17 o 18.
+
+### 3. Reconstrucción condicional de 1576
+
+`MethosRecoveredName_1576(x)` equivale probablemente a:
+
+`return (x == 16) || (x == 17) || (x == 18);`
+
+Esto es una reconstrucción semántica provisional basada en 1.279 usos contextuales de ambos tokens. No debe marcarse como verdad binaria hasta consultar NativeFunctionRegistryBuilder con los paquetes exactos Core/Engine/NWindow de L2Sudamerica.
+
+### 4. Implicación funcional limitada
+
+El método 1576 parece clasificar tres valores enteros específicos como un grupo. No hay evidencia suficiente para nombrar ese grupo como teclas, modificadores, estados de pulsación, categorías de shortcut ni códigos virtuales. El parámetro no tiene un nombre original recuperado.
+
+### 5. Acción técnica pendiente
+
+Para cerrar la inferencia se requiere:
+1. Obtener Core.u, Engine.u y NWindow.u del mismo cliente/runtime L2Sudamerica.
+2. Ejecutar NativeFunctionRegistryBuilder y filtrar NativeToken 154 y 132.
+3. Confirmar Name, Owner, ReturnType, Flags y si IsOperator.
+4. Correlacionar el descriptor exacto con los callsites del paquete Interface.u.
+5. Solo entonces restaurar el nombre real y semántica del método 1576.
+
+No se han alterado binarios ni se ha compilado o ejecutado el cliente.
