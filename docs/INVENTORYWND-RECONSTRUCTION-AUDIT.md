@@ -456,3 +456,14 @@ Se hizo una búsqueda de identificadores y llamadas en los 159 archivos UnrealSc
 | `function48` | 6 | Sus seis llamadas están dentro del bloque posterior al retorno inicial de `function3`, por tanto no son alcanzables desde esa entrada |
 
 Esta búsqueda no prueba que las rutinas sin llamadas sean inútiles: podrían ser callbacks externos o conservarse por compatibilidad con el runtime. Por eso no se borran ni se modifican. Sí permite descartar que `function47` sea un helper activo llamado desde otra clase del código recuperado. Se conserva la fuente intacta y se añaden estas relaciones a la matriz de auditoría.
+
+## Vigésima segunda pasada: contraste de categorías de objetos con Silent Dark (2026-11-14)
+
+Se comparó la clasificación de objetos de Animal con la implementación de `SortItem()` de Silent Dark, que conserva las categorías explícitas:
+
+- Silent Dark clasifica `ItemType 0` como armas, `1` como armaduras y `2` como accesorios.
+- Animal `function31(ItemInfo)` devuelve true exactamente para `ItemType 0, 1, 2` y enruta el objeto al control `EquipmentItem` (variable `item_5`). La semántica queda confirmada como filtro conjunto de equipo/armas-armaduras-accesorios; no se recuperó un nombre original exacto, así que se conserva `function31`.
+- En Silent Dark, `ItemType 5` se subdivide por `ItemSubType`; `ItemSubType 5` se agrega explícitamente a `RecipeList`.
+- Animal `function32(ItemInfo)` acepta `ItemSubType 5` o `6` y enruta a `CraftingItem` (`item_6`). El subtipo 5 como receta queda respaldado por una segunda implementación. La búsqueda de referencias a `ItemSubType 6` en las 169 clases Silent Dark no encontró un uso comparable; el significado del 6 sigue sin resolverse.
+
+Esto permite describir la función31 con mayor certeza y confirma parte del propósito de function32, pero no justifica inventar identificadores originales ni eliminar el subtipo 6. No se modificó la fuente Animal.
