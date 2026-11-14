@@ -327,3 +327,13 @@ El helper escribe `-1` en `TrashGrp/TrashList[int_2]` y retorna. No hay llamadas
 ### Resultado de esta pasada
 
 No se renombraron funciones ni se modificó el comportamiento. Se confirmó el subtipo 5 como receta; el subtipo 6 y la enumeración `ItemType` siguen abiertos. Se mantiene la protección: ninguna prueba ejecuta `RequestDestroyItem` ni altera la configuración de borrado.
+
+## Decimocuarta pasada: búsqueda ampliada de referencias de tipos de ítem (2026-11-14)
+
+Se inspeccionó el árbol completo de la rama principal (233 rutas, sin truncamiento) para localizar fuentes, tablas de ítems o datos de cliente que pudieran resolver los valores numéricos de `ItemType` y `ItemSubType`. El repositorio contiene los paquetes `Interface.u` y `interface.xdat` de Animal, Berserker, L2Sudamérica y Silent Dark, además del cliente Interlude de referencia; no contiene `itemname-e.dat`, `itemdata`, `weapongrp`, `armorgrp`, `etcitemgrp` ni una tabla equivalente de definiciones de objetos. Tampoco hay fuentes de `InventoryWnd.uc` alternativas versionadas para esos otros paquetes.
+
+Se amplió la búsqueda externa y apareció una implementación pública de clasificación de inventario para otra interfaz Lineage II: convierte `ItemType` a `EItemType` y `ItemSubType` a `EEtcItemType`, y separa explícitamente activos, armas, armaduras, accesorios, consumibles, elixires, flechas, virotes y recetas. Esta fuente confirma que esos campos son enumeraciones de clasificación y que las recetas son una categoría diferenciada, pero no aporta una tabla numérica fiable aplicable al build Animal. La página consultada es una modificación de terceros, no una fuente oficial ni el mismo paquete AnimalGame: https://maxcheaters.com/topic/244963-edit-file-inventorywnd/
+
+**Conclusión:** la referencia externa no autoriza traducir los valores 0/1/2 de Animal a etiquetas concretas ni identificar el subtipo 6. Se mantienen ambas cuestiones abiertas. Tampoco se ha inferido que la categoría de recetas de otra interfaz use los mismos números que Animal, aunque el valor 5 sí está confirmado por la asignación directa de `RecipeBookWnd` en las fuentes Animal.
+
+No se modificó `InventoryWnd.uc`, no se renombraron helpers y no se alteró ningún comportamiento. La siguiente vía de mayor valor es extraer y comparar las clases `InventoryWnd` de los otros paquetes ya guardados en el repositorio, buscando coincidencias de bytecode y nombres de campos/eventos antes de acudir a referencias genéricas adicionales.
