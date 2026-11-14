@@ -1,0 +1,59 @@
+# L2Sudamerica — auditoría de interfaz
+
+Fecha de actualización: 2026-11-14
+
+## Alcance y separación
+
+Este registro corresponde exclusivamente al cliente Interlude de L2Sudamerica. No mezclar con Berserker, AnimalGame, otros servidores, Methos-Interface ni interfaces de terceros. Los paquetes originales deben conservarse inmutables.
+
+## Descargas oficiales localizadas
+
+Página oficial: https://www.l2sudamerica.com/?page=download
+
+La página publica dos variantes:
+
+| Variante | Descripción publicada | Descarga oficial |
+|---|---|---|
+| Interface 2.0 | Más liviana, menor carga gráfica | https://drive.google.com/file/d/1EcLm1ln28486fSbX624VxPH_8iDksHa8/view?usp=drive_link |
+| Interface 3.0 | Más completa, interfaz más moderna y detallada | https://drive.google.com/file/d/1Qn5_BPk1AD8NPBpGWlJAys57eWtmOUSj/view?usp=drive_link |
+
+Espejos oficiales publicados para 2.0:
+
+- MediaFire: https://www.mediafire.com/file/z6ja61scxvy4xmu/l2Sudamerica_fafureon_20.rar/file
+- MediaFire mirror 1: https://www.mediafire.com/file/mag7cknt9aoddgo/l2Sudamerica_fafureon_20_-_miror_1.rar/file
+
+Los dos mirrors de MediaFire muestran un archivo RAR de 3.54 GB. El primero figura cargado el 2023-06-09 y el segundo el 2023-06-10. Los enlaces Google Drive y MediaFire son enlaces publicados por la página oficial. El tamaño y las fechas describen esos mirrors; no prueban que su contenido sea idéntico a la versión actual del servidor.
+
+Updater obligatorio publicado por el servidor:
+
+- ZIP directo: https://www.l2sudamerica.com/L2SudamericaUpdater.zip
+- Mega: https://mega.nz/file/DNkyAIAC
+
+La página indica ejecutar el updater después de descomprimir el cliente y antes del primer inicio.
+
+## Estado de adquisición
+
+- Los enlaces fueron localizados en la página oficial y abiertos para identificar sus destinos.
+- Los mirrors MediaFire muestran landing pages activas y el tamaño de 3.54 GB.
+- **No se ha descargado ni inspeccionado todavía ninguno de los RAR de 2.0/3.0 ni el updater.**
+- Por tanto, no se registra ningún SHA-256 ni se afirma que los paquetes contengan archivos concretos hasta descargarlos y examinarlos.
+- La descarga del updater ZIP fue localizada, pero la lectura web no pudo recuperar el binario por el tipo de contenido ZIP. Mega tampoco pudo abrirse desde la herramienta de consulta.
+
+## Trabajo técnico previo sobre la copia original de L2Sudamerica
+
+Según el registro de trabajo anterior:
+
+- `Interface.u`: extracción de 150/150 clases sin errores.
+- `interface.xdat`: se probó una modificación real y se verificó la reconstrucción.
+- Recompilación y reprotección de `Interface.u`: preparadas, pero el resultado final todavía está pendiente.
+- Próxima prueba técnica: modificar una clase `.uc` de forma controlada, recompilar, aplicar nuevamente la protección compatible y comprobar que el cliente conserva el cambio.
+- No declarar la prueba cerrada hasta inspeccionar el archivo resultante y verificar su funcionamiento.
+
+## Próximos pasos
+
+1. Descargar las variantes oficiales 2.0 y 3.0, preferiblemente en una carpeta de trabajo separada.
+2. Calcular SHA-256 de cada archivo descargado antes de extraerlo.
+3. Inventariar el contenido sin modificar los originales: nombres, tamaños, fechas y presencia de `Interface.u`, `interface.xdat`, DLL y archivos de sistema.
+4. Comparar las dos variantes y determinar qué protección usa cada archivo.
+5. Completar la prueba controlada de recompilación/reprotección de `Interface.u`.
+6. Registrar hashes de originales y derivados por separado.
