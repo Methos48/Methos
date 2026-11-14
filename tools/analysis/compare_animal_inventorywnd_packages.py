@@ -7,7 +7,7 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as tokens, extract_event_routes
+from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as tokens, extract_event_routes, count_parameters
 
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
@@ -24,10 +24,6 @@ def event_routes(functions: list[dict]) -> dict[int, str]:
 def normalized_hash(source: str) -> str:
     normalized = " ".join(tokens(source))
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-
-
-def parameter_count(params: str) -> int:
-    return len([part for part in params.split(",") if part.strip()])
 
 
 def main() -> int:
@@ -96,7 +92,7 @@ def main() -> int:
                 SequenceMatcher(None, source_tokens, candidate_tokens, autojunk=False).ratio()
                 if source_tokens and candidate_tokens else 0.0
             )
-            same_params = parameter_count(function["params"]) == parameter_count(candidate["params"])
+            same_params = count_parameters(function["params"]) == count_parameters(candidate["params"])
             conflict = (
                 candidate["name"].lower() in animal_names
                 and candidate["name"].lower() != function["name"].lower()
