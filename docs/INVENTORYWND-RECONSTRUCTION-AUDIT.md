@@ -295,3 +295,15 @@ Su cuerpo solo contiene `return;`. El comparador de similitud no ofrece un candi
 Mantiene `vvCanUseSetEquipment = true; return;`. El bloque posterior intenta obtener `UserInfo` y habilitarlo solo para una lista fija de nombres, pero es inalcanzable desde la entrada. Se conserva el retorno y no se reactiva la lista. El helper `MethosRecoveredName_1105(ItemInfo)` consulta esta bandera antes de recorrer piezas del set y solicitar `RequestUseItem` para las piezas que faltan; por tanto, la bandera habilita ese flujo de uso de piezas, no modifica la lógica de equipamiento del servidor.
 
 No se modificó `InventoryWnd.uc`. Estos hallazgos se añaden como anotaciones semánticas; los identificadores permanecen intactos hasta demostrar el nombre del build Animal.
+
+## Duodécima pasada: contrato nativo de GetAccessoryServerID (2026-11-14)
+
+Se contrastó el bytecode/descompilado Animal con la declaración nativa de `GetAccessoryServerID` en `UIScript` del kit Interlude y con el flujo de `EarItemUpdate`/`FingerItemUpdate`.
+
+La firma nativa documentada es `GetAccessoryServerID(out int a_LEar, out int a_REar, out int a_LFinger, out int a_RFinger)`: las cuatro salidas están ordenadas explícitamente como oreja izquierda, oreja derecha, dedo izquierdo y dedo derecho.
+
+En Animal, `function44(int)` compara el ID con las salidas 1 y 2 y devuelve `-1/1/0`. Eso coincide exactamente con la lógica de referencia de `IsLOrREar` del kit Interlude. En cambio, la función Animal que ya se llama `IsLOrREar(int)` compara las salidas 3 y 4, que según el contrato nativo corresponden a dedos. `IsLOrRFinger(int)` también compara las salidas 3 y 4, esta vez con variables explícitamente llamadas `LFinger/RFinger`. Y `EarItemUpdate()` llama a `IsLOrREar`, mientras `FingerItemUpdate()` llama a `IsLOrRFinger`.
+
+Esto deja una inconsistencia concreta en la versión Animal: el helper llamado `IsLOrREar` parece comparar los IDs de dedos, mientras `function44` es el helper que compara los IDs de orejas. La referencia Interlude respalda esa interpretación, pero no demuestra si Animal pretendía conservar dos helpers duplicados, si el nombre del helper existente se desplazó durante la compilación, o si hay una peculiaridad de implementación nativa específica de ese cliente. `function44` no tiene call sites en la clase, por lo que no se cambia el nombre ni se altera `EarItemUpdate`/`FingerItemUpdate`.
+
+**Conclusión operativa:** queda identificada una posible inversión de clasificación orejas/dedos en Animal, con evidencia de la firma nativa y de los consumidores. No es una corrección autorizada para esta reconstrucción: requeriría comprobar el comportamiento real del `GetAccessoryServerID` de Animal en ejecución o disponer de una segunda fuente del mismo build. La fuente reconstruida permanece intacta.
