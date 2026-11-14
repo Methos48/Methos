@@ -787,6 +787,14 @@ jobs:
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $hennaSources $hennaOutput
           if ($LASTEXITCODE -ne 0) { throw "Renaming function37 to HandleAddHennaInfo did not compile in isolation." }
           Write-Host "PASS: INVENTORYWND_FUNCTION37_HANDLEADDHENNAINFO_COMPILES=true"
+          $hennaReopened = Join-Path $probeRoot "HennaCandidate-Reopened"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $hennaOutput $hennaReopened "$env:ANIMAL_UCC_ROOT/Interlude/Interface/Classes"
+          if ($LASTEXITCODE -ne 0) { throw "Renamed HandleAddHennaInfo package could not be reopened." }
+          $hennaReopenedFile = Join-Path $hennaReopened "InventoryWnd.uc"
+          $hennaReopenedText = [IO.File]::ReadAllText($hennaReopenedFile)
+          if (![regex]::IsMatch($hennaReopenedText, '(?m)^function HandleAddHennaInfo\(string ')) { throw 'HandleAddHennaInfo name did not persist after package reopen.' }
+          if ([regex]::IsMatch($hennaReopenedText, '(?m)^function function37\(')) { throw 'function37 remained after renamed package reopen.' }
+          Write-Host "PASS: INVENTORYWND_FUNCTION37_RENAMED_NAME_PERSISTED=true"
 
           $addItemSources = Join-Path $probeRoot "AddItemCandidate"
           Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $addItemSources -Recurse
@@ -797,13 +805,19 @@ jobs:
           $addItemText = $addItemText.Replace('function30', 'HandleAddItem')
           [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
           $addItemOutput = Join-Path $probeRoot "InventoryWnd-AddItemCandidate.u"
+          $PSNativeCommandUseErrorActionPreference = $false
           $addItemLog = dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $addItemSources $addItemOutput 2>&1
           $addItemExit = $LASTEXITCODE
           $addItemLog | Out-File -FilePath (Join-Path $probeRoot "function30-HandleAddItem-compiler.log") -Encoding utf8
           if ($addItemExit -eq 0) {
             Write-Host "PASS: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=true"
           } else {
-            Write-Host "INFO: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=false exit=$addItemExit"
+            $diagnostics = $addItemLog -join [Environment]::NewLine
+            if ($diagnostics -match "'HandleAddItem' conflicts with") {
+              Write-Host "REJECTED: FUNCTION30_CANNOT_BE_HANDLEADDITEM_IN_ANIMAL=true"
+            } else {
+              Write-Host "INCONCLUSIVE: FUNCTION30_HANDLEADDITEM_RENAME_FAILED_FOR_OTHER_REASON=true"
+            }
             $addItemLog | Select-String -Pattern 'already defined|duplicate|overload|HandleAddItem|error' | ForEach-Object { Write-Host $_.Line }
           }
 
