@@ -1216,3 +1216,35 @@ La inspección confirma campos del encabezado, contadores y desplazamientos. No 
 ### Decisión
 
 La evidencia acumulada favorece claramente `InventoryWnd-HennaCandidate.u`: fuente de dos líneas, tres referencias textuales coherentes, contadores del encabezado idénticos al limpio y crecimiento total exacto de 24 bytes. Sigue siendo candidato estático; no instalar ni reemplazar `Interface-clean.u` hasta validar tablas/bytecode y probar en cliente.
+
+
+## Quincuagésima tercera pasada: análisis real de las 5.258 entradas de la tabla de nombres (2026-11-14)
+
+Se decodificó la tabla de nombres de ambos paquetes desde el offset 64, leyendo las 5.258 entradas con longitud compacta, texto terminado en NUL y flags DWORD. La lectura llegó a un límite consistente en ambos archivos, sin errores de formato.
+
+### Resultado
+
+- Paquete limpio: 5.258 entradas decodificadas; final de tabla calculado en offset 102.623.
+- HennaCandidate: 5.258 entradas decodificadas; final de tabla calculado en offset 102.631.
+- Se compararon todas las entradas por índice, texto y flags.
+- **Única diferencia:** índice 1.119, `function37` → `HandleAddHennaInfo`.
+- Los flags de esa entrada y los de todas las demás entradas son idénticos.
+- No hay nombres agregados ni eliminados, ni cambios en el orden de las otras 5.257 entradas.
+
+Esto confirma a nivel de tabla de nombres que el candidato reemplaza una entrada existente, sin alterar los índices ni introducir nuevos nombres. La tabla crece 8 bytes, exactamente la diferencia de longitud entre ambos identificadores.
+
+### Corrección de offsets consignados en la pasada 52
+
+La pasada 52 registró incorrectamente los offsets absolutos de export e import con una diferencia de 1.024 bytes respecto de los valores leídos directamente del encabezado. Los valores correctos del encabezado son:
+
+| Campo | Limpio | HennaCandidate |
+|---|---:|---:|
+| Export offset | 3.179.823 | 3.179.847 |
+| Import offset | 3.173.210 | 3.173.234 |
+| Fin calculado de tabla de nombres | 102.623 | 102.631 |
+
+La diferencia entre offsets de export/import sigue siendo +24 bytes en el candidato, y los contadores del encabezado permanecen iguales. Esta corrección reemplaza los valores absolutos erróneos de la pasada 52; sus conclusiones sobre los contadores y el desplazamiento relativo +24 se mantienen.
+
+### Límite y siguiente paso
+
+La tabla de nombres queda validada por completo para este cambio. Aún falta decodificar las tablas de import/export y el bytecode de `InventoryWnd`. La evidencia actual no certifica ejecución en cliente. No instalar el candidato ni alterar el paquete limpio.
