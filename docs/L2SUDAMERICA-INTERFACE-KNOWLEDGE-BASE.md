@@ -211,3 +211,8 @@ Estas fichas están en:
 ## Auditoría de comercio y almacén
 
 - [Comercio, almacén, tienda privada, envíos y multisell](L2SUDAMERICA-TRADE-WAREHOUSE-SHOP-AUDIT.md) — siete ventanas cruzadas U/XDAT; geometría, controles, eventos registrados, payloads y solicitudes observadas. La correlación de productores y la validación en cliente siguen pendientes.
+
+
+## Auditoría de macros, recetas y habilidades
+
+- [Macros, recetas y aprendizaje de habilidades](L2SUDAMERICA-MACRO-RECIPE-SKILL-AUDIT.md) — análisis cruzado de diez ventanas U/XDAT, solicitudes API, eventos registrados, edición de macros, fabricación y aprendizaje/encantamiento. La correlación de productores y la validación en cliente siguen pendientes.
