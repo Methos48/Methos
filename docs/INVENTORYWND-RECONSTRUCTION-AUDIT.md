@@ -913,3 +913,26 @@ Se mantiene la conclusión: Silent Dark documenta un patrón funcional de result
 ### Nota de precisión sobre el inventario de funciones
 
 El recuento de 53 funciones Silent Dark se toma del inventario del artefacto. La extracción independiente por patrón de declaraciones detecta 52; esta diferencia de un elemento permanece como discrepancia de metodología y no se usa para afirmar una cantidad exacta de funciones compiladas.
+
+
+## Cuadragésima tercera pasada: auditoría de riesgo en los fuentes reabiertos (2026-11-14)
+
+Se comparó el fuente base `Animal-Rebuilt/UnrealScript/InventoryWnd.uc` con `Reopened-Clean`, `Reopened-Edited` y los candidatos de renombrado del artefacto.
+
+### Hallazgos críticos
+
+- `Reopened-Clean/InventoryWnd.uc` y `Reopened-Edited/InventoryWnd.uc` son idénticos byte por byte (SHA-256 `ba569baad297a387df748eb079fd6a1bd9d946bd3ab62c1949c980467cc67435`). No son dos validaciones independientes.
+- En el fuente base, el evento 2600 llama a `function30(param)`. La función `function30(string)` procesa el texto del evento y existe además una función distinta `bool HandleAddItem(ItemInfo)`, usada por el filtrado para decidir si un objeto coincide.
+- En los fuentes reabiertos, el evento 2600 fue cambiado a `HandleAddItem(param)`, aunque el método `bool HandleAddItem(ItemInfo)` permanece y no se creó una versión `HandleAddItem(string)`. Esto introduce una colisión/incompatibilidad de firma potencial y rompe la correspondencia original entre evento y parser. No se debe aceptar como renombrado seguro.
+- El evento 2630 se redirigió de `function37(param)` a `HandleAddHennaInfo(param)`. En el archivo reabierto aparece un wrapper adicional con ese nombre, mientras `function37(string)` sigue presente. El cambio altera la ruta de despacho y necesita validación independiente; el nombre descriptivo por sí solo no demuestra equivalencia.
+- La reapertura también modifica los offsets de comentarios de control de flujo, agrega numerosos `return;` finales y altera la representación de las teclas Alt/Ctrl de constantes simbólicas a números. Esas diferencias no deben tratarse como mejoras funcionales ni asumirse inocuas sin recompilar y probar.
+
+### Candidatos de nombres
+
+Los archivos `AddItemCandidate` y `HennaCandidate` son experimentos separados que renombran la declaración y el despacho de una función anónima. No deben confundirse con el resultado `Reopened-Clean`, que conserva `function30`/ `function37` pero redirige parcialmente los eventos.
+
+### Decisión
+
+Se marca `Reopened-Clean` y `Reopened-Edited` como material de investigación, **no como fuente de producción validado**. Se conserva el fuente base como referencia de comportamiento para esta auditoría. No se copió ninguno de estos cambios al paquete ni al código de producción.
+
+Próximo paso: comparar los cuerpos completos de `function30`, `function37`, `HandleAddItem(ItemInfo)` y el wrapper `HandleAddHennaInfo`, y reconstruir una tabla de llamadas/firmas para confirmar qué nombres pueden recuperarse sin alterar el despacho.
