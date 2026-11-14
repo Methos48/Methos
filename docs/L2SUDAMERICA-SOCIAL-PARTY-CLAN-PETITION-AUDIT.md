@@ -208,3 +208,34 @@ Mide 256×401 y registra eventos 740, 750, 760 y 770. Presenta pestañas y estad
 ## 13. Conclusión provisional
 
 La interfaz de L2Sudamerica tiene una capa de clan extensa con administración de miembros, rangos, aprendices, permisos, emblemas y guerras; un canal de comando separado; dos presentaciones de party; búsqueda de grupos con salas y listas de espera; almacenamiento local de miembros para invitaciones; y un subsistema de peticiones de soporte. Muchas acciones visibles son solicitudes al servidor y algunas son administrativas o destructivas. Las personalizaciones deben preservar confirmaciones, argumentos, permisos y respuestas, y distinguir siempre el cambio visual de la operación real.
+
+
+## 14. Addendum — invitación a clan y vista GM
+
+### InviteClanPopWnd
+- XML: 256×180, anclado BOTTOM_CENTER → BOTTOM_CENTER, offset (0,-45).
+- Controles: ClanBackTexture, InviteTitle0, ComboboxInviteClandPopWnd, InviteClandPopOkBtn e InviteClandPopCancelBtn.
+- OnLoad registra evento 160 y crea ocho entradas de tipo de clan: 0, 100, 200, 1001, 1002, 2001, 2002 y -1.
+- Al mostrarse, construye el combo a partir de los tipos/nombres habilitados que conserva ClanWnd, filtrando por estado y tipo.
+- Al confirmar, obtiene GetTargetInfo(UserInfo), valida que el target tenga nID distinto de cero, toma el tipo reservado de la opción elegida y envía RequestClanAskJoin(targetID, clanType).
+- Evento 160 cierra la ventana.
+
+Esta ventana no invita a alguien al clan directamente: solicita unirse al clan del personaje objetivo, con un tipo/clase de clan seleccionado. La dirección de la operación queda clara por el nombre RequestClanAskJoin y los parámetros objetivo + clanType.
+
+### GMClanWnd
+- XML: 283×411, anclado TOP_LEFT, offset (0,65); reutiliza casi todo el árbol de controles de ClanWnd y añade elementos de presentación GM.
+- Hereda de ClanWnd, pero registra eventos adicionales 2380, 2390 y 2400.
+- En inicialización deshabilita controles administrativos ordinarios (información de miembro/autorización, board, info, penalty, leave, guerra, invitación, edición de auth y títulos).
+- Usa GMAPI.RequestGMCommand(2, texto) para iniciar la consulta GM y procesa respuestas por eventos 2380/2390/2400.
+- Un booleano bShow alterna la presentación de resultados y la limpieza/ocultación del panel.
+
+No interpretar GMClanWnd como un panel normal de administración del clan: deriva de ClanWnd para reutilizar presentación/datos, pero su canal principal es GMAPI y la mayoría de botones ordinarios se deshabilitan.
+
+## 15. PartyMatchWndCommon — formateo de rangos de nivel
+
+La clase auxiliar no registra eventos ni tiene XML propio. Su función formatea rangos de nivel para presentación:
+- Nivel de entrada hasta 10 → "1 ~ 9" o "1~9".
+- Hasta 70 → agrupa por decenas y muestra un intervalo de nueve niveles.
+- Superior → "70 ~ 80" o "70~80".
+
+La función recibe un booleano que controla los espacios alrededor del separador. Es lógica de presentación de filtros, no una validación de nivel del servidor.
