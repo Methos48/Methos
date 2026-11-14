@@ -226,3 +226,8 @@ Nueva ficha técnica: [L2SUDAMERICA-PET-SUMMON-POTION-AUDIT.md](L2SUDAMERICA-PET
 ## 11. Auditoría de mapas, radar, misiones y navegación
 
 Nueva ficha: [L2SUDAMERICA-MAP-QUEST-NAVIGATION-AUDIT.md](L2SUDAMERICA-MAP-QUEST-NAVIGATION-AUDIT.md). Documenta MinimapWnd/Expand, MinimapControl, RadarMapWnd, RadarWnd, RadarContainerWnd, QuestTreeWnd, QuestListWnd, QuestBtnWnd, TownMapWnd, ZoneTitleWnd y GMQuestWnd; incluye geometría XDAT, eventos, APIs, vínculo QuestAPI↔minimapa, leyenda de zonas y preguntas abiertas. Análisis estático, sin modificaciones ni pruebas de carga.
+
+
+## 12. Auditoría social, clan, party matching y peticiones
+
+Nueva ficha: [L2SUDAMERICA-SOCIAL-PARTY-CLAN-PETITION-AUDIT.md](L2SUDAMERICA-SOCIAL-PARTY-CLAN-PETITION-AUDIT.md). Incluye ClanWnd/ClanDrawerWnd, UnionWnd/UnionDetailWnd, PartyWnd normal/compacta, PartyMatch y salas/listas de espera, SaveLoadParty, Petition, BoardWnd, MailBtnWnd y SSQMainBoard. Registra geometría XDAT, controles, eventos, solicitudes administrativas, operaciones de party, persistencia INI y preguntas abiertas. Análisis estático; no se editaron paquetes.
