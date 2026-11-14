@@ -186,3 +186,48 @@ La tabla de eventos enruta:
 ### Límites y siguiente fase
 
 La geometría y rutas principales están recuperadas, pero varias funciones conservan nombres numéricos saneados. Falta resolver cada una contra llamadas API y referencias de bytecode, documentar el significado de todos los IDs de evento con sus productores, mapear cada control XML a su handle/callback y validar el flujo de búsqueda/ordenación/descartar con pruebas unitarias o capturas controladas. No se ha editado ni recompilado ningún binario.
+
+
+## Segunda pasada — lógica interna del inventario
+
+### Capacidad y equipo
+
+- El contador visible se calcula como inventario normal + objetos de misión + cantidad de objetos en los 15 slots de equipo habilitados.
+- El límite se obtiene de `UIDATA_PLAYER.GetInventoryLimit()`; no es un número fijo de la interfaz.
+- La rutina de recuento ignora los slots de equipo deshabilitados.
+- Al refrescar el inventario, limpia las listas visuales y los arrays auxiliares de crafting/supplies antes de reconstruirlos.
+- Hay tratamiento especial para accesorios duplicados: al retirar un objeto de un slot, el código puede trasladar el objeto de mano derecha a mano izquierda cuando su SlotBitType lo requiere.
+- Los arrays de pendientes para orejas y anillos se resuelven contra el estado de equipamiento y rellenan los slots correspondientes.
+
+### Orden personalizado
+
+- Al ocultar la ventana, guarda la secuencia de ClassID mediante `SaveInventoryOrder`.
+- La rutina complementaria carga el orden con `LoadInventoryOrder`.
+- Al reconstruir el inventario, primero coloca los objetos que coinciden con la lista guardada y después completa el resto; la ordenación es local/visual, no una petición al servidor.
+- El botón SortButton llama a la rutina de ordenación; no debe confundirse con cambiar el orden de equipamiento.
+
+### Operaciones pendientes y confirmaciones
+
+La interfaz guarda un contexto temporal (tipo de operación, ServerID, cantidad y ubicación de clic) antes de mostrar el mensaje de confirmación. El evento 1710 recupera ese contexto y ejecuta la solicitud correspondiente:
+
+| Contexto interno | Acción ejecutada |
+|---|---|
+| 1111 / 2222 | Usar objeto |
+| 3333 | Soltar 1 |
+| 4444 | Soltar cantidad elegida |
+| 5555 | Soltar cantidad total |
+| 6666 | Destruir 1 |
+| 8888 | Destruir cantidad elegida |
+| 7777 | Destruir cantidad total |
+| 9999 | Cristalizar 1 |
+| 10000 | Recuperar cantidad elegida desde inventario de mascota |
+
+El flujo distingue soltar del inventario, destruir con TrashButton y cristalizar. No sustituir ni saltar los cuadros de confirmación al rediseñar.
+
+### Restricciones al abrir
+
+Antes de solicitar `RequestItemList`, comprueba ventanas incompatibles como WarehouseWnd, TradeWnd, ShopWnd, MultiSellWnd y DeliverWnd. La apertura del inventario puede ser rechazada mientras esas ventanas están activas. La rutina también consulta PrivateShopWnd; hay que verificar el resto de su condición completa antes de modificarla.
+
+### Próxima investigación
+
+Resolver nombres numéricos de las funciones de clasificación, búsqueda y filtros; rastrear el productor de cada evento 2570–2631; completar la condición de compatibilidad de ventanas; y mapear controles de Enchant/FastDelete/Refine con su callback real. La lógica de operaciones destructivas queda marcada como zona de riesgo: cualquier cambio futuro debe preservar ServerID, cantidades, validaciones y confirmaciones.
