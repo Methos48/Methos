@@ -254,3 +254,79 @@ La clase `SublimityShortcut` registra 25002 y declara `MethosRecoveredName_737(i
 La auditoría anterior dejó abierta la interpretación del booleano de 630/631 y no había seguido el cuerpo de _744. Ya está resuelto por la fuente exportada: ambos eventos actualizan el shortcut en dos formatos y cambian la visibilidad de las texturas de forma opuesta. También queda corregida la ambigüedad sobre los cinco hooks de SublimityShortcutWnd: sus cuerpos no están vacíos en la derivada.
 
 **Pendiente binario:** extraer los flags UFunction y el bytecode bruto de estos seis métodos para cotejar el export textual con la serialización original. No se ha compilado ni ejecutado el cliente.
+
+
+## Addendum E — investigación específica de SublimityShortcut y evento 25002
+
+Se revisaron de nuevo los fuentes `SublimityShortcut.uc`, `SublimityItem.uc`, `Shortcut.uc` e `InterfaceAI_KeySettingWnd.uc` del paquete L2Sudamerica.
+
+### 1. Ruta real del evento 25002
+
+La cadena recuperada es:
+
+`RegisterEvent(25002)` en `SublimityShortcut.OnLoad`
+→ `SublimityItem.OnEvent` caso 25002
+→ `MethosRecoveredName_878(payload)`
+→ parseo de `key` y `state`
+→ `MethosRecoveredName_737(key,state)`.
+
+El parser confirma que el payload contiene al menos dos enteros denominados literalmente `key` y `state`. El método 737 aparece como `return;` tanto en SublimityItem como en SublimityShortcut. No hay lógica visible de tecla/estado en esas dos implementaciones exportadas.
+
+### 2. Estructura de datos de SublimityShortcut
+
+La clase declara:
+- Un struct con tres enteros (campos saneados 4025–4027).
+- Tres arrays de 256 elementos: uno de enteros y dos de strings.
+- Tres enteros escalares adicionales (4030–4032).
+- En OnLoad, solo se observa que 4030 se inicializa a -1.
+
+No se asigna semántica a estos campos por sus nombres saneados. Las fuentes disponibles no muestran referencias adicionales a esos arrays/escalares dentro de los 151 fuentes UC, aparte de las declaraciones y la inicialización indicada. Es una señal de que la lógica pudo quedar fuera de la exportación recuperada, no prueba de que los campos estén inactivos en el binario original.
+
+### 3. Método 1576: clasificación bit a bit pendiente
+
+`MethosRecoveredName_1576(int)` devuelve una expresión formada por tres llamadas anidadas a `__NFUN_154__(valor, 16/17/18)` combinadas mediante `__NFUN_132__`. El decompilador agrega un `return false;` posterior inalcanzable.
+
+Sin resolver con certeza los intrínsecos 154 y 132 no se puede etiquetar el resultado como máscara, combinación AND/OR u otra operación. Queda como expresión recuperada, no como lógica interpretada.
+
+### 4. No confundirlo con el sistema Shortcut clásico
+
+Existe otra clase independiente, `Shortcut`, que registra el evento 90 y maneja los comandos de teclas configurables. Su configuración lee y guarda:
+- `Option.ini [Key] Panel1/Panel2/Panel3`
+- `Option.ini [Key] UseBind1/UseBind2/UseBind3`
+- `Game/EnterChatting`
+
+La ventana `InterfaceAI_KeySettingWnd` presenta tres casillas UseBind y tres selectores de panel, y persiste los cambios a través de `Shortcut.MethosRecoveredName_1017`.
+
+La clase Shortcut traduce los nombres de comandos:
+- `UserShorcutKey_1..12` → `/useshortcut <Panel1> <slot>`
+- `UserShorcutKey_Q,W,E,R,T,Y,U,I,O,P,[,]` → `/useshortcut <Panel2> <slot 1..12>`
+- `UserShorcutKey_F1..F12` → `/useshortcut <Panel3 actual> <slot 1..12>`
+- Hay rutas paralelas `UserShorcutKeyForce_...` que ejecutan `/useshortcutforce`.
+
+En F1–F12, cuando UseBind3 está activo, el código lee el número de página de la barra horizontal si está visible; de lo contrario, lee el textbox de la barra vertical. Si UseBind3 está desactivado, el comando usa el valor de Panel3 cargado desde Option.ini. En las rutas de 1–12 y Q..], el comando solo se ejecuta si UseBind1 o UseBind2 respectivamente está activo.
+
+Esta clase es el sistema clásico de asignación de teclas y no es la implementación de `SublimityShortcut`. La existencia de rutas `/useshortcutforce` tampoco demuestra que el cliente pueda saltarse restricciones del servidor; solo acredita qué comando de cliente se envía.
+
+### 5. Hallazgo de arquitectura
+
+Hay dos sistemas separados en el mismo paquete:
+1. `Shortcut` + `InterfaceAI_KeySettingWnd`: asignación de teclas por Option.ini y emisión de comandos de acceso directo.
+2. `SublimityShortcut` + `SublimityItem`: receptor del evento 25002 con payload key/state, arrays de 256 elementos y lógica de callback no recuperada.
+
+No se debe trasladar la lógica de la clase Shortcut a SublimityShortcut ni asumir que ambos comparten el mismo registro de teclas. No se ha encontrado una llamada directa que conecte la ruta 25002 con los comandos de la clase Shortcut.
+
+### 6. Estado de recuperación
+
+| Elemento | Estado |
+|---|---|
+| Registro del evento 25002 | Confirmado |
+| Campos key/state del payload | Confirmados |
+| Firma y despacho al hook 737 | Confirmados |
+| Cuerpo funcional del hook 737 | No recuperado; stub en ambas clases |
+| Uso de arrays de 256 | No resuelto |
+| Semántica del struct de tres enteros | No resuelta |
+| Intrínsecos 154/132 del método 1576 | Pendiente |
+| Sistema clásico Shortcut / Option.ini | Lógica fuente recuperada |
+| Relación entre ambos sistemas | No demostrada |
+
+**Próxima tarea técnica:** resolver los intrínsecos `__NFUN_154__` y `__NFUN_132__` desde el registro nativo y buscar referencias de los índices saneados en el mapa de nombres del paquete. Después, analizar los exports de SublimityShortcut y SublimityItem a nivel serializado. No se ha compilado ni ejecutado el cliente.
