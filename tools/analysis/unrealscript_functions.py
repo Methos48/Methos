@@ -111,6 +111,36 @@ def extract_event_routes(source: str) -> dict[int, str]:
     return routes
 
 
+def count_parameters(params: str) -> int:
+    """Count comma-separated parameters without splitting nested expressions."""
+    if not params.strip():
+        return 0
+    count = 1
+    stack: list[str] = []
+    pairs = {")": "(", "]": "[", "}": "{"}
+    quote: str | None = None
+    escaped = False
+    for char in params:
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char in "([{":
+            stack.append(char)
+        elif char in ")]}":
+            if stack and stack[-1] == pairs[char]:
+                stack.pop()
+        elif char == "," and not stack:
+            count += 1
+    return count
+
+
 def extract_functions(source: str) -> list[dict[str, str]]:
     masked = mask_comments(source)
     declaration_view = mask_code(source)
