@@ -86,3 +86,15 @@ La estructura del código confirma que el cliente separa dos clases de daño med
 4. Documentar el significado exacto de los índices y los parámetros antes de cambiar colores, posición, tamaño o filtros.
 
 **Estado:** flujo de eventos y separación de canales identificados estáticamente. La asignación semántica definitiva «recibido/hecho» y la prueba dentro del cliente siguen pendientes. No se ha editado ni recompilado ningún binario.
+
+
+### Confirmación de etiquetas visibles en OptionWnd.uc
+
+La revisión de los manejadores de cambios de opciones resolvió los nombres persistidos:
+
+- `Cb_Damage` guarda `Damage / Normal Damage`.
+- `Cb_EDamage` guarda `Damage / Enemy Damage`.
+- `Cb_HP`, `Cb_MP`, `Cb_CP`, `Cb_EXP`, `Cb_Miss`, `Cb_Resist`, `Cb_Block`, `Cb_Critical`, `Cb_Critical2`, `Cb_Overhit`, `Cb_Successful`, `Cb_Failed` y `Cb_Spoiled` son opciones independientes del mismo panel.
+- La activación maestra es `Options / ShowDamage`; las dos opciones de daño no sustituyen ese interruptor general.
+
+Esto confirma que la interfaz distingue explícitamente **Normal Damage** y **Enemy Damage**. La lectura funcional más probable es daño normal generado por el jugador frente a daño atribuido al enemigo, pero se mantiene pendiente comprobar la orientación exacta (hecho/recibido) contrastando los textos de SystemMsg para los índices 35, 1130, 36 y 37. Los nombres de opciones, aislados, no demuestran quién es el atacante en cada mensaje.
