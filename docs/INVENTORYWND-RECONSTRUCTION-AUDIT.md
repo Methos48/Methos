@@ -467,3 +467,13 @@ Se comparó la clasificación de objetos de Animal con la implementación de `So
 - Animal `function32(ItemInfo)` acepta `ItemSubType 5` o `6` y enruta a `CraftingItem` (`item_6`). El subtipo 5 como receta queda respaldado por una segunda implementación. La búsqueda de referencias a `ItemSubType 6` en las 169 clases Silent Dark no encontró un uso comparable; el significado del 6 sigue sin resolverse.
 
 Esto permite describir la función31 con mayor certeza y confirma parte del propósito de function32, pero no justifica inventar identificadores originales ni eliminar el subtipo 6. No se modificó la fuente Animal.
+
+## Vigésima tercera pasada: prueba UCC de nombres candidatos (2026-11-14)
+
+Se añadió una prueba aislada que modifica copias temporales de `InventoryWnd.uc`, incluyendo también las referencias del despachador `OnEvent`, sin tocar la fuente Animal original.
+
+Resultados del run `43565701277`:
+- `function37(string)` renombrada a `HandleAddHennaInfo(string)`: **compiló correctamente** junto con el resto de las 159 clases. Esto confirma que el nombre candidato es compatible con el contrato de compilación Animal y refuerza la evidencia de evento 2630/cuerpo `UpdateHennaInfo()`. La prueba de reapertura y persistencia del nombre se añadió al siguiente ciclo y queda pendiente.
+- `function30(string)` renombrada a `HandleAddItem(string)`: **rechazada por el compilador**. Error exacto: `HandleAddItem conflicts with Function Interface.InventoryWnd.HandleAddItem`, en la declaración existente `HandleAddItem(ItemInfo)`. UCC no admite esa duplicación de nombre en la clase Animal. Por tanto, aunque Silent Dark use `HandleAddItem(string)`, ese nombre no puede trasladarse a Animal mientras se conserve la función tipada `HandleAddItem(ItemInfo)`; se descarta como nombre para `function30` en esta reconstrucción.
+
+La validación base del mismo run volvió a compilar Animal y reabrir 160/160 clases, y la edición de prueba volvió a sobrevivir a compilación y reapertura. El run terminó marcado como fallido únicamente porque la prueba diagnóstica trató el rechazo esperado del candidato `HandleAddItem` como error del paso; se ajustó el workflow para registrar ese rechazo como resultado esperado y continuar. No se cambió `InventoryWnd.uc` ni el comportamiento del cliente.
