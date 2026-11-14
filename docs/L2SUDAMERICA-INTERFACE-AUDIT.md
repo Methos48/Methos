@@ -116,7 +116,7 @@ La cabecera Base64 de ambos empieza por `/+36zgE`, consistente con que se recibi
 
 ## Resultado de descifrado y descompilación real — 2026-11-14
 
-****Prueba automatizada aprobada.**** Workflow: https://github.com/Methos48/Methos/actions/runs/43578703858
+****Prueba automatizada aprobada.**** Workflow: https://github.com/Methos48/Methos/actions/runs/43579091099
 
 Se procesaron los dos binarios exactos del directorio `reference-data/packages/l2sudamerica/`, sin tocar sus originales.
 
@@ -167,3 +167,24 @@ También aquí los últimos 20 bytes pertenecen al payload. La variante que los 
 - [ ] La reprotección final de un paquete U/XDAT editado debe verificarse por separado con el perfil original.
 
 El artefacto del workflow conserva los binarios descifrados, las 150 fuentes `.uc`, el XML XDAT y los informes de verificación durante 30 días. No se reemplazó ningún archivo original.
+
+
+## Inventario estructurado completo — 2026-11-14
+
+El workflow actualizado ejecutó `tools/l2sa_audit/extract_interface_inventory.py` y generó los inventarios tabulares/JSON a partir de los 150 fuentes UnrealScript y los 169 XML de ventanas:
+
+| Inventario | Registros |
+|---|---:|
+| Clases exportadas | 150 |
+| Declaraciones de variables de clase | 1,028 |
+| Constantes de clase | 372 |
+| Firmas de funciones | 2,245 |
+| Ventanas XML | 169 |
+| Shortcuts XML | 8 |
+| Controles XDAT con nombre | 4,092 |
+
+Los CSV incluyen clase, línea de origen, tipo, identificador seguro y FName original cuando está disponible. El JSON reúne variables, constantes y funciones por clase. Los controles XDAT incluyen ventana, tipo, nombre y propiedades de tamaño/anclaje cuando existen. Las variables locales de funciones no se mezclan con los campos de clase; las declaraciones de arreglos se cuentan como una declaración y conservan su longitud.
+
+- Extractor reproducible: `tools/l2sa_audit/extract_interface_inventory.py`.
+- Auditoría específica de la clase: [L2SUDAMERICA-INVENTORYWND-AUDIT.md](L2SUDAMERICA-INVENTORYWND-AUDIT.md).
+- Workflow y artefactos de esta ejecución: https://github.com/Methos48/Methos/actions/runs/43579091099.
