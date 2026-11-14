@@ -134,3 +134,55 @@ Esta auditoría corresponde solo a `InventoryWnd` de L2Sudamerica. La auditoría
 - [ ] Probar cambios solo en una copia, con reconstrucción exacta; no editar el original.
 
 No se restauran nombres ni se modifican funciones por semejanza con AnimalGame u otras interfaces. No se ha cambiado el comportamiento del cliente.
+
+
+## Auditoría profunda — InventoryWnd (14-11-2026)
+
+### Geometría y composición XDAT
+
+- Ventana principal: 566 × 400, anclada `CENTER_RIGHT` a `CENTER_RIGHT`, desplazamiento (-8, -70).
+- Zona de equipamiento `Equip_Classic`: 206 × 393, con fondo `Abaddon.Inventory_Equip_BG` y máscara de slots `Abaddon.Inventory_Equip_Slot_NoBr`.
+- Zona de inventario: ItemWindow de 339 × 288, origen (217,55); QuestItem, EquipmentItem, CraftingItem y SuppliesItem comparten la misma zona y se alternan por pestañas/estado.
+- Búsqueda: SearchBar 96 × 18, CancelBar 16 × 16, SearchItem 339 × 288, BlackSquare y EnableButton. Se anclan dinámicamente al viewport superior o inferior derecho según el estado de expansión.
+- Equipo: 15 slots independientes, HennaItem, peso, Adena y contador de objetos.
+- Botones/acciones visibles: SortButton, BtnClose, BtnMin, BtnExpand, CrystallizeButton, TrashButton, RefineButton, EnchantButton, FastDelete y BtnInfo.
+
+### Correspondencia de slots de equipo
+
+Orden interno del array de 15 handles:
+0 Underwear; 1 Head; 2 Hair; 3 Hair2; 4 Neck; 5 RHand; 6 Chest; 7 LHand; 8 REar; 9 LEar; 10 Gloves; 11 Legs; 12 Feet; 13 RFinger; 14 LFinger.
+
+Las posiciones XML son independientes del orden del array; no reordenar el array al rediseñar la presentación.
+
+### Ciclo de vida y eventos
+
+`OnLoad` registra 2570, 2580, 2590, 2600, 2610, 2620, 2630, 2631, 260, 180, 1710 y 150. Inicializa handles, tooltips y estado de búsqueda. `OnShow` comprueba si el personaje tiene habilidad de cristalizar, actualiza contenido, peso y contador, muestra SortButton y configura anclajes de búsqueda; `OnHide` ejecuta limpieza.
+
+La tabla de eventos enruta:
+- 2570 → actualización/ordenación del inventario.
+- 2580 → mostrar/actualizar la ventana.
+- 2590 → ocultar/cerrar o restaurar estado asociado.
+- 2600 → actualizar datos de inventario.
+- 2610 → actualización de objetos/estado de pestañas.
+- 2620 → refresco de contenido.
+- 2630 → actualización adicional parametrizada.
+- 2631 → alternar/actualizar un estado de ventana.
+- 1710 → refresco de contador/estado.
+- 180 → sincronización del jugador/estado.
+- 150 → evento de UI/visibilidad.
+- 260 aparece duplicado en el switch original; conservar constancia de la duplicación hasta identificar si es artefacto de decompilación.
+
+### Interacciones y seguridad de operaciones
+
+- Doble clic y clic derecho convergen en una rutina común de selección/uso.
+- Selección contempla modificadores de teclado; hay una ruta explícita que solicita destruir un objeto con Ctrl+Alt.
+- Drag & drop diferencia inventario, equipo, crafting, supplies, quest, slots de equipamiento, inventario de mascota, TrashButton y CrystallizeButton.
+- Reordenamiento local usa `GetIndexAt`, `FindItemWithServerID` y `SwapItems`; mover desde equipo puede emitir `RequestUnequipItem`.
+- Mover desde inventario de mascota usa `PetAPI.RequestGetItemFromPet`, con validaciones de stack y límites.
+- Tirar objetos usa rutas de confirmación y solicitudes con ServerID/cantidad; cristalizar comprueba habilidad y si el objeto es cristalizable.
+- Ordenar, expandir/contraer, búsqueda y filtro de categorías son funcionalidades distintas; no asumir que la búsqueda modifica el inventario del servidor.
+- Se encontraron persistencias locales/INI para la lista de descarte rápido; revisar a fondo antes de modificar el comportamiento de FastDelete/Trash.
+
+### Límites y siguiente fase
+
+La geometría y rutas principales están recuperadas, pero varias funciones conservan nombres numéricos saneados. Falta resolver cada una contra llamadas API y referencias de bytecode, documentar el significado de todos los IDs de evento con sus productores, mapear cada control XML a su handle/callback y validar el flujo de búsqueda/ordenación/descartar con pruebas unitarias o capturas controladas. No se ha editado ni recompilado ningún binario.
