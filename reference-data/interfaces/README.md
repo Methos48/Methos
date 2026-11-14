@@ -28,11 +28,11 @@ It is a research catalogue, not a claim that every listed archive has been downl
 
 | Label | Known contents from source listing | Status | Source |
 |---|---|---|---|
-| P166 | Interface/NWindow/Core/Engine UnrealScript sources, UCC build setup; 996 files, 870 .uc reported | Download link located; archive not yet acquired | [L2JBaylee P166](https://l2jbaylee.dev/resources/interface-p166) |
-| P196 | Interface/NWindow source trees and compiler environment; 702 files, 608 .uc reported | Download link located; archive not yet acquired | [L2JBaylee P196](https://l2jbaylee.dev/resources/interface-p196) |
-| P286 | Interface/NWindow sources, L2Editor, Java XDatEditor; 829 files, 716 .uc reported | Download link located; archive not yet acquired | [L2JBaylee P286](https://l2jbaylee.dev/resources/interface-p286) |
-| P311 | Interface/NWindow sources, L2Editor build/package tools; 883 files, 788 .uc reported | Download link located; archive not yet acquired | [L2JBaylee P311](https://l2jbaylee.dev/resources/interface-p311) |
-| P338 Voices | Compiled `InterfaceClassic.u` and `InterfaceClassic.xdat` | Download link located; archive not yet acquired | [L2JBaylee P338](https://l2jbaylee.dev/resources/interface-p338) |
+| P166 | RAR 4.8 MiB; 996 files, 870 .uc; Interface/NWindow/Core/Engine sources and UCC build setup. Published SHA-256: `359b470ca06cc4f0baa258e4c692ee5b0015bf02f8786c8c146afb88dab79589` | Direct RAR URL verified; retrieval endpoint rejects `application/x-rar-compressed`; not acquired | [Details](https://l2jbaylee.dev/resources/interface-p166) · [RAR](https://files.l2jbaylee.dev/shares/Interface_P166.rar) |
+| P196 | RAR 6.9 MiB; 702 files, 608 .uc; Interface/NWindow sources and `_Compile` tools. Published SHA-256: `61298ddef8dad003cc4d556c7278beab3401f2aa2bb00a502d5178c50f7cba23` | Direct RAR URL verified; retrieval endpoint rejects `application/x-rar-compressed`; not acquired | [Details](https://l2jbaylee.dev/resources/interface-p196) · [RAR](https://files.l2jbaylee.dev/shares/Interface_P196.rar) |
+| P286 | RAR 19.5 MiB; 829 files, 716 .uc; Interface/NWindow sources, L2Editor and Java XDatEditor. Published SHA-256: `d8b9756a94fa40b235675c3c7ebd78c2d782ab5ef4452aa0aec6940ba6cc7e79` | Direct RAR URL verified; retrieval endpoint rejects `application/x-rar-compressed`; not acquired | [Details](https://l2jbaylee.dev/resources/interface-p286) · [RAR](https://files.l2jbaylee.dev/shares/Interface_P286.rar) |
+| P311 | RAR 6.0 MiB; 883 files, 788 .uc; Interface/NWindow sources and L2Editor tools. Published SHA-256: `92228e6a558f21e739d29f4a0b9e47a3042a70e3b72450f26a5337ae9b9fb70b` | Direct RAR URL verified; retrieval endpoint rejects `application/x-rar-compressed`; not acquired | [Details](https://l2jbaylee.dev/resources/interface-p311) · [RAR](https://files.l2jbaylee.dev/shares/Interface_P311.rar) |
+| P338 Voices | RAR 3.3 MiB; exactly 2 files: `InterfaceClassic.u` + `InterfaceClassic.xdat`; archive named `Interface_P338_Voices_UNPROTECTED.rar`. Published SHA-256: `7751d729633c3c4676da70365e7b9085448b1ccefbdcd3392e48c26ac94693b5` | Direct RAR URL verified; retrieval endpoint rejects `application/x-rar-compressed`; not acquired. Chronicle compatibility untested | [Details](https://l2jbaylee.dev/resources/interface-p338) · [RAR](https://files.l2jbaylee.dev/shares/Interface_P338_Voices_UNPROTECTED.rar) |
 | P542 | 37.5 MiB RAR, 2,049 files; includes `InterfaceClassic/Classes/InventoryWnd.uc`, compiled `InterfaceClassic.u` and `InterfaceClassic.xdat`, NWindow sources and Samurai/Crow XML layouts | Exact SHA-256 published; download attempted but host rejected binary retrieval; not acquired | [P542 archive details](https://l2jbaylee.dev/resources/interface-p542) |
 
 P166/P196/P286/P311/P338/P542 are archive labels, not proof that they are Interlude builds. Keep them as comparative candidates and classify their chronicle only after inspecting the archive.
@@ -49,7 +49,7 @@ P166/P196/P286/P311/P338/P542 are archive labels, not proof that they are Interl
 ## Download limitations encountered
 
 - The Zone-Game attachment page blocks guest access to `InterfaceXdatC6.zip`.
-- The P542 RAR direct URL is `https://files.l2jbaylee.dev/shares/Interface_P542.rar`; both web retrieval and direct download attempts failed in this environment. Its published SHA-256 is `7251f9dc8ac0896ab4d3d163644192255555d0d2f9e5f4c81718ce63ed353585`.
+- The L2JBaylee direct RAR URLs for P166/P196/P286/P311/P338 and P542 were extracted from their resource pages. Web retrieval fails because the host responds with `application/x-rar-compressed`, which this retrieval path rejects. These are verified URLs, not acquired archives. Published SHA-256 values are recorded above/in the CSV.
 - MaxCheaters pages expose source links in forum posts, but no verified binary was acquired in this pass.
 
 Therefore **no newly sourced binary archive is claimed to be stored in this repository yet**.
