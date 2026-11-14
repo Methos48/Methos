@@ -91,7 +91,19 @@ if (args.Length > 0 && args[0] == "--audit-export-table")
     Console.WriteLine($"EXPORT_AUDIT_PROFILE={packageIndex.Summary.Version}/{packageIndex.Summary.LicenseeVersion}");
     Console.WriteLine($"EXPORT_AUDIT_COUNTS names={packageIndex.Names.Count} imports={packageIndex.Imports.Count} exports={packageIndex.Exports.Count}");
     Console.WriteLine($"EXPORT_AUDIT_OFFSETS names={packageIndex.Summary.NameOffset} imports={packageIndex.Summary.ImportOffset} exports={packageIndex.Summary.ExportOffset}");
-    Console.WriteLine($"EXPORT_AUDIT_END={packageIndex.ExportTableEnd}; FILE_LENGTH={packageIndex.Summary.FileLength}; TRAILING_BYTES={packageIndex.Summary.FileLength - packageIndex.ExportTableEnd}");
+    int exportLimit = new[]
+    {
+        packageIndex.Summary.NameOffset,
+        packageIndex.Summary.ImportOffset,
+        packageIndex.Summary.ExportOffset,
+        packageIndex.Summary.FileLength
+    }.Where(offset => offset > packageIndex.Summary.ExportOffset)
+        .DefaultIfEmpty(packageIndex.Summary.FileLength).Min();
+    int exportTableBytes = packageIndex.ExportTableEnd - packageIndex.Summary.ExportOffset;
+    int exportGapBytes = exportLimit - packageIndex.ExportTableEnd;
+    Console.WriteLine($"EXPORT_AUDIT_END={packageIndex.ExportTableEnd}; NEXT_SECTION_OFFSET={exportLimit}; EXPORT_TABLE_BYTES={exportTableBytes}; GAP_BYTES={exportGapBytes}");
+    if (packageIndex.ExportTableEnd > exportLimit)
+        throw new InvalidDataException($"Export table overlaps the next package section: end={packageIndex.ExportTableEnd}, next={exportLimit}.");
     int matches = 0;
     foreach (var item in packageIndex.Exports.Select((entry, index) => (entry, index))
         .Where(item => string.Equals(Name(item.entry.ObjectName), "InventoryWnd", StringComparison.OrdinalIgnoreCase)))
