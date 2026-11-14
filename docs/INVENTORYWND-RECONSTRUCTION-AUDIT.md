@@ -120,3 +120,20 @@ Se siguieron las referencias y los puntos de entrada de `function2`, `function13
 - `function47`: marcar una posición de la lista como vacía/deshabilitada; nombre original y uso no probados.
 
 Se mantienen los identificadores anónimos porque no se encontró una fuente exacta de AnimalGame que demuestre los nombres originales. No se ejecutaron acciones de borrado ni se modificó código del cliente.
+
+
+## Sexta pasada: código inalcanzable en el cambio de tamaño (2026-11-14)
+
+Una lectura de control de flujo de todas las funciones del `InventoryWnd.uc` reabierto encontró un caso adicional que cambia la interpretación de la reconstrucción:
+
+- `function3()` se invoca desde `OnLoad` y desde el evento/callback que alterna `ExpandedInventory`.
+- Sin embargo, su primera instrucción ejecutable es `return;`. Todo el bloque posterior —ajuste de tamaño 673x400/566x400, columnas 12/9, texturas y anclajes— es inalcanzable en el fuente extraído.
+- `function48(...)` solo es llamado desde ese bloque inalcanzable. Por tanto, aunque implementa correctamente el mapeo de anclajes 1–8 a `SetAnchor`, no se ejecuta desde las llamadas encontradas en esta clase.
+- Se hizo un barrido de las funciones del archivo buscando otros cuerpos que comiencen con `return;` y contengan instrucciones posteriores. `function3()` fue el único caso detectado con ese patrón.
+- El botón de expandir/contraer aún cambia la opción `ExpandedInventory` y vuelve a llamar `function3()`, pero con el `return` inicial no aplica el cambio de dimensiones. Esto es consistente con una rutina deshabilitada en el código extraído, aunque no demuestra por qué fue deshabilitada ni si existe otra ruta externa.
+
+### Corrección de interpretación
+
+La descripción anterior de `function3` como rutina que configura efectivamente el inventario expandido/contraído era incompleta. Su cuerpo contiene esa lógica, pero está anulada por el retorno inicial. La descripción correcta es: rutina de ajuste de layout presente pero inactiva en el fuente extraído. `function48` es un helper de anclaje cuyo único conjunto de llamadas conocido también queda inactivo.
+
+No se quitó el `return`, no se activó el redimensionamiento y no se cambió el comportamiento del cliente. Antes de considerar restaurar esa rutina hay que comprobar si el `return` existe en el bytecode original de AnimalGame o fue introducido por la descompilación/reconstrucción.
