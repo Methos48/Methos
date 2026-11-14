@@ -205,3 +205,52 @@ SublimityShortcut registra 25002. La base parsea key y state y llama a _737(key,
 El inventario textual muestra un override candidato en SublimityShortcut y cinco en SublimityShortcutWnd. Esto corrige la afirmación previa de que no había coincidencias nominales en SublimityShortcutWnd.
 
 **Pendiente de alta prioridad:** leer el serial data de los exports de función en bruto para obtener FunctionFlags, NativeIndex, parámetros/defaults y bytecode. El lector actual UnrealPackageIndex valida y expone tablas principales y metadatos de export, pero mantiene opacos los serial payloads de objetos; no reconstruye todavía flags de UFunction.
+
+
+## Addendum D — verificación directa de los cuerpos de las dos derivadas
+
+Se volvió al código fuente exportado del artefacto, no solo al resumen de firmas. Este contraste permite corregir una conclusión anterior.
+
+### 1. Cinco hooks de SublimityShortcutWnd sí tienen implementación
+
+La clase derivada contiene cuerpos funcionales para las cinco firmas:
+- `MethosRecoveredName_735()`: limpia la ventana, reconstruye estado, restaura configuración y recorre cuatro paneles.
+- `MethosRecoveredName_729(int)`: llama a `MethosRecoveredName_744(id, true)`.
+- `MethosRecoveredName_730(int)`: llama a `MethosRecoveredName_744(id, false)`.
+- `MethosRecoveredName_731(int)`: llama a `MethosRecoveredName_345(0, page)`.
+- `MethosRecoveredName_728(string)`: implementa un switch amplio de nombres de controles de shortcut y acciones asociadas.
+
+Los métodos homónimos de SublimityItem son stubs `return;`; la derivada proporciona la lógica efectiva de la ventana. Esto confirma el reemplazo funcional en el nivel del código fuente exportado. Los flags UFunction del paquete aún no se han leído, así que no se afirma una verificación binaria del flag `FUNC_Virtual`.
+
+### 2. Significado observable de 630 y 631
+
+La función común `MethosRecoveredName_744(id, bool)`:
+1. Recorre cuatro páginas/paneles guardados en el array de estado.
+2. Si el ID pertenece a la página del panel, llama dos veces a `UIAPI_SHORTCUTITEMWINDOW.UpdateShortcut`, una para cada orientación/representación.
+3. Llama a `MethosRecoveredName_746(id, !bool)`.
+
+La función 746 elige:
+- true: `MethosRecoveredName_814(id)`, que muestra las texturas de ambos formatos de barra para ese shortcut.
+- false: `MethosRecoveredName_816(id)`, que oculta esas texturas.
+
+Por tanto, la semántica observable es **actualizar las dos representaciones visuales del shortcut y encender/apagar su textura**, no una acción del servidor. Según el evento, 631 pasa true y termina en el argumento false de 746; 630 pasa false y termina en true. El sentido visual exacto (mostrar/ocultar) queda así invertido entre ambos eventos.
+
+### 3. Evento 640 y páginas
+
+`MethosRecoveredName_345(panel, page)` valida panel entre 0 y 3 y página entre 0 y 9, guarda el valor en el array de cuatro páginas y en la opción `Game/ShortcutPage_<panel>`, y reconstruye ese panel mediante `MethosRecoveredName_752(panel)`.
+
+La ruta de evento 640 llama con panel 0 y la página recibida. El mismo método es reutilizado por botones de navegación de los otros tres paneles.
+
+### 4. Evento 90 y controles
+
+`MethosRecoveredName_728(string)` implementa la selección por nombre de control, incluyendo controles de los grupos `MyShortcutItem...` y comandos de ventana. Esto confirma que el evento 90 llega a una lógica de UI real en SublimityShortcutWnd, no a un simple stub.
+
+### 5. SublimityShortcut: diferencia crítica
+
+La clase `SublimityShortcut` registra 25002 y declara `MethosRecoveredName_737(int,int)`, pero ese cuerpo exportado sí es únicamente `return;`. A diferencia de SublimityShortcutWnd, no se ha encontrado una implementación derivada funcional de ese hook en la fuente recuperada. La acción de teclado asociada a 25002 permanece sin resolver y puede depender de bytecode ausente, nativo o de una ruta externa.
+
+### 6. Corrección del estado anterior
+
+La auditoría anterior dejó abierta la interpretación del booleano de 630/631 y no había seguido el cuerpo de _744. Ya está resuelto por la fuente exportada: ambos eventos actualizan el shortcut en dos formatos y cambian la visibilidad de las texturas de forma opuesta. También queda corregida la ambigüedad sobre los cinco hooks de SublimityShortcutWnd: sus cuerpos no están vacíos en la derivada.
+
+**Pendiente binario:** extraer los flags UFunction y el bytecode bruto de estos seis métodos para cotejar el export textual con la serialización original. No se ha compilado ni ejecutado el cliente.
