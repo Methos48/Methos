@@ -1532,3 +1532,24 @@ Los cambios están subidos y documentados. No se ha observado todavía una ejecu
 
 
 Corrección de revisión: la primera escritura del patrón de rutas dejó escapes duplicados en la expresión regular. Se detectó al releer el archivo y se corrigió en `1a36412`; el patrón ahora contiene los escapes regex normales. La prueba cubre el caso, pero su ejecución sigue pendiente.
+
+
+## Sexagésima séptima pasada: detección de IDs de evento duplicados (2026-11-14)
+
+La extracción de rutas ya ignoraba comentarios y literales, pero construía el diccionario directamente. Si el código contenía dos cláusulas `case` con el mismo ID, la segunda sobrescribía silenciosamente la primera y el informe aparentaba una ruta inequívoca.
+
+### Corrección aplicada
+
+- `extract_event_routes` ahora registra cada ID de forma explícita.
+- Si encuentra un ID repetido, detiene el análisis con `ValueError` e identifica ambos handlers.
+- Se añadió una prueba que exige el rechazo de dos cláusulas con el mismo ID.
+
+Esto evita que un mapa de eventos ambiguo llegue a las comparaciones entre Animal, Berserker y Silent Dark como si fuera evidencia limpia.
+
+Commits:
+- `b947c44`: rechazo de IDs duplicados.
+- `a625123`: prueba de duplicados.
+
+### Estado
+
+Cambios subidos y documentados. No se ha ejecutado localmente la suite ni se ha confirmado GitHub Actions; por tanto, no se declara validación aprobada. Los paquetes binarios originales permanecen intactos.
