@@ -266,3 +266,8 @@ La ficha de Shortcut fue ampliada con el cruce de `Shortcut.uc` e `InterfaceAI_K
 ## 19. Auditoría de SublimityShortcut
 
 Nueva ficha: [L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md](L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md). Documenta la variante de cuatro paneles heredada de SublimityItem, sus 120 índices, páginas, persistencia propia y diferencias con ShortcutWnd estándar. Se marcan como pendientes los eventos 631/25002 y la lógica incompleta de SublimityShortcut; no se atribuyen semánticas no demostradas.
+
+
+## 20. Auditoría de ToolTip y SublimityItem
+
+Nueva ficha: [L2SUDAMERICA-TOOLTIP-SUBLIMITYITEM-AUDIT.md](L2SUDAMERICA-TOOLTIP-SUBLIMITYITEM-AUDIT.md). Cubre el evento global 2920, el catálogo de variantes de tooltip, construcción dinámica DrawList, inventario/precios/refinería, y el despacho de eventos de la clase base SublimityItem. Se mantienen pendientes los productores, contratos nativos, bytecode y ramas duplicadas/stubs.
