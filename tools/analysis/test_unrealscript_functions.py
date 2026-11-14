@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from unrealscript_functions import extract_functions, lex_tokens, mask_comments
+from unrealscript_functions import extract_event_routes, extract_functions, lex_tokens, mask_comments
 
 
 class UnrealScriptFunctionExtractionTests(unittest.TestCase):
@@ -31,6 +31,21 @@ function Real()
 """
         functions = extract_functions(source)
         self.assertEqual([item["name"] for item in functions], ["Real"])
+
+    def test_event_routes_ignore_comments_and_multiline_literals(self):
+        source = """switch(EventNum)
+{
+    case 100: RealHandler();
+    /*
+    case 200: CommentHandler();
+    */
+    local string S;
+    S = "literal start
+case 300: LiteralHandler();
+literal end";
+}
+"""
+        self.assertEqual(extract_event_routes(source), {100: "RealHandler"})
 
     def test_preserves_comment_markers_inside_strings(self):
         source = '''function Real()
