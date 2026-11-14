@@ -554,3 +554,30 @@ Resultado:
 - No hay referencias a estos identificadores desde las otras 158 clases de Berserker.
 
 Esto replica la ausencia de referencias externas ya observada en Animal y reduce la posibilidad de que las funciones aisladas tengan consumidores textuales en otra clase de esa variante. No demuestra que el runtime no pueda invocarlas por callbacks/reflexión; por eso se conservan todas las funciones. No se cambió el código.
+
+## Vigésima novena pasada: segunda referencia pública de Interlude para eventos de inventario (2026-11-14)
+
+Se localizó una segunda fuente pública de UnrealScript en `kdo70/a1_l2j`, independiente del UCC de referencia usado por el workflow:
+- [InventoryWnd.uc](https://github.com/kdo70/a1_l2j/blob/main/tools/client/Interface/Classes/InventoryWnd.uc)
+- [UIEventManager.uc](https://github.com/kdo70/a1_l2j/blob/main/tools/client/NWindow/Classes/UIEventManager.uc)
+
+La tabla de eventos de `UIEventManager.uc` declara explícitamente:
+- `EV_UpdateHennaInfo = 260`
+- `EV_InventoryAddItem = 2600`
+- `EV_InventoryAddHennaInfo = 2630`
+- `EV_InventoryToggleWindow = 2631`
+
+El `OnEvent` de esa fuente enruta 2600 a `HandleAddItem(param)`, 2630 a `HandleAddHennaInfo(param)` y 260 a `HandleUpdateHennaInfo(param)`. Los tres handlers y sus firmas string coinciden con la estructura/eventos recuperados de Animal:
+- Animal `function30(string)`, evento 2600: candidato `HandleAddItem(string)`.
+- Animal `function37(string)`, evento 2630: candidato `HandleAddHennaInfo(string)`, no `HandleUpdateHennaInfo`.
+- El evento 260 corresponde al handler de actualización de henna ya nombrado en Animal.
+
+La fuente pública muestra además que `HandleAddHennaInfo` conserva un bloque comentado que analizaba ID/estado y después llama a `UpdateHennaInfo()`; `HandleUpdateHennaInfo` también llama a esa rutina. Como ambos cuerpos efectivos son casi iguales, el número/evento 2630 es la evidencia que distingue el nombre candidato.
+
+Límites importantes:
+- Es otra variante Interlude, no el paquete AnimalGame. Se usa como referencia independiente de nombres/eventos, no como fuente para reemplazar código.
+- Su `HandleAddItem(string)` no convive con la función booleana `HandleAddItem(ItemInfo)` que existe en Animal; la prueba UCC de Animal ya confirmó la colisión. No se renombra `function30`.
+- Sus `IsEquipItem` y `IsQuestItem` tienen cuerpos distintos de Animal `function31`/`function32`; no se asignan esos nombres a los filtros de Animal.
+- Su `IsLOrREar` compara los dos primeros IDs de `GetAccessoryServerID`, lo que respalda el papel semántico de Animal `function44`; pero Animal ya tiene una función llamada `IsLOrREar` que compara los dos últimos IDs. La contradicción y la colisión impiden renombrar `function44`.
+
+La evidencia de eventos eleva `HandleAddHennaInfo` a candidato muy sólido para `function37`, pero Animal y Berserker conservan literalmente `function37` en sus paquetes compilados. Por fidelidad histórica, el identificador de producción sigue intacto hasta una fuente del mismo build que demuestre el nombre original.
