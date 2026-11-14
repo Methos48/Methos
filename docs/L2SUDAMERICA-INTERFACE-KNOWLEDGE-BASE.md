@@ -204,3 +204,4 @@ Estas fichas están en:
 ## Auditorías de ventanas completadas parcialmente
 
 - [OptionWnd y sus cinco pestañas](L2SUDAMERICA-OPTIONWND-AUDIT.md): análisis UC + XDAT de configuración gráfica, audio, opciones de juego, funciones de interfaz y daño flotante. Incluye inventario de controles, claves de configuración, eventos registrados, conexiones entre ventanas y pendientes de validación.
+- [StatusWnd, TargetStatusWnd, PartyWnd, SkillCastWnd y AbnormalStatusWnd](L2SUDAMERICA-STATUS-PARTY-CAST-AUDIT.md): cruce de fuentes UC y XML XDAT, geometría, eventos, acciones de grupo, casteo y estados alterados.
