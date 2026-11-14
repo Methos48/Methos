@@ -1248,3 +1248,29 @@ La diferencia entre offsets de export/import sigue siendo +24 bytes en el candid
 ### Límite y siguiente paso
 
 La tabla de nombres queda validada por completo para este cambio. Aún falta decodificar las tablas de import/export y el bytecode de `InventoryWnd`. La evidencia actual no certifica ejecución en cliente. No instalar el candidato ni alterar el paquete limpio.
+
+
+## Quincuagésima cuarta pasada: comparación íntegra del bloque de importaciones (2026-11-14)
+
+Se compararon los bytes del bloque comprendido entre el offset de importación y el offset de exportación, calculados directamente desde los encabezados de los dos paquetes.
+
+### Resultado comprobado
+
+| Dato | Interface-clean.u | HennaCandidate.u |
+|---|---:|---:|
+| Inicio de importaciones | 3.173.210 | 3.173.234 |
+| Inicio de exportaciones | 3.179.823 | 3.179.847 |
+| Longitud del bloque | 6.613 bytes | 6.613 bytes |
+| SHA-256 del bloque | `6fe3d845f336f6b31240bc568e4df50e3b004313bf2af1a7d66c2dfbbda6ff85` | `6fe3d845f336f6b31240bc568e4df50e3b004313bf2af1a7d66c2dfbbda6ff85` |
+
+La comparación directa `clean[import_offset:export_offset] == candidate[import_offset:export_offset]` devuelve **True**. El bloque completo es idéntico, no solo su hash. El desplazamiento de ambas tablas posteriores es +24 bytes, pero el contenido de importaciones no cambia.
+
+### Intento de decodificación y límite
+
+Se intentó interpretar cada registro de importación con una lectura simplificada de índices compactos. La lectura no produjo referencias de nombre válidas, por lo que se descartó como parser insuficiente y no se usa para afirmar que los registros individuales estén decodificados. La igualdad binaria del bloque sí es una prueba directa y reproducible de que no cambió.
+
+El bloque posterior al offset de exportación mide 158.834 bytes en ambos archivos, pero no es idéntico. Contiene la tabla de exportación y/o datos serializados; sin decodificar correctamente los registros de exportación y sus offsets no se debe atribuir cada diferencia a bytecode o a metadatos.
+
+### Decisión
+
+Las importaciones quedan verificadas como intactas. El siguiente objetivo es identificar y decodificar el bloque de exportaciones con el formato UE2 correcto, separar los registros de los datos serializados y localizar el export `InventoryWnd`. No se instala el candidato; el paquete limpio permanece intacto.
