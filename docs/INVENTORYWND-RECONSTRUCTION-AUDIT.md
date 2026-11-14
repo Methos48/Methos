@@ -1503,3 +1503,8 @@ La revisión del extractor encontró que el patrón de declaraciones todavía se
 ### Validación y límites
 
 Los cambios quedaron registrados en el repositorio. En esta pasada no se ejecutó la suite local ni se observó un resultado de GitHub Actions; por tanto, la corrección está implementada y cubierta por una prueba añadida, pero no se declara CI aprobado. No se modificaron los paquetes binarios ni el código de la interfaz.
+
+
+### Revisión adicional del enmascarador
+
+Al verificar el código recién subido se detectó y corrigió un detalle del propio escáner: debía recorrer la vista donde los comentarios ya están neutralizados, no el texto original, para que comillas dentro de comentarios no abrieran falsos literales. También se ajustó la detección de barra invertida para reconocer exactamente un carácter de escape. La corrección quedó registrada en el commit `53ea84e`. La ejecución de pruebas sigue pendiente; no se presenta como validación aprobada.
