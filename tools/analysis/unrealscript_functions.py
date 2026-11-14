@@ -3,6 +3,13 @@ from __future__ import annotations
 import re
 
 
+def decode_source_bytes(raw: bytes) -> str:
+    """Decode UnrealScript source strictly, honoring Unicode BOMs."""
+    if raw.startswith((b"\\xff\\xfe", b"\\xfe\\xff")):
+        return raw.decode("utf-16")
+    return raw.decode("utf-8-sig")
+
+
 FUNCTION = re.compile(
     r"(?im)^\s*function\s+(?:(?:[A-Za-z_]\w*)\s+)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{"
 )
