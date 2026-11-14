@@ -130,3 +130,27 @@ Se recorrieron las 151 fuentes UC del artefacto buscando RegisterEvent y Execute
 Hay que mantener separados tres conceptos: (1) el ID reconocido por SublimityItem.OnEvent, (2) la clase que registra/consume el ID, y (3) el lugar que lo produce. La búsqueda textual solo ha resuelto parte de (2) y (3). Los IDs 2530–2560 ilustran por qué una coincidencia numérica entre dos ventanas no prueba una relación de herencia.
 
 **Nuevo pendiente:** recorrer los bytecode de las funciones que llaman a ExecuteEvent/DispatchEvent y las referencias nativas, además de revisar registros heredados en cada clase derivada.
+
+
+## Addendum B — jerarquía real de herencia en las 150 fuentes exportadas
+
+Se inspeccionaron las declaraciones `class ... extends ...` de las 150 fuentes UC incluidas en el artefacto y se contrastaron con los nombres de funciones de SublimityItem.
+
+Resultado directo:
+- `SublimityItem extends UISublimityCommonAPI`.
+- `SublimityShortcut extends SublimityItem`: 3 funciones exportadas; registra 25002.
+- `SublimityShortcutWnd extends SublimityItem`: 34 funciones exportadas; registra 650, 631, 630, 640 y 90.
+- No aparece otra clase con `extends SublimityItem` entre las 150 fuentes examinadas.
+- Ninguna de las funciones declaradas en esas dos derivadas coincide por nombre con los hooks saneados `MethosRecoveredName_###` declarados por SublimityItem. La excepción aparente es `MethosRecoveredName_737` en SublimityShortcut: ese nombre sí coincide, pero el inventario de funciones de SublimityItem también contiene 737; por tanto, la búsqueda automática debe tratarlo como un override candidato, no como cero overrides.
+
+### Corrección importante sobre el alcance
+
+La frase anterior “varias clases derivadas pueden registrar pocos eventos” era una generalización. La evidencia de este paquete es más precisa: hay exactamente dos derivadas directas exportadas de SublimityItem en el conjunto de 150 clases. Los otros consumidores de APIs Sublimity no son por eso derivados de SublimityItem.
+
+### Lectura funcional prudente
+
+- SublimityShortcut registra únicamente 25002 y declara un método con la misma identidad saneada que un hook de la base. Esto lo convierte en un candidato claro para seguir el camino del evento de teclado.
+- SublimityShortcutWnd registra cinco eventos y declara métodos con nombres numéricos recuperados. Para asociar cada evento con cada método hay que revisar el cuerpo de OnEvent y el bytecode/dispatch virtual, no deducirlo solo por el número.
+- La tabla de eventos de la clase base no debe interpretarse como si todos los eventos fueran usados por estas dos derivadas. Muchos casos pueden ser compartidos por otras clases a través de UISublimityCommonAPI o ser residuos de una jerarquía mayor no presente en esta exportación.
+
+**Pendiente:** comparar todas las firmas y flags de función del export table para confirmar virtual/override, y reconstruir la relación exacta entre OnEvent, los hooks de la base y las dos derivadas.
