@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/validate-animal-interface.yml"
       - "reference-data/packages/animal/Interface.u"
+      - "reference-data/packages/animal/interface.xdat"
+      - "tools/xdat/report_animal_inventorywnd.py"
       - "src/Methos.Engine/**"
       - "tests/ProtectionPipelineSmoke/**"
       - "reference-data/kits/Compilador-U.zip"
@@ -37,6 +39,15 @@ jobs:
           if (!(Test-Path (Join-Path $kit "Interlude/System/ucc.exe"))) { throw "Interlude UCC runtime missing." }
           "ANIMAL_UCC_ROOT=$kit" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Analyze Animal InventoryWnd controls from XDAT
+        shell: pwsh
+        run: |
+          python tools/xdat/report_animal_inventorywnd.py Animal-InventoryWnd-XDAT
+          if ($LASTEXITCODE -ne 0) { throw "Animal InventoryWnd XDAT analysis failed." }
+          $report = Get-Content -LiteralPath "Animal-InventoryWnd-XDAT/InventoryWnd.json" -Raw | ConvertFrom-Json
+          Write-Host "ANIMAL_INVENTORYWND_CONTROL_COUNT=$($report.control_count_including_window)"
+          Write-Host "ANIMAL_INVENTORYWND_TEXTURE_COUNT=$($report.texture_references.Count)"
+          Get-Content -LiteralPath "Animal-InventoryWnd-XDAT/README.md"
       - name: Inspect original Animal Interface.u
         shell: pwsh
         run: |
