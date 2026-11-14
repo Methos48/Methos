@@ -90,6 +90,42 @@ jobs:
           Write-Host "ANIMAL_DECOMPILED_CLASSES=$($classes.Count)"
           "ANIMAL_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Decompile InventoryWnd from other stored interface packages
+        shell: pwsh
+        run: |
+          $packages = @(
+            @{ Name = "berserker"; Path = "reference-data/packages/berserker/Interface.u" },
+            @{ Name = "l2sudamerica"; Path = "reference-data/packages/l2sudamerica/Interface.u" },
+            @{ Name = "silent-dark"; Path = "reference-data/packages/silent-dark/Interface.u" }
+          )
+          $root = Join-Path $PWD "Cross-Package-InventoryWnd"
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          foreach ($package in $packages) {
+            $input = Join-Path $PWD $package.Path
+            if (!(Test-Path -LiteralPath $input)) {
+              Write-Host "CROSS_PACKAGE_MISSING=$($package.Name)"
+              continue
+            }
+            $output = Join-Path $root $package.Name
+            New-Item -ItemType Directory -Path $output -Force | Out-Null
+            Write-Host "===== DECOMPILING $($package.Name) ====="
+            try {
+              dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-decompile $input $output "$env:ANIMAL_UCC_ROOT/Interlude/Interface/Classes"
+              if ($LASTEXITCODE -ne 0) { throw "Decompiler returned exit code $LASTEXITCODE" }
+              $classCount = @(Get-ChildItem -LiteralPath $output -Filter "*.uc" -File).Count
+              Write-Host "CROSS_PACKAGE_CLASSES_$($package.Name.ToUpper())=$classCount"
+              $inventory = Join-Path $output "InventoryWnd.uc"
+              if (Test-Path -LiteralPath $inventory) {
+                Write-Host "CROSS_PACKAGE_INVENTORYWND_BYTES=$((Get-Item $inventory).Length)"
+                Select-String -LiteralPath $inventory -Pattern '^\s*function\s+' | ForEach-Object { $_.Line.Trim() }
+              } else {
+                Write-Host "CROSS_PACKAGE_INVENTORYWND_NOT_EXPORTED=$($package.Name)"
+              }
+            } catch {
+              Write-Host "CROSS_PACKAGE_DECOMPILE_FAILED=$($package.Name): $($_.Exception.Message)"
+            }
+          }
+          "CROSS_PACKAGE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Compare anonymous Animal InventoryWnd functions with UCC reference
         shell: pwsh
         run: |
@@ -738,5 +774,6 @@ jobs:
             Animal-InventoryWnd-XDAT/
             Animal-Rebuilt/Reopened-Clean/*.uc
             Animal-Rebuilt/Reopened-Edited/*.uc
+            Cross-Package-InventoryWnd/**/*.uc
           if-no-files-found: warn
           retention-days: 14
