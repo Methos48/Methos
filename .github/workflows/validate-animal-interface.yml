@@ -718,6 +718,7 @@ jobs:
             Animal-Rebuilt/Interface-edited-test.u
             Animal-Rebuilt/UnrealScript/*.uc
             Animal-Rebuilt/UnrealScript/methos_name_map.json
+            Animal-InventoryWnd-XDAT/
             Animal-Rebuilt/Reopened-Clean/*.uc
             Animal-Rebuilt/Reopened-Edited/*.uc
           if-no-files-found: warn
