@@ -116,7 +116,7 @@ La cabecera Base64 de ambos empieza por `/+36zgE`, consistente con que se recibi
 
 ## Resultado de descifrado y descompilación real — 2026-11-14
 
-**<badge>Prueba automatizada aprobada</badge>** Workflow: https://github.com/Methos48/Methos/actions/runs/43578703858
+****Prueba automatizada aprobada.**** Workflow: https://github.com/Methos48/Methos/actions/runs/43578703858
 
 Se procesaron los dos binarios exactos del directorio `reference-data/packages/l2sudamerica/`, sin tocar sus originales.
 
