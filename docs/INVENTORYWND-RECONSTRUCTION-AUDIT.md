@@ -1329,3 +1329,27 @@ Los encabezados declaran versión 126 y licensee 1. Por tanto, no se debe aplica
 Esta pasada fija el contrato del parser y las reglas de validación; todavía no declara decodificados los 9.744 registros ni identifica el export InventoryWnd. La documentación pública sirve como especificación de contraste, no como prueba de que el parser local ya funcione. El bloque de importaciones idéntico y el diferencial de exportaciones de la pasada 55 permanecen como evidencia previa.
 
 Siguiente paso: implementar el lector CompactIndex con pruebas de límites y ejecutar primero un parseo completo de ambos paquetes; comparar cantidad de registros, cursor final, referencias, rangos serializados y localizar el export cuyo nombre sea InventoryWnd. No modificar ni instalar ningún paquete.
+
+
+## Quincuagésima séptima pasada: instrumentación del parser de exports y auditoría CI (2026-11-14)
+
+Se inspeccionó el código real de `UnrealPackageIndex` antes de implementar otro parser. Hallazgo importante: Methos ya contiene un lector UE1/UE2 que decodifica las tablas completas de nombres, imports y exports, incluidos CompactIndex, referencias de objeto, flags, tamaño serializado y offset serializado. Cada registro export ya se valida contra los límites de nombres, imports/exports y el tamaño total del archivo. Por tanto, no se duplicó el parser ni se introdujo un segundo lector experimental.
+
+### Cambios registrados
+
+1. Se expuso de solo lectura `ExportTableEnd` para que la auditoría pueda informar el final exacto de los registros consumidos.
+2. Se agregó el comando `--audit-export-table <package.u>` al proyecto de pruebas. Informa versión/licencia, cantidades, offsets de las tablas, posición final del cursor, bytes finales no consumidos y la referencia completa del export llamado `InventoryWnd`.
+3. El comando exige exactamente un export `InventoryWnd`; cero o varios resultados detienen la auditoría en vez de escoger uno arbitrariamente.
+4. Se añadió un paso al workflow `validate-animal-interface.yml` para ejecutar el comando sobre el `Interface.u` original de Animal antes de la descompilación.
+
+### Commits
+
+- `5ce123c` — expone el límite de la tabla de exports.
+- `33aaa5a` — añade el comando de auditoría.
+- `a857fd3` — integra la auditoría en CI.
+
+### Estado y límite
+
+La instrumentación está subida a `main`, pero esta pasada no dispone todavía de una salida de ejecución del workflow que confirme los valores reales del paquete Animal. No se declara aún que el cursor termine exactamente al final del archivo ni se afirma que el export ya haya sido localizado. El siguiente dato válido será el log de CI: perfil, 9.744 (si ese es el recuento del paquete inspeccionado), offset final, bytes sobrantes y referencia de `InventoryWnd`.
+
+No se modificó `Interface.u`, ningún paquete candidato ni el comportamiento de la interfaz. Próximo paso: revisar el resultado del workflow; si el cursor deja bytes sobrantes o el recuento de InventoryWnd no es uno, diagnosticar el formato con esa evidencia antes de tocar el parser.
