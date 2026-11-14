@@ -169,3 +169,11 @@ Se revisó UELib 1.13.7 y se confirmó una ruta de diagnóstico más precisa que
 La comprobación se hará en el paquete Animal original. Se inspeccionarán el token inicial, los saltos y el token Return con sus offsets almacenados. Si el bytecode muestra un salto que evita el bloque de layout, el retorno temprano es real. Si el bytecode contiene el bloque antes del retorno y UELib lo omite o altera, habrá evidencia concreta de un defecto de descompilación.
 
 No se ha cambiado el bytecode, no se ha eliminado el return; y no se ha activado el redimensionamiento. Esta pasada fija el método de comprobación y evita una corrección especulativa.
+
+## Novena pasada: límite real del flujo binario (2026-11-14)
+
+Al revisar el código fuente de UELib se detectó una distinción importante: UStruct.ScriptSize no es el tamaño del bytecode; el límite que usa el propio deserializador es el campo privado ByteScriptSize. La primera versión del diagnóstico comparaba el final de los tokens con ScriptSize, por lo que su indicador COMPLETE podía ser incorrecto.
+
+Se corrigió el diagnóstico para leer ByteScriptSize por reflexión y comparar contra ese límite exacto. Ahora informa ambos tamaños por separado y calcula COMPLETE respecto del flujo binario real. Esto es necesario porque UELib captura internamente excepciones durante la deserialización y puede devolver una lista parcial de tokens sin propagar el error.
+
+La prueba automática está integrada en el workflow, pero aún falta obtener una ejecución terminada y revisar la salida del diagnóstico. No se ha modificado InventoryWnd ni el bytecode original.
