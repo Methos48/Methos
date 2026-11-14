@@ -1300,3 +1300,32 @@ La tabla declara 9.744 exportaciones. La cantidad de islas de diferencia (9.745)
 ### Próximo paso
 
 Obtener una lectura validada del formato UE2 de los registros de exportación (índices compactos, FName, flags, serial size y serial offset) y verificarla contra límites y referencias conocidas. Después se podrá localizar el registro de `InventoryWnd` y separar metadatos de datos serializados. No se modifica ni instala ningún paquete de producción.
+
+
+## Quincuagésima sexta pasada: contrato de lectura para exports UE2 v126 (2026-11-14)
+
+Se contrastó el formato de exportación con la documentación histórica del formato de paquetes Unreal y con la implementación de serialización de UEViewer. La referencia de formato describe los campos en este orden para UE1/UE2: referencias compactas de clase y superclase, referencia de paquete como DWORD, índice compacto del nombre, flags DWORD, tamaño serializado compacto y offset compacto cuando el tamaño es mayor que cero. El formato de CompactIndex es firmado, de 1 a 5 bytes; las referencias positivas apuntan a exports (índice = valor - 1), las negativas a imports (índice = -valor - 1) y cero representa NULL.
+
+Fuentes técnicas consultadas:
+- Unreal Archive, Legacy Package File Format: https://unrealarchive.org/wikis/unreal-wiki/Legacy%3APackage_File_Format.html
+- Unreal Archive, Data Details (CompactIndex y referencias): https://unrealarchive.org/wikis/unreal-wiki/Legacy%3APackage_File_Format/Data_Details.html
+- UEViewer, UnPackage3.cpp (orden de serialización de FObjectExport): https://github.com/gildor2/UEViewer/blob/master/Unreal/UnrealPackage/UnPackage3.cpp
+
+### Contrato que debe cumplir el parser para estos paquetes
+
+Los encabezados declaran versión 126 y licensee 1. Por tanto, no se debe aplicar el layout UE3/UE4 ni asumir campos posteriores como Archetype, ExportFlags o flags de 64 bits. Para cada uno de los 9.744 registros, el lector deberá:
+
+1. Leer ClassIndex y SuperIndex como CompactIndex firmado.
+2. Leer PackageIndex como DWORD little-endian y validarlo como referencia de objeto.
+3. Leer ObjectName como CompactIndex y comprobar que cae dentro de las 5.258 entradas de nombres.
+4. Leer ObjectFlags como DWORD little-endian (la versión 126 es anterior al cambio de flags de 64 bits).
+5. Leer SerialSize como CompactIndex no negativo.
+6. Leer SerialOffset como CompactIndex solo cuando SerialSize > 0; para tamaño cero no consumir ese campo.
+7. Comprobar que cada referencia de objeto está dentro de los límites de las tablas correspondientes y que cada rango [SerialOffset, SerialOffset + SerialSize) queda dentro del archivo.
+8. Comprobar que el cursor final coincide exactamente con el límite de la tabla de exports, sin bytes sobrantes ni truncamiento.
+
+### Límite y decisión
+
+Esta pasada fija el contrato del parser y las reglas de validación; todavía no declara decodificados los 9.744 registros ni identifica el export InventoryWnd. La documentación pública sirve como especificación de contraste, no como prueba de que el parser local ya funcione. El bloque de importaciones idéntico y el diferencial de exportaciones de la pasada 55 permanecen como evidencia previa.
+
+Siguiente paso: implementar el lector CompactIndex con pruebas de límites y ejecutar primero un parseo completo de ambos paquetes; comparar cantidad de registros, cursor final, referencias, rangos serializados y localizar el export cuyo nombre sea InventoryWnd. No modificar ni instalar ningún paquete.
