@@ -936,3 +936,33 @@ Los archivos `AddItemCandidate` y `HennaCandidate` son experimentos separados qu
 Se marca `Reopened-Clean` y `Reopened-Edited` como material de investigación, **no como fuente de producción validado**. Se conserva el fuente base como referencia de comportamiento para esta auditoría. No se copió ninguno de estos cambios al paquete ni al código de producción.
 
 Próximo paso: comparar los cuerpos completos de `function30`, `function37`, `HandleAddItem(ItemInfo)` y el wrapper `HandleAddHennaInfo`, y reconstruir una tabla de llamadas/firmas para confirmar qué nombres pueden recuperarse sin alterar el despacho.
+
+
+## Cuadragésima cuarta pasada: reconstrucción de sobrecargas y corrección del diagnóstico de la pasada 43 (2026-11-14)
+
+Se inspeccionaron directamente los cinco fuentes presentes en el ZIP, incluidos los candidatos `AddItemCandidate` y `HennaCandidate`. Esta revisión permite precisar el despacho y corregir una conclusión anterior.
+
+### Evento 2600: dos funciones con el mismo nombre
+
+En el fuente base existen dos responsabilidades distintas:
+- `function30(string param)`: convierte el parámetro del evento con `ParamToItemInfo`, clasifica el objeto y lo incorpora al inventario o equipo.
+- `function bool HandleAddItem(ItemInfo info_4)`: predicado usado por el filtro de inventario para decidir si un objeto entra en la lista de resultados.
+
+El candidato `AddItemCandidate` renombra la primera función a `HandleAddItem(string string_2)`, manteniendo la segunda como `HandleAddItem(ItemInfo info_4)`. Por tanto, **no es una colisión incompatible** si el compilador UnrealScript de destino admite sobrecarga por tipos, como sugiere la propia estructura del candidato. La pasada 43 fue demasiado concluyente al calificar el cambio de firma como incompatible: se corrige aquí a «sobrecarga candidata que requiere compilación real para validar».
+
+En cambio, `Reopened-Clean` y `Reopened-Edited` redirigen el evento 2600 a `HandleAddItem(param)`, pero conservan únicamente la declaración `HandleAddItem(ItemInfo)` y no incluyen la sobrecarga `HandleAddItem(string)`. En esos dos archivos sí queda una llamada sin una declaración textual compatible. No son equivalentes al candidato AddItemCandidate.
+
+### Evento 2630: Henna
+
+El fuente base despacha el evento 2630 a `function37(param)`. El candidato `HennaCandidate` cambia el nombre de esa función a `HandleAddHennaInfo(string string_2)` y conserva su cuerpo, que llama a `UpdateHennaInfo()`. Esta transformación mantiene el tipo de parámetro y el comportamiento visible del wrapper.
+
+`Reopened-Clean`/ `Reopened-Edited` también redirigen 2630 a `HandleAddHennaInfo(param)` y añaden un wrapper con ese nombre. Para el evento 2630, por tanto, la ruta sí tiene una declaración string visible. El riesgo principal en estos archivos no es una firma ausente para 2630, sino las alteraciones adicionales del fuente reabierto y la falta de compilación/runtime.
+
+### Estado de validación
+
+- `AddItemCandidate`: renombrado del parser de evento a una sobrecarga `HandleAddItem(string)`; candidato coherente en el texto, aún no compilado.
+- `HennaCandidate`: renombrado de `function37(string)` a `HandleAddHennaInfo(string)`; candidato coherente en el texto, aún no compilado.
+- `Reopened-Clean` y `Reopened-Edited`: idénticos entre sí; contienen cambios adicionales y el despacho 2600 carece de una sobrecarga string visible. No validar como fuente final.
+- Fuente base: sigue siendo la referencia conservadora para preservar comportamiento.
+
+No se modificó producción ni se ha afirmado compatibilidad binaria. El próximo paso es verificar el soporte de sobrecarga y compilar los candidatos por separado con el compilador/runtime correcto, si está disponible.
