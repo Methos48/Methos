@@ -307,3 +307,23 @@ En Animal, `function44(int)` compara el ID con las salidas 1 y 2 y devuelve `-1/
 Esto deja una inconsistencia concreta en la versión Animal: el helper llamado `IsLOrREar` parece comparar los IDs de dedos, mientras `function44` es el helper que compara los IDs de orejas. La referencia Interlude respalda esa interpretación, pero no demuestra si Animal pretendía conservar dos helpers duplicados, si el nombre del helper existente se desplazó durante la compilación, o si hay una peculiaridad de implementación nativa específica de ese cliente. `function44` no tiene call sites en la clase, por lo que no se cambia el nombre ni se altera `EarItemUpdate`/`FingerItemUpdate`.
 
 **Conclusión operativa:** queda identificada una posible inversión de clasificación orejas/dedos en Animal, con evidencia de la firma nativa y de los consumidores. No es una corrección autorizada para esta reconstrucción: requeriría comprobar el comportamiento real del `GetAccessoryServerID` de Animal en ejecución o disponer de una segunda fuente del mismo build. La fuente reconstruida permanece intacta.
+
+## Decimotercera pasada: clasificación de subtipos y helpers de inventario (2026-11-14)
+
+Se volvió a recorrer el `InventoryWnd.uc` completo del artefacto Animal y las 159 clases descompiladas para rastrear los valores `ItemSubType` 5 y 6, la ruta `function30` y el helper `function47`.
+
+### `function32(ItemInfo)` y `item_6` (CraftingItem)
+
+`function32` devuelve verdadero para `ItemSubType == 5` o `ItemSubType == 6`, y `function30` envía esos objetos a `item_6`, que el XDAT identifica como `CraftingItem` (panel 339×288, 9 columnas × 8 filas, máximo 250 objetos). En `RecipeBookWnd.AddRecipeBookItem`, Animal asigna explícitamente `ItemSubType = 5` a los objetos de receta que añade a `RecipeBookWnd.RecipeItem`. Esto confirma que el subtipo 5 corresponde a receta en ese flujo. La búsqueda global en las 159 clases no encontró otra asignación, comparación o consumidor que explique el subtipo 6. Por tanto, `function32` agrupa recetas conocidas y un segundo subtipo aún no identificado en el panel Crafting; no se debe llamar a ambos «recetas» sin evidencia adicional.
+
+### `function31(ItemInfo)`
+
+Solo clasifica `ItemType` 0, 1 o 2 y envía esos elementos a `item_5`. La búsqueda global no encontró una definición de enum ni una asignación de esos valores que permita recuperar etiquetas de categoría inequívocas. Se conserva el nombre anónimo.
+
+### `function47()` — escritura de configuración sin llamada identificada
+
+El helper escribe `-1` en `TrashGrp/TrashList[int_2]` y retorna. No hay llamadas a `function47` en `InventoryWnd.uc` ni referencias a su nombre en las otras 158 fuentes descompiladas. `function2` carga esa lista desde INI; `function13` activa/desactiva el modo de borrado automático y llama a `function46`; `function46` lee la lista y ejecuta `RequestDestroyItem` para los objetos encontrados. No se encontró un camino que invoque `function47`, así que no se le atribuye una función de «quitar de lista» activa ni se conecta al botón de papelera. Se mantiene sin cambios.
+
+### Resultado de esta pasada
+
+No se renombraron funciones ni se modificó el comportamiento. Se confirmó el subtipo 5 como receta; el subtipo 6 y la enumeración `ItemType` siguen abiertos. Se mantiene la protección: ninguna prueba ejecuta `RequestDestroyItem` ni altera la configuración de borrado.
