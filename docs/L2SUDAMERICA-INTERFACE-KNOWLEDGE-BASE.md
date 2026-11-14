@@ -246,3 +246,8 @@ Nueva ficha: [L2SUDAMERICA-SPECIAL-SYSTEMS-AUDIT.md](L2SUDAMERICA-SPECIAL-SYSTEM
 ## 15. Auditoría de UICommonAPI
 
 Nueva ficha: [L2SUDAMERICA-UICOMMONAPI-AUDIT.md](L2SUDAMERICA-UICOMMONAPI-AUDIT.md). Analiza la capa compartida UICommonAPI: wrappers de ventana/diálogo, parser de ItemInfo, parser LVDataRecord, mensajes, eventos internos, ordenación local de inventario y wrappers de primitivas. Se marcan funciones con cuerpo vacío en la exportación y las dependencias que requieren análisis de bytecode. Análisis estático; sin cambios en binarios.
+
+
+## 16. Auditoría de DialogBox
+
+Nueva ficha: [L2SUDAMERICA-DIALOGBOX-AUDIT.md](L2SUDAMERICA-DIALOGBOX-AUDIT.md). Documenta los ocho tipos de diálogo, exclusión de instancia simultánea, identidad del llamador, ID de confirmación, eventos globales 1710/1720, acción predeterminada de Enter, entrada numérica, barra temporizada y estructura XDAT. Se identifican riesgos de concurrencia y consumo de respuestas entre ventanas. Análisis estático; sin modificar ni probar binarios.
