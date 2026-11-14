@@ -146,6 +146,12 @@ jobs:
             }
           }
           "CROSS_PACKAGE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Test comment-aware UnrealScript function extraction
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tools/analysis -p "test_unrealscript_functions.py" -v
+          if ($LASTEXITCODE -ne 0) { throw "UnrealScript function extractor tests failed." }
+
       - name: Compare anonymous Animal InventoryWnd functions with UCC reference
         shell: pwsh
         run: |
