@@ -1061,3 +1061,37 @@ Hashes SHA-256 verificados:
 Se corrige el grado de confianza de la pasada 46: el artefacto contiene un paquete candidato serializado con el nuevo nombre, pero **no hay validación binaria diferencial aislada ni prueba de carga/runtime**. Se mantiene como candidato experimental. No sustituir `Interface-clean.u` ni desplegar HennaCandidate en el cliente.
 
 Próximo paso: conseguir un parser de paquetes Unreal compatible con esta versión o un volcado de exports/bytecode para comparar la clase InventoryWnd y confirmar que el cambio está limitado a la función esperada.
+
+
+## Cuadragésima octava pasada: contraste directo HennaCandidate vs HennaCandidate-Reopened (2026-11-14)
+
+Se compararon los dos archivos fuente del ZIP, no solo las cadenas del paquete binario. Esta pasada separa definitivamente el candidato Henna aislado de su variante reabierta.
+
+### HennaCandidate (fuente de prueba aislada)
+
+- Evento 2600 conserva la llamada original `function30(param)`.
+- Evento 2630 llama a `HandleAddHennaInfo(param)`.
+- Declara `HandleAddHennaInfo(string string_2)`, con el cuerpo del wrapper original `function37`.
+- El predicado `HandleAddItem(ItemInfo info_4)` se conserva para el filtro.
+- No aparece una declaración `HandleAddItem(string)`, pero tampoco se redirige el evento 2600 hacia ese nombre.
+
+**Conclusión:** el candidato aislado Henna no introduce el problema de firma del evento 2600. El cambio textual visible está limitado al nombre del wrapper de Henna y su llamada en evento 2630.
+
+### HennaCandidate-Reopened (fuente reabierta desde paquete)
+
+- Evento 2630 conserva `HandleAddHennaInfo(param)`.
+- Evento 2600 fue cambiado a `HandleAddItem(param)`.
+- La única declaración de `HandleAddItem` sigue siendo `function bool HandleAddItem(ItemInfo info_4)`; no existe una sobrecarga string en ese archivo.
+- Por tanto, el evento 2600 pasa un `string` a una función declarada con `ItemInfo`. La ruta no tiene una declaración textual compatible.
+- Además, la reabertura alteró la estructura del archivo (3,523 a 3,691 líneas), duplicó varios `return` y modificó otros segmentos del switch/eventos. No debe tratarse como un espejo fiel del candidato fuente original.
+
+### Corrección y decisión
+
+El paquete `InventoryWnd-HennaCandidate.u` se asocia con la prueba aislada, pero la inspección de cadenas por sí sola no demuestra equivalencia exacta de bytecode. La fuente aislada es coherente en sus rutas 2600/2630 a nivel de llamadas y tipos visibles; la variante reabierta no lo es para el evento 2600.
+
+Se mantienen tres estados separados:
+1. `HennaCandidate/InventoryWnd.uc`: candidato fuente aislado, revisión estática favorable.
+2. `HennaCandidate-Reopened/InventoryWnd.uc`: reconstrucción posterior, no apta como fuente final por la redirección 2600.
+3. `Interface-clean.u`: referencia limpia que no se modifica.
+
+No se cambia producción. Próximo paso: comparar el export/bytecode de InventoryWnd entre el paquete limpio y HennaCandidate con un parser compatible, para verificar que el paquete serializado corresponde realmente al fuente aislado.
