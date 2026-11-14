@@ -28,6 +28,16 @@ It is a research catalogue, not a claim that every listed archive has been downl
 
 | GK Global / Rusacis Interlude | `interfacegk.rar`; post describes retail `Interface.xdat` with GK interface, `Interface.u` UnrealScript and XML; follow-up provides compiled `Interface.u` and Interlude compiler RAR | Interlude-labelled archive link located; download attempt failed; contents and compatibility not inspected | [MaxCheaters thread](https://maxcheaters.com/topic/249411-gk-global-interface-rusacis-l2royale/) · [RAR](https://www.mediafire.com/file/g8sucve4j3gbxit/interfacegk.rar/file) |
 
+## Newly located Interlude binaries and historical leads
+
+| Candidate | Evidence | Status |
+|---|---|---|
+| Ares Interlude updated package | Later post shares an Interlude package on Mega: `https://mega.nz/file/qrgAhIpS#ZxQBz9NdaK_-f1lfjUyrdPMfriDKVuaeEerXbXVQTSU`. A C4 package is listed separately and is not Interlude. | Link located; contents/download not verified. |
+| Wellington V3 Interlude XDAT | Forum user identifies a decrypted Interlude `interface.xdat` from Wellington V3: `https://www.mediafire.com/file/mcp9v8fy8o0vd8u/interface.xdat/file`. | Link located; file identity and download not verified. |
+| Euro-PVP Interlude XDAT | 2025 forum request links an `interface.xdat` from EURO-PVP: `https://drive.google.com/file/d/1IBTapu25niYl1vaKM4XxEYO0kgpaVDa8/view?usp=sharing`. | Server identified; bytes/hash not verified. |
+| Elfen edited Interlude pair | 2017 post describes paired `Interface.u` + `Interface.xdat` RAR, four shortcut bars and inventory sorting. Old Zippyshare link is historical; password shown in source: `TgC68qs`. | Host likely obsolete; not acquired. |
+| Interlude Interface.u (2019) | Forum reply points to `https://www.sendspace.com/file/60jlhv`. | Thread blocked to automated retrieval; file identity/availability unverified. |
+
 ## Other client-interface archives (chronicle not yet verified)
 
 | Label | Known contents from source listing | Status | Source |
@@ -60,10 +70,12 @@ Therefore **no newly sourced binary archive is claimed to be stored in this repo
 
 ## Next acquisition sequence
 
-1. Obtain the Interlude C6 XDAT attachment, GK Global/Rusacis package, and the candidate Interlude U/XDAT pairs.
+1. Obtain the Ares Mega package, Wellington V3 XDAT, Euro-PVP XDAT and GK Global/Rusacis package; then resolve older Interlude U/XDAT leads.
 2. Obtain the P162+/P196 source-rich interface package if the forum attachment remains available.
 3. Obtain the L2JBaylee RAR archives and verify each against its published SHA-256.
 4. Extract into separate immutable folders under `reference-data/interfaces/<chronicle-or-label>/original/`.
 5. Generate a manifest containing every file path, size, and hash.
 6. Identify actual chronicle, package names, protocol metadata, encryption header, and whether the archive includes compiled `.u` / `.xdat` or only sources.
 7. Add further samples only when an original download or user-provided archive is available.
+
+- The 2017 Elfen/Zippyshare and 2019 Sendspace Interlude leads have not been confirmed alive; retain them as historical references only.
