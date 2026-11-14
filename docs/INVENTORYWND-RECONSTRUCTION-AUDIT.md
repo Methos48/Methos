@@ -581,3 +581,9 @@ Límites importantes:
 - Su `IsLOrREar` compara los dos primeros IDs de `GetAccessoryServerID`, lo que respalda el papel semántico de Animal `function44`; pero Animal ya tiene una función llamada `IsLOrREar` que compara los dos últimos IDs. La contradicción y la colisión impiden renombrar `function44`.
 
 La evidencia de eventos eleva `HandleAddHennaInfo` a candidato muy sólido para `function37`, pero Animal y Berserker conservan literalmente `function37` en sus paquetes compilados. Por fidelidad histórica, el identificador de producción sigue intacto hasta una fuente del mismo build que demuestre el nombre original.
+
+### Resultado del workflow con el comparador integrado
+
+El run `43566703204` terminó **SUCCESS**: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43566703204). Artifact `Animal-U-Reconstruction-Validation`, ID `14103300541`.
+
+El JSON `Animal-InventoryWnd-XDAT/cross-package-function-matches.json` del artifact confirma `animal=72`, `berserker=72`, `silent_dark=53` y `same_name_exact=72` en la comparación previa a restauraciones. También conserva los candidatos y los indicadores de colisión para las 15 funciones anónimas. Las pruebas de compilación limpia, reapertura 160/160, edición real persistente y renombre temporal de `function37` volvieron a finalizar correctamente.
