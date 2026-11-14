@@ -434,3 +434,25 @@ Resultados confirmados en los logs:
 - Animal: compilación limpia correcta, reapertura de 160/160 clases, compilación de la copia editada correcta y marcador de edición persistente tras reabrir.
 
 La detección evita repetir el error engañoso de tratar el paquete L2Sudamérica protegido como si fuera un UnrealPackage plano. No se intenta descifrarlo sin resolver primero las claves NPKscrypt. La fuente Animal y el comportamiento del juego siguen sin cambios.
+
+## Vigésima primera pasada: referencias globales de las funciones anónimas (2026-11-14)
+
+Se hizo una búsqueda de identificadores y llamadas en los 159 archivos UnrealScript recuperados de Animal, no solo dentro de `InventoryWnd.uc`. El resultado confirma qué funciones tienen referencias reales y cuáles están aisladas:
+
+| Función | Referencias encontradas | Resultado |
+|---|---:|---|
+| `function14` | 0 | Declaración sin llamadas en las 159 clases |
+| `function44` | 0 | Helper aislado; no hay evidencia de uso desde otra clase |
+| `function26` | 0 | Duplicado funcional de `IsArrow`, pero sin llamadas propias |
+| `function47` | 0 | Rutina que escribe en `TrashList`, sin llamadas en el código recuperado |
+| `MethosRecoveredName_1105` | 0 | Rutina de uso de piezas de set, sin llamadas recuperadas |
+| `function30` | 1 | Despachada desde `OnEvent` (evento 2600) |
+| `function37` | 1 | Despachada desde `OnEvent` (evento 2630) |
+| `function31` / `function32` | 1 cada una | Invocadas por la clasificación de objetos de `function30` |
+| `function2` | 1 | Invocada durante inicialización |
+| `function13` | 1 | Invocada por el botón de descarte; llama a `function46` |
+| `function46` | 1 | Invocada por `function13` para ejecutar el descarte automático |
+| `function3` | 2 | Invocada durante carga y por el callback de inventario expandido |
+| `function48` | 6 | Sus seis llamadas están dentro del bloque posterior al retorno inicial de `function3`, por tanto no son alcanzables desde esa entrada |
+
+Esta búsqueda no prueba que las rutinas sin llamadas sean inútiles: podrían ser callbacks externos o conservarse por compatibilidad con el runtime. Por eso no se borran ni se modifican. Sí permite descartar que `function47` sea un helper activo llamado desde otra clase del código recuperado. Se conserva la fuente intacta y se añaden estas relaciones a la matriz de auditoría.
