@@ -261,3 +261,8 @@ Nueva ficha: [L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md](L2SUDAMERICA-SHORTCUT-SYSTE
 ### Addendum a la auditoría 17 — bindings y teclas rápidas
 
 La ficha de Shortcut fue ampliada con el cruce de `Shortcut.uc` e `InterfaceAI_KeySettingWnd.uc`: tres bindings independientes (teclas 1–12, QWERTY y F1–F12), paneles configurables por INI, comandos `/useshortcut` y `/useshortcutforce`, y la frontera no reconstruida de `NWindow.ShortcutAPI`. También se registraron dos puntos que requieren prueba/bytecode: la rama Force de Bind3 y etiquetas duplicadas en el switch de comandos. No se atribuye a “force” capacidad de saltarse restricciones del servidor.
+
+
+## 19. Auditoría de SublimityShortcut
+
+Nueva ficha: [L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md](L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md). Documenta la variante de cuatro paneles heredada de SublimityItem, sus 120 índices, páginas, persistencia propia y diferencias con ShortcutWnd estándar. Se marcan como pendientes los eventos 631/25002 y la lógica incompleta de SublimityShortcut; no se atribuyen semánticas no demostradas.
