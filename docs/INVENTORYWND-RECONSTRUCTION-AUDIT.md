@@ -477,3 +477,15 @@ Resultados del run `43565701277`:
 - `function30(string)` renombrada a `HandleAddItem(string)`: **rechazada por el compilador**. Error exacto: `HandleAddItem conflicts with Function Interface.InventoryWnd.HandleAddItem`, en la declaración existente `HandleAddItem(ItemInfo)`. UCC no admite esa duplicación de nombre en la clase Animal. Por tanto, aunque Silent Dark use `HandleAddItem(string)`, ese nombre no puede trasladarse a Animal mientras se conserve la función tipada `HandleAddItem(ItemInfo)`; se descarta como nombre para `function30` en esta reconstrucción.
 
 La validación base del mismo run volvió a compilar Animal y reabrir 160/160 clases, y la edición de prueba volvió a sobrevivir a compilación y reapertura. El run terminó marcado como fallido únicamente porque la prueba diagnóstica trató el rechazo esperado del candidato `HandleAddItem` como error del paso; se ajustó el workflow para registrar ese rechazo como resultado esperado y continuar. No se cambió `InventoryWnd.uc` ni el comportamiento del cliente.
+
+## Vigésima cuarta pasada: comparación exacta Animal–Berserker (2026-11-14)
+
+Se compararon las fuentes completas `InventoryWnd.uc` extraídas de Animal y Berserker en el artifact validado `Animal-U-Reconstruction-Validation` (run `43564770505`). Berserker aporta una segunda fuente de paquete real, no una plantilla UCC genérica.
+
+Hallazgos medidos:
+- Las funciones `function30(string)`, `function37(string)` y `HandleAddItem(ItemInfo)` tienen cuerpos normalizados idénticos en ambas fuentes.
+- `function44(int)` también coincide en su lógica; la única diferencia es que Berserker termina con `return;` mientras Animal tiene `return 0;`.
+- Berserker conserva exactamente los identificadores anónimos `function30`, `function37` y `function44`. Por tanto, este segundo paquete no recupera los nombres originales y confirma que esos identificadores ya estaban presentes en otra compilación/variante de la misma familia.
+- La fuente Animal contiene algunas declaraciones de variables adicionales y diferencias menores de descompilación, pero no hay evidencia para sustituir los nombres anónimos.
+
+Esta comparación refuerza que `HandleAddHennaInfo` es un nombre semánticamente plausible por la variante Silent Dark, pero no demuestra que fuera el nombre original de Animal/Berserker. Se mantiene `function37` en la fuente original hasta validar la prueba de compilación y reapertura, y no se renombran `function30` ni `function44`. No se alteró el código de producción.
