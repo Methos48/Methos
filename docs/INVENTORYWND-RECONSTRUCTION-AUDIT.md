@@ -1368,3 +1368,26 @@ Se corrigió el comando `--audit-export-table`:
 Commit: `d46d83c`.
 
 Esta corrección es importante para no diagnosticar como corrupción el espacio legítimo que contiene payloads de objetos. La ejecución CI sigue pendiente de confirmación; el siguiente paso es obtener su log y comprobar el límite real, el export único `InventoryWnd` y la referencia de clase/superclase/contenedor.
+
+
+## Quincuagésima novena pasada: pruebas de límites de CompactIndex (2026-11-14)
+
+Se añadió un autotest ejecutable del decodificador CompactIndex ya existente, sin duplicar su implementación.
+
+Cobertura de los vectores binarios:
+- cero y límite de un byte;
+- transición a dos y tres bytes;
+- valor negativo;
+- rango que requiere el quinto byte;
+- `int.MaxValue` e `int.MinValue`;
+- rechazo de una secuencia truncada.
+
+El comando es `--self-test-compact-index`. Se incorporó como paso explícito al workflow de validación Animal antes de analizar la tabla Export. Así, cualquier regresión de lectura compacta detendrá el flujo antes de emitir conclusiones sobre los índices de `InventoryWnd`.
+
+Archivos:
+- `tests/ProtectionPipelineSmoke/Program.cs`
+- `.github/workflows/validate-animal-interface.yml`
+
+Commits: `70b8823` (autotest) y `c7c99bc` (CI).
+
+**Límite actual:** el autotest está agregado al workflow, pero todavía no se ha observado una ejecución real de Actions. No se declara como aprobado hasta obtener el log.
