@@ -347,3 +347,33 @@ La ejecución quedó encolada al registrar esta modificación:
 - Commit del workflow: `19af06d23a2e2e5ef810b3e94592d300f6d66f1a`.
 
 El paso es deliberadamente tolerante a fallos por paquete: registra si una extracción individual no puede completarse, sin ocultar los resultados de las demás. No cambia ni recompila los paquetes de referencia, no sustituye la fuente Animal y no renombra funciones. La comparación semántica se hará después de inspeccionar los archivos efectivamente extraídos; una coincidencia de otro cliente solo será evidencia comparativa, no prueba automática del nombre original Animal.
+
+## Decimosexta pasada: comparación real con Berserker y Silent Dark (2026-11-14)
+
+Se completó el workflow `43564397510` y se inspeccionó el artefacto `Animal-U-Reconstruction-Validation` (ID `14102101234`). La compilación limpia de Animal, la reapertura de sus 160 clases y la prueba de edición real seguida de compilación y reapertura terminaron correctamente. El marcador `MethosAnimalRoundTripProbe_20261113` sobrevivió al ciclo completo.
+
+### Berserker: misma familia de InventoryWnd que Animal
+
+El paquete Berserker sí se pudo abrir como UE 126/0 y exportó 159/159 clases. Su `InventoryWnd.uc` tiene 72 funciones, igual que Animal. Tras normalizar espacios, la similitud de líneas es 99,69 %. La comparación línea por línea encontró solo estas diferencias:
+- Berserker no incluye las 12 declaraciones de propiedades que el proceso de recuperación ya restauró en Animal.
+- `OnKeyUp` conserva los valores numéricos 18/17 en vez de los enums `IK_Alt`/`IK_Ctrl`.
+- Tres retornos tipados de Berserker aparecen como `return;` donde Animal tiene `return 0` o `return None`; son diferencias de salida/descompilación, no pruebas de una lógica distinta.
+- El cuerpo de `function44` es el mismo salvo el retorno final redundante (`return 0` frente a `return;`).
+
+Los cuerpos de las 13 funciones anónimas comparables (`function14`, `function30`, `function31`, `function32`, `function37`, `function44`, `function26`, `function2`, `function13`, `function47`, `function46`, `function3`, `function48`) coinciden exactamente, salvo la diferencia trivial del retorno final en `function44`. Berserker conserva los mismos nombres anónimos; por tanto, confirma que son funciones heredadas de la misma familia de código, pero no recupera sus nombres originales. No se renombra ninguna.
+
+### Silent Dark: variante funcionalmente distinta
+
+El paquete Silent Dark se abrió y exportó correctamente. Su `InventoryWnd.uc` tiene 53 funciones, frente a 72 de Animal/Berserker, y utiliza una arquitectura distinta para búsqueda, botones y filtrado. Tiene nombres explícitos como `HandleAddHennaInfo`, pero su cuerpo no coincide exactamente con `function37` de Animal; tampoco su ruta `HandleAddItem(string)` equivale a la ruta Animal `HandleAddItem(ItemInfo)`. Estos nombres sirven como pistas para nuevas búsquedas, no como evidencia suficiente para renombrar funciones de Animal. Se mantienen los identificadores actuales.
+
+### L2Sudamérica: paquete protegido o no estándar, aún no inspeccionable en crudo
+
+La extracción directa de `reference-data/packages/l2sudamerica/Interface.u` falló con `Interface isn't an UnrealPackage!`. UELib no llegó a leer tablas de paquete. No se fuerza la apertura ni se quita ninguna cabecera a ciegas: primero hay que identificar y verificar la capa de protección de ese archivo mediante el pipeline correspondiente. El archivo original permanece intacto.
+
+### Resultado
+
+- Berserker aporta una segunda copia de la misma familia de código y confirma que las funciones anónimas no son artefactos exclusivos de la extracción Animal.
+- Silent Dark permite estudiar una variante diferente, pero sus nombres no se trasladan a Animal sin coincidencia de cuerpo, evento y firma.
+- L2Sudamérica queda pendiente de detección/decodificación segura.
+- La reconstrucción Animal mantiene la validación de ida y vuelta: compilación limpia, reapertura de 160/160 clases y cambio real persistente después de recompilar y reabrir.
+- No se cambió `InventoryWnd.uc` ni se modificó el comportamiento del juego.
