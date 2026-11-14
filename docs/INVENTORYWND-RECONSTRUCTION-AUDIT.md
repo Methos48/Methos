@@ -1149,3 +1149,32 @@ La prueba cubre cadenas imprimibles completas del paquete, no el bytecode Unreal
 ### Decisión
 
 Mantener `InventoryWnd-HennaCandidate.u` como candidato preferido para la siguiente fase de inspección. `Interface-clean.u` sigue siendo la referencia intacta. No modificar ni desplegar el paquete limpio.
+
+
+## Quincuagésima primera pasada: ubicación exacta de las tres referencias binarias de Henna (2026-11-14)
+
+Se volvió a inspeccionar el contenido bruto de ambos `.u` del ZIP, localizando todas las apariciones byte a byte y revisando su contexto. Esta pasada precisa la conclusión de la comparación de cadenas de la pasada 50.
+
+### Tres apariciones en cada paquete
+
+En `Interface-clean.u`, `function37` aparece exactamente tres veces:
+1. Tabla de nombres del paquete (offset 24,049): entrada de nombre `function37`.
+2. Texto fuente serializado (offset 2,306,047): llamada `function37(param);` dentro del evento 2630.
+3. Texto fuente serializado (offset 2,352,466): declaración `function function37(string string_2)`.
+
+En `InventoryWnd-HennaCandidate.u`, `HandleAddHennaInfo` aparece exactamente tres veces en las posiciones correspondientes:
+1. Tabla de nombres (offset 24,049): entrada `HandleAddHennaInfo`.
+2. Texto fuente serializado (offset 2,306,055): llamada `HandleAddHennaInfo(param);` dentro del evento 2630.
+3. Texto fuente serializado (offset 2,352,482): declaración `function HandleAddHennaInfo(string string_2)`.
+
+Los contextos del evento 2600 siguen conteniendo `function30(param)` en ambos paquetes. La entrada `function30` y su declaración también permanecen presentes. El nombre `HandleAddItem` conserva sus apariciones y no sustituye a la ruta del evento 2600.
+
+### Lectura técnica
+
+La tabla de nombres y las dos referencias de texto del wrapper concuerdan con el cambio de fuente de dos líneas. No se observó una cuarta referencia residual a `function37` en el candidato, ni una referencia a `HandleAddHennaInfo` en el paquete limpio.
+
+Esto verifica consistencia de nombres y texto serializado, pero el paquete incluye datos compilados/serializados que no se pueden validar completamente leyendo estas cadenas. No se ha decodificado el bytecode de las funciones ni probado la ejecución en el cliente. Se mantiene el bloqueo de instalación hasta contar con una herramienta compatible o una prueba controlada.
+
+### Estado
+
+`InventoryWnd-HennaCandidate.u` continúa siendo el candidato estático preferido. `Interface-clean.u` permanece intacto. No se modificó ningún archivo de producción.
