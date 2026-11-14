@@ -83,6 +83,20 @@ def mask_code(source: str) -> str:
     return "".join(chars)
 
 
+
+EVENT_ROUTE = re.compile(
+    r"(?im)^\\s*case\\s+(\\d+)\\s*:\\s*([A-Za-z_]\\w*)\\s*\\("
+)
+
+
+def extract_event_routes(source: str) -> dict[int, str]:
+    """Read event case handlers while ignoring comments and string literals."""
+    return {
+        int(match.group(1)): match.group(2)
+        for match in EVENT_ROUTE.finditer(mask_code(source))
+    }
+
+
 def extract_functions(source: str) -> list[dict[str, str]]:
     masked = mask_comments(source)
     declaration_view = mask_code(source)
