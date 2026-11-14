@@ -6,14 +6,11 @@ from pathlib import Path
 if len(sys.argv) != 4:
     raise SystemExit("Usage: compare_animal_inventorywnd_reference.py <animal.uc> <reference.uc> <output.json>")
 
-from unrealscript_functions import extract_functions as extract, lex_tokens as lex
+from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as lex
 
 animal_path, ref_path, out_path = map(Path, sys.argv[1:])
 def read_source(path: Path):
-    raw = path.read_bytes()
-    if raw.startswith((bytes.fromhex("FFFE"), bytes.fromhex("FEFF"))):
-        return raw.decode("utf-16")
-    return raw.decode("utf-8-sig")
+    return decode_source_bytes(path.read_bytes())
 
 animal = extract(read_source(animal_path))
 reference = extract(read_source(ref_path))
