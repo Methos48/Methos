@@ -292,3 +292,6 @@ Ampliación verificada de SublimityShortcutWnd: los cinco hooks candidatos (_735
 
 
 Hallazgo adicional sobre atajos: SublimityShortcut registra 25002 y recibe payload key/state, pero su hook 737 permanece stub en las fuentes exportadas; declara tres arrays de 256 y un struct de tres enteros sin semántica aún recuperada. Se separó explícitamente este sistema del Shortcut clásico (evento 90), cuya asignación de teclas y persistencia Option.ini sí están documentadas. Shortcut clásico mapea 1–12, Q..] y F1–F12 a /useshortcut, además de rutas /useshortcutforce. No hay prueba de bypass de validaciones del servidor. Véase Addendum E.
+
+
+Investigación de intrínsecos SublimityShortcut: en las 151 fuentes UC se contabilizaron 1.041 usos de __NFUN_154__ en 95 archivos y 238 usos de __NFUN_132__ en 41. Los contextos apuntan fuertemente a igualdad (==) y OR lógico (||), respectivamente. Bajo esa hipótesis, _1576(x) clasifica x==16,17 o 18. Se registra expresamente como inferencia contextual, no como identificación nativa confirmada: faltan Core.u, Engine.u y NWindow.u del mismo runtime para generar el registro exacto. Véase Addendum F.
