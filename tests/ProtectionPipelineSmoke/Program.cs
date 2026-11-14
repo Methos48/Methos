@@ -27,8 +27,10 @@ if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
     foreach (var token in decoder.DeserializedTokens)
         Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name}");
     int decodedEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
+        decoder.DeserializedTokens.Max(token => token.Position + token.Size);
+    int decodedStorageEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
         decoder.DeserializedTokens.Max(token => token.StoragePosition + token.StorageSize);
-    Console.WriteLine($"DECODED_STORAGE_END={decodedEnd}; BYTE_SCRIPT_SIZE={byteScriptSize}; COMPLETE={(decodedEnd >= byteScriptSize)}");
+    Console.WriteLine($"DECODED_INSTRUCTION_END={decodedEnd}; BYTE_SCRIPT_SIZE={byteScriptSize}; DECODED_STORAGE_END={decodedStorageEnd}; DATA_SCRIPT_SIZE={target.ScriptSize}; COMPLETE={(decodedEnd >= byteScriptSize)}");
     return;
 }
 
