@@ -231,3 +231,8 @@ Nueva ficha: [L2SUDAMERICA-MAP-QUEST-NAVIGATION-AUDIT.md](L2SUDAMERICA-MAP-QUEST
 ## 12. Auditoría social, clan, party matching y peticiones
 
 Nueva ficha: [L2SUDAMERICA-SOCIAL-PARTY-CLAN-PETITION-AUDIT.md](L2SUDAMERICA-SOCIAL-PARTY-CLAN-PETITION-AUDIT.md). Incluye ClanWnd/ClanDrawerWnd, UnionWnd/UnionDetailWnd, PartyWnd normal/compacta, PartyMatch y salas/listas de espera, SaveLoadParty, Petition, BoardWnd, MailBtnWnd y SSQMainBoard. Registra geometría XDAT, controles, eventos, solicitudes administrativas, operaciones de party, persistencia INI y preguntas abiertas. Análisis estático; no se editaron paquetes.
+
+
+## 13. Auditoría de asedios, Manor y Olympiad
+
+Nueva ficha: [L2SUDAMERICA-SIEGE-MANOR-OLYMPIAD-AUDIT.md](L2SUDAMERICA-SIEGE-MANOR-OLYMPIAD-AUDIT.md). Documenta SiegeInfoWnd y sus solicitudes SiegeAPI; nueve ventanas/rutas de Manor para semillas, cosechas, configuración y venta; y paneles Olympiad/Observer. Incluye eventos, payloads observados, geometría XDAT, dependencias y preguntas abiertas. Análisis estático; no se modificaron ni probaron binarios.
