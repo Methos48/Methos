@@ -371,6 +371,40 @@ jobs:
           }
           Write-Host "ANIMAL_TYPED_RETURNS_NORMALIZED=$total"
           if ($unknown.Count -gt 0) { Write-Host "ANIMAL_TYPED_RETURN_TYPES_REQUIRING_REVIEW=$($unknown -join ';')" }
+      - name: Diagnose InventoryWnd function44 return before changing it
+        shell: pwsh
+        run: |
+          $sourceFile = Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc"
+          $sourceText = [IO.File]::ReadAllText($sourceFile)
+          Write-Host "===== INVENTORY FUNCTION44 SIGNATURE AND BODY ====="
+          $pattern = '(?im)^\s*function\s+(?<type>[A-Za-z_]\w*)\s+function44\s*\((?<args>[^)]*)\)\s*\{'
+          $match = [regex]::Match($sourceText, $pattern)
+          if (!$match.Success) {
+            Write-Host "INVENTORY_FUNCTION44_NOT_FOUND"
+          } else {
+            $openBrace = $sourceText.IndexOf('{', $match.Index)
+            $depth = 0
+            $closeBrace = -1
+            for ($i = $openBrace; $i -lt $sourceText.Length; $i++) {
+              if ($sourceText[$i] -eq '{') { $depth++ }
+              elseif ($sourceText[$i] -eq '}') {
+                $depth--
+                if ($depth -eq 0) { $closeBrace = $i; break }
+              }
+            }
+            if ($closeBrace -lt 0) { throw "InventoryWnd.function44 has an unmatched brace." }
+            $functionText = $sourceText.Substring($match.Index, $closeBrace - $match.Index + 1)
+            Write-Host "INVENTORY_FUNCTION44_TYPE=$($match.Groups['type'].Value)"
+            Write-Host "INVENTORY_FUNCTION44_ARGS=$($match.Groups['args'].Value)"
+            Write-Host $functionText
+          }
+          $mapFile = Join-Path $env:ANIMAL_SOURCES "methos_name_map.json"
+          Write-Host "===== NAME MAP REFERENCES TO FUNCTION44 ====="
+          if (Test-Path -LiteralPath $mapFile) {
+            Select-String -LiteralPath $mapFile -Pattern 'function44|InventoryWnd' -Context 2,2
+          } else {
+            Write-Host "ANIMAL_NAME_MAP_NOT_FOUND"
+          }
       - name: Diagnose Animal IsKeyDown signature mismatch
         shell: pwsh
         run: |
