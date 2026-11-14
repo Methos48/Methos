@@ -200,3 +200,7 @@ Estas fichas están en:
 7. Mantener un registro de avances y preguntas abiertas en GitHub en cada sesión.
 
 **Estado de esta base:** esquema maestro creado; inventarios y artefacto de referencia disponibles. La comprensión completa de cada clase, función, control y recurso es un trabajo continuo. No se declara terminada la auditoría general ni la capacidad de recompilar y cargar cambios.
+
+## Auditorías de ventanas completadas parcialmente
+
+- [OptionWnd y sus cinco pestañas](L2SUDAMERICA-OPTIONWND-AUDIT.md): análisis UC + XDAT de configuración gráfica, audio, opciones de juego, funciones de interfaz y daño flotante. Incluye inventario de controles, claves de configuración, eventos registrados, conexiones entre ventanas y pendientes de validación.
