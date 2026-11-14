@@ -857,3 +857,28 @@ El informe de comparación usa hashes de cuerpos normalizados; no se ha afirmado
 La hipótesis de que `SearchItem` es un nodo residual/no utilizado por la lógica UnrealScript gana apoyo: la variante Berserker comparte íntegramente el flujo de búsqueda Animal, sin que `SearchItem` participe en él. Aun así, su función externa o su presencia en otros XDAT sigue abierta.
 
 Se mantiene el XDAT sin cambios. El siguiente paso será examinar la variante Silent Dark y separar diferencias reales de lógica frente a diferencias de nombres recuperados automáticamente.
+
+
+## Cuadragésima primera pasada: contraste con InventoryWnd de Silent Dark (2026-11-14)
+
+Se examinó el archivo completo `Cross-Package-InventoryWnd/silent-dark/InventoryWnd.uc` del mismo artefacto y se comparó su estructura con la fuente Animal.
+
+### Diferencias de arquitectura confirmadas
+
+- Animal contiene 72 funciones; Silent Dark contiene 53 según el inventario del análisis del artefacto (52 declaraciones detectables con el patrón de extracción independiente, por una diferencia de conteo que queda anotada y no se fuerza a coincidir).
+- Se compararon 47 nombres de función compartidos: 17 tienen cuerpo idéntico tras normalizar comentarios/espacios; el resto difiere.
+- Silent Dark no contiene `FilterInventory()`, `RestoreInventory()` ni `OnKeyUp()`. En su lugar tiene `OnChangeEditBox()` y `SearchInventory()`.
+- Silent Dark registra el cambio de texto del EditBox y filtra desde `InventoryWnd.Container.SearchBar`. Su búsqueda oculta los paneles de inventario/quest y muestra un ItemWindow de resultados que el script identifica como `InventoryWnd.Container.EquipItem_Underwearss`.
+- Animal usa `InventoryWnd.SearchBar` y su función `FilterInventory()` modifica `InventoryItem`; no utiliza el identificador `EquipItem_Underwearss` como destino de búsqueda en el flujo de filtro.
+- Silent Dark obtiene los handles principales mediante rutas bajo `.Container.`, y obtiene `SortButton`, `TrashButton`, `btnEnchant` y `SearchBar`. No pide `EnchantButton`, `FastDelete` ni `RefineButton`.
+- Silent Dark tampoco contiene referencia a `SearchItem). Su panel de resultados es el control denominado `EquipItem_Underwearss`, una convención heredada/atípica en el código; no se debe equiparar automáticamente al nodo Animal `SearchItem`.
+
+### Correspondencia de eventos
+
+Silent Dark usa el evento 2600 para `HandleAddItem` y el 2630 para `HandleAddHennaInfo`; Animal/Berserker usan esos mismos IDs para `function30` y `function37`. La diferencia de rutas confirma que las variantes pertenecen a generaciones o esquemas de eventos distintos. No se deben copiar handlers entre ellas por coincidencia de número.
+
+### Conclusión
+
+Silent Dark demuestra que existió una arquitectura alternativa de búsqueda: un EditBox con callback de cambio y un ItemWindow de resultados separado, distinto del inventario normal. Esto aporta contexto histórico útil, pero **no demuestra** que el `SearchItem` de XDAT Animal sea ese mismo panel, porque los nombres, rutas, jerarquía y fuente son diferentes.
+
+La hipótesis de que el `SearchItem` de Animal sea un residuo de búsqueda sigue abierta; ahora tiene una comparación de referencia concreta para futuras pruebas. No se renombraron controles ni se modificó código/XDAT de producción.
