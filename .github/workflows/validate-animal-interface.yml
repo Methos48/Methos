@@ -149,6 +149,10 @@ jobs:
           $report = Join-Path $PWD "Animal-InventoryWnd-XDAT/cross-package-function-matches.json"
           python tools/analysis/compare_animal_inventorywnd_packages.py (Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc") $berserker $silent $report
           if ($LASTEXITCODE -ne 0) { throw "Animal InventoryWnd cross-package comparison failed." }
+          $reportData = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+          foreach ($route in $reportData.anonymous_event_correspondence) {
+            Write-Host "ANIMAL_EVENT_ROUTE=$($route.event_id) HANDLER=$($route.animal_handler) SILENT_REFERENCE=$($route.silent_dark_handler) NAME_CONFLICT=$($route.candidate_name_conflicts_with_existing_animal_function)"
+          }
 
       - name: Restore missing Animal class property declarations from reference sources
         shell: pwsh
