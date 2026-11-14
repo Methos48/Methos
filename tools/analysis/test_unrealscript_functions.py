@@ -47,6 +47,13 @@ literal end";
 """
         self.assertEqual(extract_event_routes(source), {100: "RealHandler"})
 
+    def test_event_routes_reject_duplicate_event_ids(self):
+        source = """case 100: FirstHandler();
+case 100: SecondHandler();
+"""
+        with self.assertRaisesRegex(ValueError, "Duplicate event case 100"):
+            extract_event_routes(source)
+
     def test_preserves_comment_markers_inside_strings(self):
         source = '''function Real()
 {
