@@ -1402,3 +1402,19 @@ La prueba confirma que el parser no acepte silenciosamente esa representación i
 Commit: `f40a4fc`.
 
 Pendiente: ejecución del workflow en GitHub Actions y revisión de sus logs. La prueba está implementada, pero aún no se considera validada en CI.
+
+
+## Sexagésima primera pasada: referencias crudas y rango serializado de InventoryWnd (2026-11-14)
+
+Se amplió el diagnóstico de `--audit-export-table` para que la salida de `InventoryWnd` no dependa solamente de nombres resueltos. Ahora informa también los valores numéricos originales de:
+- `ClassRef`
+- `SuperRef`
+- `Outer`
+
+Además informa `SerialOffset`, `SerialSize` y el final calculado del payload (`SerialEnd`). Esto permite comparar referencias exactas entre paquetes/variantes y comprobar visualmente el rango serializado, sin alterar ni extraer el objeto.
+
+El parser ya valida que las referencias estén dentro de los rangos de imports/exports y que el payload serializado no exceda el archivo; este cambio expone esos datos para auditoría reproducible.
+
+Commit: `8158e23`.
+
+Pendiente: ejecutar el comando contra el `Interface.u` de AnimalGame y conservar el log real de CI. No se atribuyen todavía valores concretos a `InventoryWnd` sin esa salida.
