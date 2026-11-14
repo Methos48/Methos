@@ -7,16 +7,13 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from unrealscript_functions import extract_functions as extract, lex_tokens as tokens, extract_event_routes
+from unrealscript_functions import decode_source_bytes, extract_functions as extract, lex_tokens as tokens, extract_event_routes
 
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
 
 def read_source(path: Path) -> str:
-    raw = path.read_bytes()
-    if raw.startswith((bytes.fromhex("FFFE"), bytes.fromhex("FEFF"))):
-        return raw.decode("utf-16")
-    return raw.decode("utf-8-sig", errors="replace")
+    return decode_source_bytes(path.read_bytes())
 
 
 def event_routes(functions: list[dict]) -> dict[int, str]:
