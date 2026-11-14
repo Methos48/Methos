@@ -98,3 +98,30 @@ La revisión de los manejadores de cambios de opciones resolvió los nombres per
 - La activación maestra es `Options / ShowDamage`; las dos opciones de daño no sustituyen ese interruptor general.
 
 Esto confirma que la interfaz distingue explícitamente **Normal Damage** y **Enemy Damage**. La lectura funcional más probable es daño normal generado por el jugador frente a daño atribuido al enemigo, pero se mantiene pendiente comprobar la orientación exacta (hecho/recibido) contrastando los textos de SystemMsg para los índices 35, 1130, 36 y 37. Los nombres de opciones, aislados, no demuestran quién es el atacante en cada mensaje.
+
+
+## Auditoría profunda — pipeline de daño y controles (14-11-2026)
+
+### Flujo de números flotantes
+
+La inspección de `CustomDamageWnd.uc` confirma:
+
+- `OnLoad` registra 580, 40 y 280. Inicializa 30 grupos visuales, cada uno con 10 texturas de dígitos: 300 handles de textura en total.
+- Cada grupo `CustomDamage1Wnd`…`CustomDamage30Wnd` tiene diez elementos `DigitXY`; las texturas usan familias `Abaddon.DamageIndicator1`…`DamageIndicator30`.
+- Evento 580 solo se procesa si `Options/ShowDamage` está activo.
+- Parser: `Index`, `Param1`, `Param2`.
+- Índices 35 y 1130: opción `OptionWnd.Cb_Damage`, número desde `Param1`, canal visual 1.
+- Índices 36 y 37: opción `OptionWnd.Cb_EDamage`, número desde `Param2`, canal visual 2.
+- Índices 296, 297, 333, 686 y 812: también `Cb_EDamage`, número desde `Param1`, canal 2.
+- El código no acumula un total: cada evento crea un indicador, y cuando no hay slot disponible acumula el valor en una cola por canal y programa un timer.
+- Cada indicador se ancla a coordenadas relativas a la ventana de juego, mueve su posición y se oculta con temporizadores. Hay lógica de dirección/desplazamiento y offsets distintos para los canales y para eventos especiales.
+- `SetValue` separa dígitos, usa prefijos `#+`, `#`, y sufijos `M`, `B`, `R` para ciertas categorías. El número de texturas disponibles limita la representación visual por indicador.
+- Evento 40 oculta los 30 grupos. El 280 está registrado, pero no tiene caso explícito en el switch de `OnEvent`; no asignar significado todavía.
+
+### Panel de filtros del chat
+
+`ChatFilterWnd.xml` incluye controles separados para sistema, daño, objetos y canales: `CheckBoxSystem`, `CheckBoxDamage`, `CheckBoxItem`, Normal, Shout, Pledge, Party, Trade, Whisper, Ally, Union, Hero, además de `SystemMsgBox`, `DamageBox`, `ItemBox` y Command. La presencia de estos controles confirma que el registro textual puede filtrarse por categorías independientemente de los números flotantes de CustomDamageWnd.
+
+### Pendiente semántico
+
+Las opciones están identificadas como `Normal Damage` y `Enemy Damage`, pero aún no se ha demostrado con la tabla de mensajes de esta misma compilación cuál de las ramas es daño causado por el jugador y cuál recibido por él. No cambiar nombres, colores ni orientación hasta resolver los IDs y verificar en cliente.
