@@ -112,3 +112,58 @@ Se confirmó una vía de lectura que evita el error UTF-8 de `fetch_blob`: el en
 La cabecera Base64 de ambos empieza por `/+36zgE`, consistente con que se recibieron datos binarios y no texto fuente. Esto confirma que GitHub entrega los contenidos íntegros en Base64 a través del conector. Sin embargo, la respuesta de esa herramienta no crea un archivo local ni entrega un identificador de archivo materializable; por ello todavía no se han decodificado los bytes en el entorno de trabajo, calculado SHA-256, ni ejecutado el decompilador/UCC/XDAT sobre estos dos binarios. No se modificó ningún original del repositorio.
 
 **Siguiente bloqueo técnico:** transferir esa respuesta Base64 a un archivo binario local de forma verificable. No se debe declarar iniciada la descompilación hasta disponer de los archivos locales y comprobar sus hashes.
+
+
+## Resultado de descifrado y descompilación real — 2026-11-14
+
+**<badge>Prueba automatizada aprobada</badge>** Workflow: https://github.com/Methos48/Methos/actions/runs/43578703858
+
+Se procesaron los dos binarios exactos del directorio `reference-data/packages/l2sudamerica/`, sin tocar sus originales.
+
+### Perfil de protección detectado
+
+- Marcador SmartCrypt: `FF ED FA CE`.
+- Selector del seed: `0x01`; segundo byte de estado: `0x00`.
+- La bandera de clave externa está desactivada: el seed de 24 bytes del propio archivo permite derivar el perfil.
+- Segunda capa: `Lineage2Ver111`.
+- Las capas SmartCrypt 1.5.2.2 y Lineage2Ver111 se volvieron a codificar y reprodujeron exactamente los bytes protegidos originales en ambos archivos.
+
+### Interface.u
+
+| Dato | Resultado |
+|---|---:|
+| Original protegido | 987,258 bytes |
+| SHA-256 original | `c1399078d889b42b7224efeae50df083a2456eeea142afd6dda68afe7f8b606b` |
+| Intermedio tras SmartCrypt | 987,258 bytes |
+| Paquete Unreal descifrado | 987,230 bytes |
+| SHA-256 descifrado | `877a6873fecfcb141b603010524f4601634ab5f31de5ae3371a1705b76f5dbc9` |
+| Versión Unreal / Licensee | 123 / 37 |
+| Nombres / imports / exports | 4,987 / 793 / 9,433 |
+| Objetos / clases | 10,226 / 150 |
+| Clases exportadas / errores | 150 / 0 |
+
+La variante correcta conserva los últimos 20 bytes dentro del payload Unreal. La hipótesis de separarlos como tráiler falla al analizar el paquete. UELib exportó las 150 clases sin errores.
+
+### interface.xdat
+
+| Dato | Resultado |
+|---|---:|
+| Original protegido | 940,381 bytes |
+| SHA-256 original | `97c1c35a8206ebc7d2ce97d891a689a1fcc1887897390f6d93dedb7ba9417269` |
+| XDAT descifrado | 940,353 bytes |
+| SHA-256 descifrado | `ce63c0c1972812621d4553b7e2dba8041bd917e3c1d220a25cdd11599777bafb` |
+| Ventanas / shortcuts | 169 / 8 |
+| Reconstrucción XML → XDAT | Coincidencia binaria exacta |
+
+También aquí los últimos 20 bytes pertenecen al payload. La variante que los separa no supera el parser. El XML de las 169 ventanas se exportó y la reconstrucción produjo el mismo XDAT descifrado byte por byte.
+
+### Conclusión y límites
+
+- [x] Descifrado SmartCrypt y Lineage2Ver111 de ambos originales.
+- [x] Round-trip exacto de las dos capas de protección.
+- [x] 150 clases Unreal exportadas sin errores.
+- [x] 169 ventanas y 8 shortcuts XDAT exportados; round-trip exacto.
+- [ ] La recompilación UCC del paquete L2Sudamerica aún no se ha ejecutado. La extracción de fuentes no equivale a una compilación completa.
+- [ ] La reprotección final de un paquete U/XDAT editado debe verificarse por separado con el perfil original.
+
+El artefacto del workflow conserva los binarios descifrados, las 150 fuentes `.uc`, el XML XDAT y los informes de verificación durante 30 días. No se reemplazó ningún archivo original.
