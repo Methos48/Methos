@@ -1418,3 +1418,30 @@ El parser ya valida que las referencias estén dentro de los rangos de imports/e
 Commit: `8158e23`.
 
 Pendiente: ejecutar el comando contra el `Interface.u` de AnimalGame y conservar el log real de CI. No se atribuyen todavía valores concretos a `InventoryWnd` sin esa salida.
+
+
+## Sexagésima segunda pasada: extracción de funciones resistente a comentarios (2026-11-14)
+
+Al revisar las herramientas que comparan funciones anónimas de `InventoryWnd` entre Animal, la referencia UCC y paquetes alternativos, se encontró un riesgo en el extractor anterior: buscaba declaraciones con una expresión regular sobre el texto completo y contaba llaves sin neutralizar comentarios. Una línea comentada que pareciera una función o contuviera `{` / `}` podía contaminar la extracción y, por extensión, las puntuaciones de similitud.
+
+### Corrección aplicada
+
+- Se creó `tools/analysis/unrealscript_functions.py` como extractor compartido.
+- El enmascarado de comentarios de línea y bloque conserva longitud y saltos de línea, por lo que los offsets originales siguen siendo utilizables.
+- El análisis de llaves ignora comentarios y llaves dentro de literales de texto.
+- Las dos herramientas de comparación de InventoryWnd usan ahora el mismo extractor:
+  - `compare_animal_inventorywnd_reference.py`
+  - `compare_animal_inventorywnd_packages.py`
+- Se agregaron pruebas para declaraciones/llaves falsas en comentarios, marcadores de comentario dentro de strings y preservación de offsets/saltos de línea.
+- El workflow ejecuta esas pruebas antes de producir comparaciones de funciones.
+
+### Commits
+
+- `f8d97c5` y `2b5eb23`: extractor y pruebas iniciales.
+- `1a1bac0`: integración en comparación entre paquetes.
+- `1936baf` y `7b866ad`: correcciones de escapes y prueba de saltos de línea.
+- `39476c3`: integración de pruebas en CI.
+
+### Estado
+
+La corrección y las pruebas quedaron registradas, pero todavía no se afirma que GitHub Actions las haya ejecutado correctamente. Las coincidencias de nombres o similitud siguen siendo indicios, no prueba de identidad funcional. No se modificaron los paquetes `.u` originales.
