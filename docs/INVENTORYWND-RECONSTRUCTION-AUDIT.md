@@ -1508,3 +1508,24 @@ Los cambios quedaron registrados en el repositorio. En esta pasada no se ejecut�
 ### Revisión adicional del enmascarador
 
 Al verificar el código recién subido se detectó y corrigió un detalle del propio escáner: debía recorrer la vista donde los comentarios ya están neutralizados, no el texto original, para que comillas dentro de comentarios no abrieran falsos literales. También se ajustó la detección de barra invertida para reconocer exactamente un carácter de escape. La corrección quedó registrada en el commit `53ea84e`. La ejecución de pruebas sigue pendiente; no se presenta como validación aprobada.
+
+
+## Sexagésima sexta pasada: extracción de rutas de eventos con lexer compartido (2026-11-14)
+
+Se aisló la lectura de rutas `case N: Handler(...)` en una función compartida del analizador UnrealScript. Antes, el comparador de paquetes mantenía su propia expresión regular y aplicaba el enmascarado localmente, lo que dejaba esa parte de la auditoría menos cubierta que la extracción de funciones.
+
+### Cambios
+
+- Se añadió `extract_event_routes` al módulo compartido; primero enmascara comentarios y literales y después recoge los IDs y handlers.
+- El comparador Animal/Berserker/Silent Dark delega ahora en esa función común.
+- Se añadió una prueba que mezcla una ruta válida, una ruta dentro de comentario de bloque y otra dentro de un literal multilínea. Solo debe sobrevivir la ruta válida.
+
+### Commits
+
+- `c4b9f1e`: extractor compartido de rutas.
+- `16ac00b`: integración en el comparador de paquetes.
+- `c8bed5b`: prueba de rutas falsas en comentarios y literales.
+
+### Validación
+
+Los cambios están subidos y documentados. No se ha observado todavía una ejecución local o CI de la suite; no se declara aprobada. No se alteraron los paquetes originales ni el código de la interfaz.
