@@ -28,6 +28,16 @@ class UnrealScriptFunctionExtractionTests(unittest.TestCase):
     def test_parameter_count_handles_escaped_quotes(self):
         self.assertEqual(count_parameters(r'string A = "x\",y", int B'), 2)
 
+    def test_parameter_count_handles_nested_brackets_and_braces(self):
+        self.assertEqual(count_parameters("int A = Values[Func(1, 2)], string B"), 2)
+        self.assertEqual(count_parameters("int A = Make({1, 2}), string B"), 2)
+
+    def test_parameter_count_rejects_malformed_delimiters_and_strings(self):
+        for params in ("int A = Func(1, 2], string B", "int A = Func(1, 2", 'string A = "unterminated'):
+            with self.subTest(params=params):
+                with self.assertRaises(ValueError):
+                    count_parameters(params)
+
     def test_ignores_function_declarations_and_braces_in_comments(self):
         source = """// function Fake() { }
 function Real()
