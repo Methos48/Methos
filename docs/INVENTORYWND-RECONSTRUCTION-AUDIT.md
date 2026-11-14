@@ -489,3 +489,15 @@ Hallazgos medidos:
 - La fuente Animal contiene algunas declaraciones de variables adicionales y diferencias menores de descompilación, pero no hay evidencia para sustituir los nombres anónimos.
 
 Esta comparación refuerza que `HandleAddHennaInfo` es un nombre semánticamente plausible por la variante Silent Dark, pero no demuestra que fuera el nombre original de Animal/Berserker. Se mantiene `function37` en la fuente original hasta validar la prueba de compilación y reapertura, y no se renombran `function30` ni `function44`. No se alteró el código de producción.
+
+## Vigésima quinta pasada: persistencia del nombre de henna tras reapertura (2026-11-14)
+
+La prueba aislada del run `43565930234` confirma:
+- La copia temporal con `function37` renombrada a `HandleAddHennaInfo(string)` compiló correctamente.
+- El paquete de prueba se reabrió correctamente y UELib exportó las 160/160 clases.
+- La fuente `InventoryWnd.uc` reabierta contiene `HandleAddHennaInfo(string)` y ya no contiene la declaración `function37`: **el cambio de nombre persistió en el paquete binario**.
+- La prueba independiente de `function30` volvió a confirmar el conflicto de nombre con `HandleAddItem(ItemInfo)`.
+
+El run terminó en fallo únicamente por propagación del código de salida 1 del compilador durante la prueba negativa esperada de `function30`, aunque el script detectó y registró correctamente el conflicto. Se corrigió el cierre del bloque PowerShell y se fuerza un código final satisfactorio tras registrar ese rechazo como resultado esperado. Nuevo run `43566249499` pendiente.
+
+Importante: la persistencia técnica del nombre candidato no demuestra que ese fuera el nombre histórico original de Animal. Por la evidencia cruzada, `HandleAddHennaInfo` es candidato de alta confianza, pero se conserva `function37` en la fuente original hasta obtener confirmación específica del paquete Animal. Ningún archivo de producción fue renombrado.
