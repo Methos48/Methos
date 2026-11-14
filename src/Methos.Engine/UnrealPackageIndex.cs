@@ -40,7 +40,7 @@ public sealed class UnrealPackageIndex
     public IReadOnlyList<ExportEntry> Exports { get; }
     internal int NameTableEnd { get; }
     internal int ImportTableEnd { get; }
-    internal int ExportTableEnd { get; }
+    public int ExportTableEnd { get; }
     private int GenerationCountOffset { get; }
     private int GenerationRecordsOffset { get; }
 
