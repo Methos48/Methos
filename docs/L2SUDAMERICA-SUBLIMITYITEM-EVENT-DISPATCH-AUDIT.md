@@ -155,3 +155,53 @@ La frase anterior “varias clases derivadas pueden registrar pocos eventos” e
 - La tabla de eventos de la clase base no debe interpretarse como si todos los eventos fueran usados por estas dos derivadas. Muchos casos pueden ser compartidos por otras clases a través de UISublimityCommonAPI o ser residuos de una jerarquía mayor no presente en esta exportación.
 
 **Pendiente:** comparar todas las firmas y flags de función del export table para confirmar virtual/override, y reconstruir la relación exacta entre OnEvent, los hooks de la base y las dos derivadas.
+
+
+## Addendum C — overrides identificados por firma y cadena de despacho
+
+Se compararon automáticamente las firmas de función de la clase base contra las dos derivadas, no solo los nombres de clase. Resultado:
+
+| Derivada | Funciones propias exportadas | Firmas que coinciden con la base |
+|---|---:|---|
+| SublimityShortcut | 3 | MethosRecoveredName_737(int, int) |
+| SublimityShortcutWnd | 34 | MethosRecoveredName_728(string), _729(int), _730(int), _731(int), _735() |
+
+Son overrides candidatos por identidad y firma de fuente. La confirmación definitiva de los flags virtual/override exige revisar export table/bytecode.
+
+### Despacho desde OnEvent
+
+| Evento | Parser intermedio | Hook final |
+|---:|---|---|
+| 630 | _911 | _730 |
+| 631 | _913 | _729 |
+| 640 | _909 | _731 |
+| 660 | _907 | _908 |
+| 650 | _905 | _906 |
+| 590 | _903 | _904 |
+| 600 | _901 | _902 |
+| 610 | _899 | _900 |
+| 620 | _898 | _897 |
+| 150 | _896 | _895 |
+| 160 | _894 | _893 |
+| 180 | _892 | _891 |
+| 90 | _923 | _728 |
+
+Los parsers _911 y _913 leen ShortcutID; _909 lee ShortcutPage. Los eventos restantes pasan por parsers propios; sus campos se deben revisar individualmente.
+
+### Cadena de eventos de shortcut
+
+- Evento 631 → parser _913 → hook _729(int). SublimityShortcutWnd implementa _729 y delega en _744(ShortcutID, true).
+- Evento 630 → parser _911 → hook _730(int). SublimityShortcutWnd implementa _730 y delega en _744(ShortcutID, false).
+- Evento 640 → parser _909 → hook _731(int). SublimityShortcutWnd implementa _731 y delega en _345(0, ShortcutPage).
+
+Por tanto, 631 y 630 activan la misma rutina de ventana con un booleano opuesto. El significado exacto de ese booleano requiere seguir _744 y sus actualizaciones posteriores.
+
+### Override candidato 737
+
+SublimityShortcut registra 25002. La base parsea key y state y llama a _737(key,state). SublimityShortcut declara la misma firma, pero ambos cuerpos exportados son solo return. Esto confirma una coincidencia de firma, pero no recupera la acción efectiva de teclado. No debe afirmarse que el evento no hace nada en el cliente original.
+
+### Corrección
+
+El inventario textual muestra un override candidato en SublimityShortcut y cinco en SublimityShortcutWnd. Esto corrige la afirmación previa de que no había coincidencias nominales en SublimityShortcutWnd.
+
+**Pendiente de alta prioridad:** leer el serial data de los exports de función en bruto para obtener FunctionFlags, NativeIndex, parámetros/defaults y bytecode. El lector actual UnrealPackageIndex valida y expone tablas principales y metadatos de export, pero mantiene opacos los serial payloads de objetos; no reconstruye todavía flags de UFunction.
