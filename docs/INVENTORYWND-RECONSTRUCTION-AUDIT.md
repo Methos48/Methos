@@ -516,3 +516,18 @@ Resultados comprobados en los logs y el artifact:
 - Prueba negativa de `function30`: UCC rechazó `HandleAddItem(string)` por colisión con `HandleAddItem(ItemInfo)`; el workflow ahora registra este rechazo como resultado esperado y finaliza correctamente.
 
 El workflow no cambió el `InventoryWnd.uc` de producción. La compilación y reapertura demuestran que el proyecto puede reconstruir el paquete y conservar una modificación real, pero la prueba temporal de henna no convierte por sí sola el nombre candidato en una identificación histórica demostrada. Se mantiene `function37` sin renombrar hasta disponer de evidencia directa del build Animal.
+
+## Vigésima séptima pasada: comparación cruzada automatizada y reproducible (2026-11-14)
+
+Se incorporó `tools/analysis/compare_animal_inventorywnd_packages.py` y un paso al workflow para generar `Animal-InventoryWnd-XDAT/cross-package-function-matches.json` a partir de las fuentes reales de Animal, Berserker y Silent Dark. El script:
+- compara los cuerpos de funciones homónimas Animal/Berserker tras normalizar comentarios y espacios;
+- clasifica las funciones anónimas de Animal frente a las funciones nombradas de Silent Dark por similitud de tokens;
+- marca cuando el nombre candidato ya existe en `InventoryWnd` de Animal, para detectar colisiones antes de probar renombres.
+
+Prueba local con el artifact validado `14103220248`:
+- Se extrajeron 72 funciones de Animal, 72 de Berserker y 53 de Silent Dark.
+- 68 funciones con el mismo nombre entre Animal y Berserker tienen cuerpos idénticos tras normalización.
+- Las cuatro diferencias restantes son pequeñas: constantes de teclas Alt/Ctrl frente a sus códigos numéricos, retornos finales explícitos frente a `return;` en `function44` y `IsLOrREar`, y `return None;` frente a `return;` en `GetCurrentTab`.
+- `function37` encuentra `HandleAddHennaInfo` como mejor candidato en Silent Dark; no hay colisión de nombre en Animal. `function30` encuentra `HandleAddItem`, pero ese nombre ya existe en Animal y el compilador confirmó el conflicto. `function44` encuentra `IsLOrREar`, pero ese nombre también existe en Animal y la comparación de IDs mantiene la contradicción ya documentada.
+
+La similitud solo produce candidatos; no restaura nombres automáticamente. El nuevo paso queda incluido en el run `43566703204`, todavía en ejecución al registrar esta pasada.
