@@ -236,3 +236,8 @@ Nueva ficha: [L2SUDAMERICA-SOCIAL-PARTY-CLAN-PETITION-AUDIT.md](L2SUDAMERICA-SOC
 ## 13. Auditoría de asedios, Manor y Olympiad
 
 Nueva ficha: [L2SUDAMERICA-SIEGE-MANOR-OLYMPIAD-AUDIT.md](L2SUDAMERICA-SIEGE-MANOR-OLYMPIAD-AUDIT.md). Documenta SiegeInfoWnd y sus solicitudes SiegeAPI; nueve ventanas/rutas de Manor para semillas, cosechas, configuración y venta; y paneles Olympiad/Observer. Incluye eventos, payloads observados, geometría XDAT, dependencias y preguntas abiertas. Análisis estático; no se modificaron ni probaron binarios.
+
+
+## 14. Auditoría de sistemas especiales
+
+Nueva ficha: [L2SUDAMERICA-SPECIAL-SYSTEMS-AUDIT.md](L2SUDAMERICA-SPECIAL-SYSTEMS-AUDIT.md). Incluye EventMatch GM/Observer, replay local, DuelManager, HeroTower, herramientas GM, ReportWnd, PC Café y cupones. Se identificaron los controles XDAT, eventos, payloads y solicitudes; también se marcaron funciones GM de EventMatch que están vacías en la fuente exportada, sin asumir una implementación inexistente. Análisis estático, sin cambios ni pruebas en cliente.
