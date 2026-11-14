@@ -9,6 +9,7 @@ on:
       - "reference-data/packages/l2sudamerica/interface.xdat"
       - "tools/PackageProbe/**"
       - "tools/xdat/**"
+      - "tools/l2sa_audit/**"
   workflow_dispatch:
 
 permissions:
@@ -108,6 +109,14 @@ jobs:
           if not successes:
               raise SystemExit("No decoded candidate passed XDAT parsing and exact round-trip.")
           PY
+
+      - name: Generate structured U variables and XDAT control inventories
+        shell: bash
+        run: |
+          python tools/l2sa_audit/extract_interface_inventory.py \
+            --u-source l2sudamerica-audit/decoded-u/sources-include-tail \
+            --xdat-xml l2sudamerica-audit/decoded-xdat/interface.xdat.include-tail-xml \
+            --output l2sudamerica-audit/structured-inventory
 
       - name: Publish audit outputs
         if: always()
