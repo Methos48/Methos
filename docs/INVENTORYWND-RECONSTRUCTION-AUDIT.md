@@ -225,3 +225,17 @@ El tamaño raíz del XDAT (566 × 400) coincide con el tamaño compacto que apar
 El XDAT contiene nombres de controles, dimensiones, anclajes, propiedades y referencias de texturas, pero no los píxeles de las texturas ni la definición completa de sus paquetes. El informe no permite reconstruir por sí solo el aspecto visual exacto de cada recurso. Tampoco se modificó `InventoryWnd.uc` ni ningún comportamiento del cliente.
 
 La ejecución completa del workflow `43563099043` terminó correctamente: compilación limpia, reapertura de 160 clases, compilación de prueba editada y verificación de persistencia del cambio.
+
+## Novena pasada: cruce de clasificadores anónimos con controles XDAT y referencia UCC (2026-11-14)
+
+El informe XDAT ya permite asociar de forma directa los destinos del clasificador con controles reales: `function30` enruta al pane `item_6`, que corresponde al control `CraftingItem` (339 × 288, 9 × 8, máximo 250 objetos); `function31` enruta al pane `item_5`, y el destino final `item_7` es otro pane de inventario. Esto confirma el propósito de `function32` como filtro para el panel de crafting, pero no prueba que ambos subtipos 5 y 6 sean recetas: el valor 5 está confirmado como receta; el valor 6 sigue sin resolver.
+
+### `function37` — candidato reforzado
+
+El workflow volvió a localizar en el kit UCC Interlude de referencia la función `HandleAddHennaInfo(string param)` (línea 2378 del archivo `InventoryWnd.uc` del kit). La función Animal `function37(string)` está conectada al evento 2630 y su cuerpo solo llama `UpdateHennaInfo()` y retorna. La coincidencia de evento, firma y efecto con la referencia respalda **`HandleAddHennaInfo` como nombre descriptivo/candidato de alta confianza**, pero no como nombre original demostrado de AnimalGame. Se conserva `function37` para no afirmar una recuperación que el paquete no acredita.
+
+### `function30` — no renombrar por colisión
+
+El mismo kit de referencia contiene `HandleAddItem(string param)` en el evento 2600. Sin embargo, Animal ya tiene una función distinta `HandleAddItem(ItemInfo)` que clasifica determinados subtipos (pociones/elixires y soulshots) para `item_7`. La función anónima `function30(string)` hace la conversión inicial `ParamToItemInfo`, enruta equipo y quest, y después clasifica en los panes de inventario. Aunque ocupa el rol de handler de evento 2600, no se renombra a `HandleAddItem` porque colisionaría con la función existente y no hay evidencia de que el nombre original de Animal fuera el mismo.
+
+No se cambiaron identificadores ni lógica. Se preserva el `InventoryWnd.uc` extraído y compilado como línea base.
