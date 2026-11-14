@@ -67,6 +67,44 @@ if (args.Length > 0 && args[0] == "--inspect-package-assets")
     return;
 }
 
+if (args.Length > 0 && args[0] == "--audit-export-table")
+{
+    if (args.Length != 2)
+        throw new ArgumentException("Usage: --audit-export-table <package.u>");
+    var packageIndex = UnrealPackageIndex.Open(args[1]);
+    string Name(int index) => index >= 0 && index < packageIndex.Names.Count
+        ? packageIndex.Names[index] : $"<invalid-name:{index}>";
+    string RefName(int reference)
+    {
+        if (reference == 0) return "<root>";
+        if (reference < 0)
+        {
+            int index = -reference - 1;
+            return index >= 0 && index < packageIndex.Imports.Count
+                ? Name(packageIndex.Imports[index].ObjectName) : $"<invalid-import:{index}>";
+        }
+        int exportIndex = reference - 1;
+        return exportIndex >= 0 && exportIndex < packageIndex.Exports.Count
+            ? Name(packageIndex.Exports[exportIndex].ObjectName) : $"<invalid-export:{exportIndex}>";
+    }
+
+    Console.WriteLine($"EXPORT_AUDIT_PROFILE={packageIndex.Summary.Version}/{packageIndex.Summary.LicenseeVersion}");
+    Console.WriteLine($"EXPORT_AUDIT_COUNTS names={packageIndex.Names.Count} imports={packageIndex.Imports.Count} exports={packageIndex.Exports.Count}");
+    Console.WriteLine($"EXPORT_AUDIT_OFFSETS names={packageIndex.Summary.NameOffset} imports={packageIndex.Summary.ImportOffset} exports={packageIndex.Summary.ExportOffset}");
+    Console.WriteLine($"EXPORT_AUDIT_END={packageIndex.ExportTableEnd}; FILE_LENGTH={packageIndex.Summary.FileLength}; TRAILING_BYTES={packageIndex.Summary.FileLength - packageIndex.ExportTableEnd}");
+    int matches = 0;
+    foreach (var item in packageIndex.Exports.Select((entry, index) => (entry, index))
+        .Where(item => string.Equals(Name(item.entry.ObjectName), "InventoryWnd", StringComparison.OrdinalIgnoreCase)))
+    {
+        matches++;
+        Console.WriteLine($"INVENTORYWND_EXPORT_INDEX={item.index}; CLASS={RefName(item.entry.ClassRef)}; SUPER={RefName(item.entry.SuperRef)}; OUTER={RefName(item.entry.Outer)}; SERIAL_SIZE={item.entry.SerialSize}; SERIAL_OFFSET={item.entry.SerialOffset}");
+    }
+    Console.WriteLine($"INVENTORYWND_EXPORT_MATCHES={matches}");
+    if (matches != 1)
+        throw new InvalidDataException($"Expected exactly one InventoryWnd export, found {matches}.");
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--inspect-package-names")
 {
     if (args.Length != 2)
