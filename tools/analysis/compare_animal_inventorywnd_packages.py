@@ -59,6 +59,19 @@ def tokens(source: str) -> list[str]:
     )
 
 
+def event_routes(functions: list[dict]) -> dict[int, str]:
+    on_event = next((item for item in functions if item["name"].lower() == "onevent"), None)
+    if not on_event:
+        return {}
+    return {
+        int(match.group(1)): match.group(2)
+        for match in re.finditer(
+            r"(?im)^\\s*case\\s+(\\d+)\\s*:\\s*([A-Za-z_]\\w*)\\s*\\(",
+            on_event["body"],
+        )
+    }
+
+
 def normalized_hash(source: str) -> str:
     normalized = " ".join(tokens(source))
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -106,6 +119,23 @@ def main() -> int:
 
     silent_candidates = []
     animal_names = {function["name"].lower() for function in animal}
+    animal_events = event_routes(animal)
+    berserker_events = event_routes(berserker)
+    silent_events = event_routes(silent)
+    event_correspondence = []
+    for event_id, handler in sorted(animal_events.items()):
+        if not ANONYMOUS.fullmatch(handler):
+            continue
+        silent_handler = silent_events.get(event_id)
+        event_correspondence.append({
+            "event_id": event_id,
+            "animal_handler": handler,
+            "berserker_handler": berserker_events.get(event_id),
+            "silent_dark_handler": silent_handler,
+            "candidate_name_conflicts_with_existing_animal_function": bool(
+                silent_handler and silent_handler.lower() in animal_names
+            ),
+        })
     for function in animal:
         if not ANONYMOUS.fullmatch(function["name"]):
             continue
@@ -152,6 +182,10 @@ def main() -> int:
             "anonymous Animal functions ranked against Silent Dark by token similarity. "
             "Similarity is a lead, not proof of original identifiers."
         ),
+        "animal_event_routes": {str(key): value for key, value in sorted(animal_events.items())},
+        "berserker_event_routes": {str(key): value for key, value in sorted(berserker_events.items())},
+        "silent_dark_event_routes": {str(key): value for key, value in sorted(silent_events.items())},
+        "anonymous_event_correspondence": event_correspondence,
         "animal_vs_berserker_same_name": cross_build,
         "animal_anonymous_vs_silent_dark": silent_candidates,
     }
@@ -169,6 +203,12 @@ def main() -> int:
         f"animal={len(animal)} berserker={len(berserker)} silent_dark={len(silent)} "
         f"same_name_exact={exact} anonymous={len(silent_candidates)}"
     )
+    for entry in event_correspondence:
+        print(
+            f"EVENT={entry['event_id']} ANIMAL={entry['animal_handler']} "
+            f"SILENT={entry.get('silent_dark_handler')} "
+            f"NAME_CONFLICT={entry['candidate_name_conflicts_with_existing_animal_function']}"
+        )
     for entry in silent_candidates:
         best = entry["silent_dark_candidates"][0] if entry["silent_dark_candidates"] else {}
         print(
