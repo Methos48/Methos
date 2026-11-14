@@ -137,3 +137,22 @@ Una lectura de control de flujo de todas las funciones del `InventoryWnd.uc` rea
 La descripción anterior de `function3` como rutina que configura efectivamente el inventario expandido/contraído era incompleta. Su cuerpo contiene esa lógica, pero está anulada por el retorno inicial. La descripción correcta es: rutina de ajuste de layout presente pero inactiva en el fuente extraído. `function48` es un helper de anclaje cuyo único conjunto de llamadas conocido también queda inactivo.
 
 No se quitó el `return`, no se activó el redimensionamiento y no se cambió el comportamiento del cliente. Antes de considerar restaurar esa rutina hay que comprobar si el `return` existe en el bytecode original de AnimalGame o fue introducido por la descompilación/reconstrucción.
+
+
+## Séptima pasada: verificación de `function3` contra las tres extracciones (2026-11-14)
+
+Se comparó `InventoryWnd.uc` en los tres resultados locales del artefacto de validación:
+
+- `UnrealScript/InventoryWnd.uc` (exportación directa del `Interface.u` AnimalGame original).
+- `Reopened-Clean/InventoryWnd.uc` (paquete reconstruido limpio, compilado y reabierto).
+- `Reopened-Edited/InventoryWnd.uc` (paquete de prueba editado, compilado y reabierto).
+
+En los tres aparece el mismo `function function3()` con `return;` inmediatamente después de declarar sus variables locales, antes de obtener los handles y antes de todo el bloque de redimensionamiento. El bloque posterior también se conserva en los tres archivos. Por tanto, el retorno temprano no fue añadido por la edición de prueba ni por la reapertura del paquete reconstruido: ya está presente en la extracción directa del paquete AnimalGame.
+
+Se contrastó además con `UnrealScriptSourceIndex.RemoveRedundantTrailingReturns`, la reparación aplicada durante la reconstrucción. Esa rutina solo busca y normaliza un `return;` que sea el último statement de una función; no elimina ni mueve un retorno inicial. Así que no es la responsable del `return` temprano.
+
+### Conclusión y límite
+
+La evidencia disponible permite afirmar que el `return;` temprano está en la representación descompilada del paquete AnimalGame original y se conserva en la ida y vuelta. Todavía no se ha inspeccionado el flujo de bytes de script de la exportación `function3` con un desensamblador de bytecode independiente; por ello no se declara probado si el salto/retorno temprano corresponde exactamente a una instrucción real del bytecode o a un defecto específico de UELib al reconstruir el fuente.
+
+No se quitó el retorno. No se activó el cambio de tamaño y no se alteró el paquete del usuario. La próxima comprobación técnica necesaria es extraer el bytecode crudo de la exportación de `function3` y contrastar sus offsets con el flujo de control que UELib produjo.
