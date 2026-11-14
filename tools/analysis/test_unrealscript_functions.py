@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from unrealscript_functions import decode_source_bytes, extract_event_routes, extract_functions, lex_tokens, mask_comments
+from unrealscript_functions import decode_source_bytes, count_parameters, extract_event_routes, extract_functions, lex_tokens, mask_comments
 
 
 class UnrealScriptFunctionExtractionTests(unittest.TestCase):
@@ -18,6 +18,16 @@ class UnrealScriptFunctionExtractionTests(unittest.TestCase):
     def test_source_decoder_rejects_invalid_utf8_instead_of_replacing_bytes(self):
         with self.assertRaises(UnicodeDecodeError):
             decode_source_bytes(b"function Real() { \xff }")
+
+    def test_parameter_count_ignores_commas_inside_nested_expressions(self):
+        self.assertEqual(count_parameters(""), 0)
+        self.assertEqual(count_parameters("int A, string B"), 2)
+        self.assertEqual(count_parameters('string A = "x,y", int B'), 2)
+        self.assertEqual(count_parameters("int A = Func(1, 2), string B"), 2)
+        self.assertEqual(count_parameters("array<int> A, map<string, int> B"), 3)
+
+    def test_parameter_count_handles_escaped_quotes(self):
+        self.assertEqual(count_parameters(r'string A = "x\\",y", int B'), 2)
 
     def test_ignores_function_declarations_and_braces_in_comments(self):
         source = """// function Fake() { }
