@@ -100,3 +100,23 @@ Se inspeccionaron las referencias textuales y los cuerpos completos de varios id
 La falta de llamadas internas no prueba que una función sea inútil: puede ser invocada desde otra clase, por reflexión/delegados o por bytecode no representado como llamada textual. Por eso no se borraron funciones duplicadas o sin referencias. También se registra el `return` temprano de `MethosRecoveredName_444` como un hallazgo del fuente extraído, no como una corrección propuesta.
 
 No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
+
+
+## Quinta pasada: flujo de borrado rápido y lista Trash (2026-11-14)
+
+Se siguieron las referencias y los puntos de entrada de `function2`, `function13`, `function46` y `function47` en `InventoryWnd.uc`:
+
+- `function2()` se invoca durante `OnLoad`, después de `InitHandle`. Recorre las posiciones 1 a 99 de la sección INI `TrashGrp`, clave `TrashList`, y cada vez que encuentra un valor cero actualiza `int_2` con el índice anterior. Es una inicialización del límite/última posición vacía de la lista; no es el ejecutor del borrado.
+- `function13()` se invoca al pulsar `TrashButton`. Alterna `bool_1`, cambia las texturas del botón entre estado normal y automático y, al activar el modo automático, llama inmediatamente a `function46()`.
+- `function46()` recorre la lista configurada desde la posición 1 hasta `int_2`. Lee cada ClassID guardado, busca ese objeto en `m_invenItem` y, si lo encuentra, ejecuta `RequestDestroyItem(ServerID, ItemNum)`. Si encuentra un valor cero, termina el recorrido. Esto confirma que el modo automático puede solicitar la destrucción de objetos configurados; no es solo un cambio visual.
+- `function47()` escribe -1 en la entrada `TrashList[int_2]` de `TrashGrp`. No se encontró ninguna llamada textual a esta función dentro de `InventoryWnd`; por tanto, su propósito parece relacionado con limpiar/deshabilitar una entrada, pero el punto de invocación original no está recuperado.
+- En el manejo de arrastre hacia `TrashButton`, los objetos apilables con más de una unidad abren un diálogo para elegir cantidad o confirmar el lote; los demás abren una confirmación de borrado. Es una ruta distinta del modo automático.
+
+### Nombres descriptivos candidatos (no restaurados)
+
+- `function2`: `LoadTrashList` / inicialización del índice de la lista; nombre original no probado.
+- `function13`: alternar el modo de borrado automático; nombre original no probado.
+- `function46`: ejecutar la lista de borrado automático; nombre original no probado.
+- `function47`: marcar una posición de la lista como vacía/deshabilitada; nombre original y uso no probados.
+
+Se mantienen los identificadores anónimos porque no se encontró una fuente exacta de AnimalGame que demuestre los nombres originales. No se ejecutaron acciones de borrado ni se modificó código del cliente.
