@@ -1353,3 +1353,18 @@ Se inspeccionó el código real de `UnrealPackageIndex` antes de implementar otr
 La instrumentación está subida a `main`, pero esta pasada no dispone todavía de una salida de ejecución del workflow que confirme los valores reales del paquete Animal. No se declara aún que el cursor termine exactamente al final del archivo ni se afirma que el export ya haya sido localizado. El siguiente dato válido será el log de CI: perfil, 9.744 (si ese es el recuento del paquete inspeccionado), offset final, bytes sobrantes y referencia de `InventoryWnd`.
 
 No se modificó `Interface.u`, ningún paquete candidato ni el comportamiento de la interfaz. Próximo paso: revisar el resultado del workflow; si el cursor deja bytes sobrantes o el recuento de InventoryWnd no es uno, diagnosticar el formato con esa evidencia antes de tocar el parser.
+
+
+## Quincuagésima octava pasada: límite correcto de la tabla Export (2026-11-14)
+
+Al revisar la salida prevista del comando de auditoría se detectó una ambigüedad: los bytes posteriores a la tabla Export no son necesariamente bytes sobrantes del archivo, porque los datos serializados de objetos pueden estar después de las tablas. Por eso, informar `FileLength - ExportTableEnd` como "trailing bytes" habría sido engañoso.
+
+Se corrigió el comando `--audit-export-table`:
+- Calcula el siguiente límite de sección a partir de los offsets de Name, Import, Export y el fin del archivo.
+- Informa el final real de lectura, el offset de la siguiente sección, el tamaño consumido por la tabla y el hueco entre secciones.
+- Falla si la tabla Export se solapa con la siguiente sección.
+- No confunde datos de objetos con bytes no consumidos.
+
+Commit: `d46d83c`.
+
+Esta corrección es importante para no diagnosticar como corrupción el espacio legítimo que contiene payloads de objetos. La ejecución CI sigue pendiente de confirmación; el siguiente paso es obtener su log y comprobar el límite real, el export único `InventoryWnd` y la referencia de clase/superclase/contenedor.
