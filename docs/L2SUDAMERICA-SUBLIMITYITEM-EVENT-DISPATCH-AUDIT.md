@@ -113,3 +113,20 @@ Un hook vacío en esta exportación no demuestra que la función original sea va
 **Confirmado estáticamente:** despachador OnEvent, mapa de IDs, campos de payload, parser de StatusIconInfo, secuencia de lista de buffs y separación entre eventos 630/631.
 
 **Pendiente:** productores, overrides efectivos, bytecode, comportamiento de timers, contratos nativos y prueba en cliente. Sin modificaciones, compilación ni prueba de runtime.
+
+
+## Addendum A — contraste de registros y productores visibles en UnrealScript
+
+Se recorrieron las 151 fuentes UC del artefacto buscando RegisterEvent y ExecuteEvent para las familias de IDs descritas arriba. Resultado estático:
+
+- 631: registro localizado en SublimityShortcutWnd.OnLoad.
+- 25002: registro localizado en SublimityShortcut.OnLoad.
+- 2530, 2540, 2550 y 2560: registros localizados en MultiSellWnd.OnLoad. Esta clase implementa su propio OnEvent y procesa esos cuatro IDs directamente; no hereda de SublimityItem. Por tanto, su coincidencia numérica con los casos del dispatcher SublimityItem no demuestra que MultiSellWnd use esos hooks heredados.
+- 100009 y 100010: ExecuteEvent localizados en UISublimityCommonAPI. La API emite 100009 con SkillID y CastTime, y 100010 sin payload.
+- No se encontró en las fuentes UC revisadas un productor ExecuteEvent explícito para el resto de IDs del dispatcher. Esto no excluye productores nativos, eventos generados por el cliente o llamadas con IDs indirectos/variables.
+
+### Implicación
+
+Hay que mantener separados tres conceptos: (1) el ID reconocido por SublimityItem.OnEvent, (2) la clase que registra/consume el ID, y (3) el lugar que lo produce. La búsqueda textual solo ha resuelto parte de (2) y (3). Los IDs 2530–2560 ilustran por qué una coincidencia numérica entre dos ventanas no prueba una relación de herencia.
+
+**Nuevo pendiente:** recorrer los bytecode de las funciones que llaman a ExecuteEvent/DispatchEvent y las referencias nativas, además de revisar registros heredados en cada clase derivada.
