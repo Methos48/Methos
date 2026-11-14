@@ -677,3 +677,40 @@ Implicaciones comprobadas:
 - No se debe reconstruir la apariencia de las texturas a partir de sus nombres, ni usar un DLL de otra compilación como sustituto.
 
 Siguiente línea de trabajo: continuar el cruce de controles XDAT con los handlers y funciones del `InventoryWnd.uc`, y mantener en espera únicamente las conclusiones que dependan de los paquetes `.utx` o del DLL exacto. El código de producción permanece intacto.
+
+
+## Trigésima quinta pasada: cruce control por control entre XDAT y UnrealScript (2026-11-14)
+
+Se cruzaron los 53 nodos contabilizados por el analizador XDAT con los nombres y accesos del `InventoryWnd.uc` extraído directamente del paquete AnimalGame. El CSV contiene 49 nombres únicos porque los cinco elementos internos de `InventoryTab` comparten el nombre genérico `ct0.Tab.TabElement`.
+
+### Coincidencias directas confirmadas
+
+- Los 15 slots `EquipItem_*` del XDAT coinciden uno por uno y en el mismo orden con las 15 asignaciones de `equipItem[0..14]` de `InitHandle()`.
+- `HennaItem`, `InventoryItem`, `QuestItem`, `EquipmentItem`, `CraftingItem`, `SuppliesItem` y `AdenaText` se enlazan a handles usados por la lógica del inventario.
+- `SearchBar` se enlaza como EditBox y alimenta `FilterInventory`; `CancelBar` ejecuta `RestoreInventory`.
+- `SortButton` llama a `SortItem`; `TrashButton` llama al alternador de borrado automático; `CrystallizeButton` se muestra/oculta según `HasCrystallizeAbility()`.
+- `BtnClose` y `BtnMin` tienen rutas de cierre/minimización en `OnClickButton`.
+- `InventoryTab` aparece como destino de foco. Los cinco nodos TabElement están en XDAT, aunque sus nombres internos genéricos no permiten asignarles una identidad textual independiente.
+
+### Desajustes XDAT–script que requieren resolución
+
+El XDAT Animal actual **no contiene** estos nombres que sí aparecen en el código extraído:
+- `InventoryWnd.EnchantButton`
+- `InventoryWnd.FastDelete`
+- `InventoryWnd.RefineButton`
+- `InventoryWnd.BtnExpand`
+- `InventoryWnd.b_FastDelete` (referencia de anclaje en el bloque de layout)
+
+El código intenta obtener handles para EnchantButton, FastDelete y RefineButton durante `InitHandle()`; además define una ruta `RefineButton` en `OnClickButton`. `BtnExpand` y `b_FastDelete` aparecen dentro del bloque de layout de `function3`, que comienza con un `return;` y no se ejecuta en la fuente extraída. En contraste, el XDAT sí contiene `CrystallizeButton`, `TrashButton` y `CancelBar`, que son nombres utilizados por el script.
+
+Estos desajustes son evidencia de una posible mezcla de generaciones de UI entre el script y el XDAT, o de referencias heredadas que el script conserva aunque el XDAT ya no las defina. **No se corrigen automáticamente**: antes hay que comprobar si el runtime tolera handles ausentes, si existen aliases globales y si el paquete contiene otra definición de ventana que complete esos controles.
+
+### Nodos XDAT sin referencia textual por nombre en InventoryWnd.uc
+
+`BackTexture`, `Container`, `AdenaBox`, `WeightIcon`, `WeightBG`, `Equip_Classic`, `ObjectViewport`, `EquipSlotBg` y `SearchItem` no aparecen como nombres en el código fuente extraído. La mayoría son recursos/contendedores visuales; `SearchItem` es un ItemWindow real sin enlace nominal encontrado. La ausencia de referencia textual no demuestra que sean inútiles: algunos pueden ser consumidos por el motor de UI, por herencia/configuración XDAT o por APIs que operan sobre la jerarquía.
+
+El nodo `Frame` y el nodo `Tex` sí participan en las referencias de layout del bloque inactivo de `function3`. `Slots2` también aparece allí; el código pide `Slots2`, mientras el XDAT contiene tanto `Slots` como `Slots2`.
+
+### Conclusión y siguiente prueba
+
+El esqueleto de slots de equipo y los paneles principales está alineado con el XDAT. La zona de botones y layout muestra diferencias de nombres concretas que no deben resolverse por intuición. La siguiente prueba segura será rastrear los nombres ausentes y los nodos no enlazados en las demás fuentes del paquete Animal, además de revisar las definiciones de ventana y los aliases del API UI. No se modificó ningún archivo de producción ni el comportamiento del cliente.
