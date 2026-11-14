@@ -37,14 +37,14 @@ function Real()
         source = r'''function Real()
 {
     local string S;
-    S = "escaped \\" } // still text /* still text */";
+    S = "escaped \" } // still text /* still text */";
     S = 'single quote with // and }';
 }
 '''
         functions = extract_functions(source)
         self.assertEqual(len(functions), 1)
         tokens = lex_tokens(functions[0]["body"])
-        self.assertIn('"escaped \\" } // still text /* still text */"', tokens)
+        self.assertIn('"escaped \" } // still text /* still text */"', tokens)
         self.assertIn("'single quote with // and }'", tokens)
 
     def test_masking_preserves_source_length_and_line_breaks(self):
