@@ -1,0 +1,104 @@
+name: Audit L2Sudamerica Interface.u and interface.xdat
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/audit-l2sudamerica-interface.yml"
+      - "reference-data/packages/l2sudamerica/Interface.u"
+      - "reference-data/packages/l2sudamerica/interface.xdat"
+      - "tools/PackageProbe/**"
+      - "tools/xdat/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Methos
+        uses: actions/checkout@v4
+
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Verify immutable originals and inspect package headers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          files = [
+              Path("reference-data/packages/l2sudamerica/Interface.u"),
+              Path("reference-data/packages/l2sudamerica/interface.xdat"),
+          ]
+          out = []
+          for path in files:
+              data = path.read_bytes()
+              line = f"{path} | bytes={len(data)} | sha256={hashlib.sha256(data).hexdigest()} | first32={data[:32].hex(' ')}"
+              print(line)
+              out.append(line)
+          Path("l2sudamerica-audit").mkdir(exist_ok=True)
+          Path("l2sudamerica-audit/original-hashes.txt").write_text("\\n".join(out)+"\\n", encoding="utf-8")
+          PY
+
+      - name: Decompile Interface.u with the maintained UELib probe
+        shell: bash
+        run: |
+          mkdir -p l2sudamerica-audit/interface-u-source
+          set +e
+          dotnet run --project tools/PackageProbe/PackageProbe.csproj --configuration Release -- \
+            reference-data/packages/l2sudamerica/Interface.u \
+            l2sudamerica-audit/interface-u-source \
+            2>&1 | tee l2sudamerica-audit/interface-u-decompile.log
+          code=${PIPESTATUS[0]}
+          echo "PackageProbeExitCode=$code" | tee -a l2sudamerica-audit/interface-u-decompile.log
+          echo "$code" > l2sudamerica-audit/interface-u-exit-code.txt
+          exit 0
+
+      - name: Parse and round-trip interface.xdat
+        shell: bash
+        run: |
+          mkdir -p l2sudamerica-audit/interface-xdat
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, sys, traceback
+          sys.path.insert(0, "tools/xdat")
+          from xdat_core import decompile_to_folder, parse_xdat, compile_from_folder
+          source = Path("reference-data/packages/l2sudamerica/interface.xdat")
+          data = source.read_bytes()
+          report = []
+          report.append(f"SIZE={len(data)}")
+          report.append(f"SHA256={hashlib.sha256(data).hexdigest()}")
+          try:
+              parsed = parse_xdat(data)
+              report.append(f"PARSE_OK type={type(parsed).__name__}")
+              out = Path("l2sudamerica-audit/interface-xdat/xml")
+              windows, shortcuts = decompile_to_folder(data, out)
+              report.append(f"DECOMPILE_OK windows={windows} shortcuts={shortcuts}")
+              rebuilt, rebuilt_windows, rebuilt_shortcuts = compile_from_folder(out, original_data=data)
+              exact = rebuilt == data
+              report.append(f"ROUNDTRIP_EXACT={exact} rebuilt_bytes={len(rebuilt)} windows={rebuilt_windows} shortcuts={rebuilt_shortcuts}")
+              if not exact:
+                  raise SystemExit("XDAT round-trip did not reproduce exact original bytes")
+          except Exception:
+              report.append("XDAT_ERROR")
+              report.append(traceback.format_exc())
+              Path("l2sudamerica-audit/interface-xdat/report.txt").write_text("\\n".join(report)+"\\n", encoding="utf-8")
+              raise
+          Path("l2sudamerica-audit/interface-xdat/report.txt").write_text("\\n".join(report)+"\\n", encoding="utf-8")
+          print("\\n".join(report))
+          PY
+
+      - name: Publish audit outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: L2Sudamerica-Interface-Audit
+          path: l2sudamerica-audit/
+          if-no-files-found: warn
+          retention-days: 30
