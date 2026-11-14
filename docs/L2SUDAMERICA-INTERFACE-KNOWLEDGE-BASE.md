@@ -216,3 +216,8 @@ Estas fichas están en:
 ## Auditoría de macros, recetas y habilidades
 
 - [Macros, recetas y aprendizaje de habilidades](L2SUDAMERICA-MACRO-RECIPE-SKILL-AUDIT.md) — análisis cruzado de diez ventanas U/XDAT, solicitudes API, eventos registrados, edición de macros, fabricación y aprendizaje/encantamiento. La correlación de productores y la validación en cliente siguen pendientes.
+
+
+## 10. Auditoría de mascotas, invocaciones, pociones y shots
+
+Nueva ficha técnica: [L2SUDAMERICA-PET-SUMMON-POTION-AUDIT.md](L2SUDAMERICA-PET-SUMMON-POTION-AUDIT.md). Incluye AutoPotionsWnd, AutoPotionOptionWnd, PotionsConfigWnd, NPHRN_PotionsWnd, AutoShotItemWnd, PetWnd, PetStatusWnd, SummonedWnd y SummonedStatusWnd; documenta eventos, temporizadores, umbrales HP/MP/CP, ClassID observados, solicitudes de objetos y preguntas abiertas. La auditoría es estática y no implica compilación ni prueba en cliente.
