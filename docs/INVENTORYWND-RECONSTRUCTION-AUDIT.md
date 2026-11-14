@@ -616,3 +616,13 @@ La fuente contiene 48 funciones y confirma de forma independiente:
 - La variante no contiene un helper equivalente que permita asignar nombre original a `function31` o `function32`; el subtipo 6 tampoco aparece en la clasificación de recetas.
 
 La tercera fuente refuerza las conclusiones semánticas de las pasadas anteriores, pero no es el mismo paquete AnimalGame. No se copió código ni se cambiaron identificadores en producción.
+
+### Resultado de la correlación automática de eventos
+
+El run `43567163467` terminó **SUCCESS**: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43567163467). Artifact `Animal-U-Reconstruction-Validation`, ID `14102532523`.
+
+Los logs publicaron las rutas exactas:
+- `ANIMAL_EVENT_ROUTE=2600 HANDLER=function30 SILENT_REFERENCE=HandleAddItem NAME_CONFLICT=True`
+- `ANIMAL_EVENT_ROUTE=2630 HANDLER=function37 SILENT_REFERENCE=HandleAddHennaInfo NAME_CONFLICT=False`
+
+El mismo run confirmó otra vez compilación limpia, reapertura 160/160, edición real persistente, compilación/reapertura del candidato temporal `HandleAddHennaInfo` y rechazo esperado de `HandleAddItem` por colisión. El workflow completo terminó correctamente y el código de producción sigue sin renombrar funciones.
