@@ -25,7 +25,6 @@ if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
     int byteScriptSize = (int)(byteScriptSizeProperty.GetValue(target) ?? throw new InvalidDataException("UELib ByteScriptSize returned null."));
     Console.WriteLine($"SCRIPT_OFFSET={target.ScriptOffset}; DATA_SCRIPT_SIZE={target.ScriptSize}; BYTE_SCRIPT_SIZE={byteScriptSize}; TOKEN_COUNT={decoder.DeserializedTokens.Count}");
     foreach (var token in decoder.DeserializedTokens)
-    foreach (var token in decoder.DeserializedTokens)
         Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name}");
     int decodedEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
         decoder.DeserializedTokens.Max(token => token.StoragePosition + token.StorageSize);
