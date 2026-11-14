@@ -57,3 +57,32 @@ Fuente: 22,723 bytes. XML: 299,705 bytes.
 ## Límites
 
 Inspección estática de fuentes y XML del artefacto automatizado. No se editó ningún archivo, no se recompiló Interface.u, no se cambió XDAT y no se probó en cliente. Los originales permanecen intactos.
+
+
+## Seguimiento específico: daño hecho y daño recibido (14-11-2026)
+
+Se inspeccionó directamente `CustomDamageWnd.uc` del artefacto auditado, incluyendo `OnLoad`, `OnEvent`, el parser del evento 580, `SetValue`, `OnTimer` y el manejo de ventanas/timers.
+
+### Flujo confirmado
+
+- `CustomDamageWnd` registra los eventos 580, 40 y 280. El evento 580 es el que procesa los mensajes de combate: lee los campos `Index`, `Param1` y `Param2`.
+- La visualización global está condicionada por `Options/ShowDamage`.
+- Hay dos controles independientes en OptionWnd: `Cb_Damage` y `Cb_EDamage`. OptionWnd los obtiene como CheckBoxHandle separados.
+- Rama `Cb_Damage`: índices 35 y 1130; toma el valor numérico de `Param1` y lo envía al canal interno 1.
+- Rama `Cb_EDamage`: índices 36 y 37; toma `Param2` y lo envía al canal interno 2.
+- La misma rama `Cb_EDamage` acepta además los índices 296, 297, 333, 686 y 812, usando `Param1`.
+- Los canales 1 y 2 usan grupos de ventanas/dígitos distintos. La rutina `SetValue` convierte el valor en dígitos y sufijos, y `OnTimer` anima/mueve/oculta las ventanas. No es una simple modificación del texto de SystemMsgList.
+- El evento 40 oculta las 30 ventanas de daño; el evento 280 está registrado, pero no tiene rama explícita en el switch OnEvent mostrado, por lo que su función sigue sin aclararse.
+
+### Interpretación y cautelas
+
+La estructura del código confirma que el cliente separa dos clases de daño mediante opciones distintas, pero los nombres internos `Cb_Damage` / `Cb_EDamage` por sí solos no bastan para asignar definitivamente cuál corresponde a daño recibido y cuál a daño hecho. Tampoco se deben traducir todavía los índices adicionales a crítico, curación u otros eventos sin consultar la tabla de mensajes exacta de L2Sudamerica.
+
+### Próxima comprobación
+
+1. Recuperar la tabla `SystemMsg`/mensajes que corresponde exactamente a esta compilación y resolver los textos de los índices 35, 1130, 36, 37, 296, 297, 333, 686 y 812.
+2. Inspeccionar los controles y textos de `OptionWnd.xml` para confirmar la presentación visible de las dos opciones.
+3. Contrastar las dos ramas con capturas/prueba controlada: recibir un golpe y golpear un objetivo, sin modificar el cliente original.
+4. Documentar el significado exacto de los índices y los parámetros antes de cambiar colores, posición, tamaño o filtros.
+
+**Estado:** flujo de eventos y separación de canales identificados estáticamente. La asignación semántica definitiva «recibido/hecho» y la prueba dentro del cliente siguen pendientes. No se ha editado ni recompilado ningún binario.
