@@ -882,3 +882,34 @@ Silent Dark usa el evento 2600 para `HandleAddItem` y el 2630 para `HandleAddHen
 Silent Dark demuestra que existió una arquitectura alternativa de búsqueda: un EditBox con callback de cambio y un ItemWindow de resultados separado, distinto del inventario normal. Esto aporta contexto histórico útil, pero **no demuestra** que el `SearchItem` de XDAT Animal sea ese mismo panel, porque los nombres, rutas, jerarquía y fuente son diferentes.
 
 La hipótesis de que el `SearchItem` de Animal sea un residuo de búsqueda sigue abierta; ahora tiene una comparación de referencia concreta para futuras pruebas. No se renombraron controles ni se modificó código/XDAT de producción.
+
+
+## Cuadragésima segunda pasada: trazado de la ruta de resultados en Silent Dark (2026-11-14)
+
+Se reabrió el fuente Silent Dark completo para verificar la ruta exacta de escritura de resultados, sin inferirla por el nombre de variables recuperadas.
+
+### Ruta confirmada
+
+1. `InitHandle()` asigna el nombre literal `EquipItem_Underwearss` a una variable.
+2. Obtiene el handle de origen desde `InventoryWnd.Container.InventoryItem`.
+3. Obtiene el handle de resultados desde `InventoryWnd.Container.EquipItem_Underwearss`.
+4. Obtiene el EditBox desde la ruta `InventoryWnd.Container.SearchBar` al ejecutar `SearchInventory()`.
+5. Cuando hay texto, limpia el ItemWindow de resultados, recorre los objetos del inventario original y añade coincidencias al destino mediante `UIAPI_ITEMWINDOW.AddItem()`.
+6. Durante la búsqueda oculta los paneles normal y de misiones, muestra el destino de resultados y deshabilita las dos pestañas del TabCtrl.
+7. Cuando el texto queda vacío, vuelve a mostrar el inventario original, oculta el panel de resultados y reactiva las pestañas.
+
+La ruta de destino concatenada por el código es exactamente `InventoryWnd.container.InventoryItem_1.EquipItem_Underwearss`. La ruta de adquisición del handle es `InventoryWnd.Container.EquipItem_Underwearss`; se conserva esta diferencia de capitalización del fuente y no se normaliza como si el runtime garantizara equivalencia.
+
+### Implicación para Animal
+
+El XDAT Animal contiene `SearchItem`, pero no contiene el nombre `EquipItem_Underwearss` como hijo de `InventoryWnd`; ese nombre sí aparece como uno de los slots de equipo fuera del contenedor, en otra ruta. Animal tampoco contiene la arquitectura de búsqueda de Silent Dark. Por eso no existe evidencia para mapear el `SearchItem` Animal directamente al panel de resultados Silent Dark.
+
+### Límites
+
+El artefacto actual no incluye el XDAT Silent Dark correspondiente. Por ello no se puede comprobar la jerarquía visual, el tipo de control ni las propiedades reales del nodo `EquipItem_Underwearss` de esa variante. Tampoco se ha ejecutado el código en el cliente para validar el comportamiento de las rutas.
+
+Se mantiene la conclusión: Silent Dark documenta un patrón funcional de resultados en un ItemWindow separado; Animal tiene un nodo `SearchItem` estructuralmente duplicado de `CraftingItem`, pero sin vínculo en su script. No se conectó ni renombró ningún control.
+
+### Nota de precisión sobre el inventario de funciones
+
+El recuento de 53 funciones Silent Dark se toma del inventario del artefacto. La extracción independiente por patrón de declaraciones detecta 52; esta diferencia de un elemento permanece como discrepancia de metodología y no se usa para afirmar una cantidad exacta de funciones compiladas.
