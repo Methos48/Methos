@@ -179,3 +179,63 @@ No modificar argumentos de solicitudes, IDs de objeto/castillo/Manor, cantidades
 6. Resolver las seis clases exportadas ausentes del CSV de funciones.
 
 **Estado:** inventariado y extraído; mapeo y análisis estático de flujos principales completados; productores, payloads restantes y FNames pendientes. No se ha compilado UCC un paquete modificado, no se ha reprotegido una modificación ni se ha probado carga real en cliente.
+
+## 10. Addendum — correlación adicional de eventos internos (14-11-2026)
+
+Una búsqueda global de los archivos UC del paquete encontró productores locales que permiten cerrar parte del flujo Manor y Olympiad. Esto mejora la trazabilidad respecto a la primera lectura de cada consumidor.
+
+### 10.1 Eventos Manor confirmados entre ventanas
+
+| Productor | Evento emitido | Consumidor registrado | Campos observados |
+|---|---:|---|---|
+| ManorCropSellWnd | 2649 | ManorCropSellChangeWnd | CropName, RewardType1, RewardType2 |
+| ManorCropSellChangeWnd | 2646 | ManorCropSellWnd | SellCntString, ManorID, ManorName, CropRemainCntString, CropPriceString, ProcureTypeString |
+| ManorCropInfoSettingWnd | 2670 | ManorCropInfoChangeWnd | CropName, TomorrowVolumeOfBuy, TomorrowLimit, TomorrowPrice, TomorrowProcure, MinCropPrice, MaxCropPrice |
+| ManorCropInfoChangeWnd | 2668 | ManorCropInfoSettingWnd | TomorrowAmountOfPurchase, TomorrowPurchasePrice, TomorrowProcure |
+| ManorSeedInfoSettingWnd | 2660 | ManorSeedInfoChangeWnd | SeedName, TomorrowSalesVolume, TomorrowLimit, TomorrowPrice, MinCropPrice, MaxCropPrice |
+| ManorSeedInfoChangeWnd | 2659 | ManorSeedInfoSettingWnd | TomorrowSalesVolume, TomorrowPrice |
+
+Los productores y consumidores se identificaron por llamadas explícitas ExecuteEvent y registros RegisterEvent en fuentes UC. Esta tabla representa eventos internos de interfaz; no son necesariamente paquetes de red ni respuestas del servidor.
+
+**Consecuencia:** la edición de cosecha/semilla es un ciclo local de ida y vuelta: la lista seleccionada arma el contexto para el editor; el editor valida/recoge campos; emite el evento local; la ventana de configuración aplica los valores a la fila correspondiente. Los cambios definitivos se envían por las solicitudes de configuración de Manor, no por esos eventos locales aislados.
+
+### 10.2 Detalle del payload de venta editada
+
+ManorCropSellChangeWnd recoge:
+- SellCntString: cantidad de venta escrita.
+- ManorID: ID del Manor asociado a la fila/lugar seleccionado.
+- ManorName: nombre de la ciudad/Manor.
+- CropRemainCntString: cantidad restante disponible.
+- CropPriceString: precio por unidad.
+- ProcureTypeString: tipo de procurement.
+
+Ese paquete se emite como evento local 2646. ManorCropSellWnd consume 2646 y actualiza la fila/lista; por tanto, el editor no ejecuta directamente la venta final en esta ruta.
+
+### 10.3 Detalle de edición de configuración
+
+- La lista de cosechas emite 2670 con identidad de cultivo y parámetros del siguiente periodo; ManorCropInfoChangeWnd usa esos valores para abrir/precargar la edición.
+- El editor de cosechas emite 2668 al aceptar; la lista consume el evento y actualiza la fila.
+- La lista de semillas emite 2660 con SeedName, TomorrowSalesVolume, TomorrowLimit, TomorrowPrice, MinCropPrice y MaxCropPrice.
+- El editor de semillas emite 2659 con TomorrowSalesVolume y TomorrowPrice; la lista consume el resultado.
+
+Los validadores de los editores comparan cantidades y precios con rangos extraídos de la fila y muestran mensajes de sistema antes de emitir el evento. Es una validación de UI; la autoridad final sigue siendo el servidor.
+
+### 10.4 Payload OlympiadBuffWnd
+
+El consumidor de evento 940 parsea:
+- PlayerID
+- Max
+- SkillID_[n]
+- SkillLevel_[n]
+- RemainTime_[n]
+- Name_[n]
+- IconName_[n]
+- Description_[n]
+
+El índice recorre Max elementos; la UI agrega filas cada 12 entradas y asigna iconos de tamaño 24, fondo L2UI.EtcWndBack.AbnormalBack. El panel se muestra si Max > 0 y ajusta su ancho al número de columnas de 12. El evento 930 solo actualiza el PlayerID del participante mostrado; el 910 limpia los iconos y reinicia el estado.
+
+### 10.5 Límites aún abiertos
+
+- No se identificó todavía el origen externo de los eventos de datos del servidor 2645, 2647, 2650–2659, 2665–2667, 2680/2690.
+- El origen del evento Olympiad 940 debe seguirse fuera de estas clases; aquí se conoce el formato del consumidor, no el productor final.
+- Las rutas de venta/configuración Manor requieren prueba en un entorno controlado para separar validación local de aceptación del servidor.
