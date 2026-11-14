@@ -795,3 +795,40 @@ El control `SearchItem` no participa en el flujo de búsqueda implementado por `
 No se debe conectar `SearchItem` al filtro ni eliminarlo sin evidencia adicional. Queda clasificado como **nodo ItemWindow huérfano en la capa UnrealScript**, con posible función externa aún desconocida.
 
 La siguiente comprobación segura es comparar su posición, anclajes, orden de hijos y propiedades con el panel `CraftingItem` y con las ventanas equivalentes de las variantes de código ya archivadas, para detectar si es un duplicado estructural o un elemento heredado de otra generación de UI. No se modificó el XDAT ni el código de producción.
+
+
+## Trigésima novena pasada: comparación estructural exacta de SearchItem (2026-11-14)
+
+Se compararon todas las propiedades decodificadas de `SearchItem` con `CraftingItem` y se verificó su posición dentro del árbol de hijos de `InventoryWnd`.
+
+### Resultado de la comparación
+
+- Ambos nodos son `ct0.ItemWindow`.
+- Las propiedades decodificadas son idénticas salvo el campo `name`: `SearchItem` frente a `CraftingItem`.
+- Coinciden tamaño (339 × 288), anclajes, desplazamiento (217, 55), grilla (9 × 8), máximo (250), iconos (32 × 32), separación (4 × 4), tipo de popup (`Inventory`), y texturas de contorno superior/inferior.
+- No hay diferencias adicionales en el conjunto de propiedades exportadas.
+
+### Posición y orden de hermanos
+
+El orden real de hijos alrededor de los paneles es:
+
+| Índice | Control |
+|---:|---|
+| 31 | `EquipmentItem` |
+| 32 | `CraftingItem` |
+| 33 | `SuppliesItem` |
+| 34 | `SearchBar` |
+| 35 | `CancelBar` |
+| 36 | `SearchItem` |
+
+Por tanto, `SearchItem` fue colocado inmediatamente después de los dos controles de búsqueda, pero su configuración no contiene ninguna diferencia respecto de `CraftingItem`. Esto es una pista estructural relevante, no prueba de que el motor lo utilice para mostrar resultados.
+
+### Correlación con el código
+
+El fuente asigna handles a `CraftingItem` y `SuppliesItem`, pero no a `SearchItem`. El filtrado sigue escribiendo los resultados en `InventoryItem`; no hay llamada que cambie el destino a `SearchItem`. La proximidad a `SearchBar`/`CancelBar` y el nombre del control podrían sugerir una implementación de búsqueda incompleta o retirada, pero la evidencia disponible no permite afirmar que esa fuera su función original.
+
+### Conclusión y decisión
+
+`SearchItem` es un **duplicado estructural exacto de CraftingItem con nombre distinto**, añadido como último hermano tras los controles de búsqueda. Se registra esta relación con alta confianza. Su propósito funcional sigue sin demostrarse.
+
+No se cambió el destino de `FilterInventory()`, no se enlazó el control y no se eliminó ningún nodo. El próximo paso será revisar las variantes de InventoryWnd disponibles en el repositorio y los metadatos de origen para establecer si `SearchItem` aparece en otras generaciones o si solo existe en este XDAT de AnimalGame.
