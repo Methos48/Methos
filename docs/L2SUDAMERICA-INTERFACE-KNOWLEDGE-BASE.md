@@ -283,3 +283,6 @@ Nueva ficha: [L2SUDAMERICA-UISUBLIMITY-COMMONAPI-AUDIT.md](L2SUDAMERICA-UISUBLIM
 Nueva ficha: [L2SUDAMERICA-SUBLIMITYITEM-EVENT-DISPATCH-AUDIT.md](L2SUDAMERICA-SUBLIMITYITEM-EVENT-DISPATCH-AUDIT.md). Reconstruye el switch OnEvent de la clase base, los IDs y campos parseados, las tres rutas de listas StatusIconInfo, el protocolo de lista de buffs y la distinción entre eventos 630/631. La fuente exportada contiene numerosos hooks vacíos: se documenta el contrato observable, pero no se inventa la implementación que falta. Pendientes: productores, overrides, bytecode y SublimityTimerActor.
 
 Addendum de jerarquía: el paquete exportado contiene dos derivadas directas de SublimityItem (SublimityShortcut y SublimityShortcutWnd); SublimityShortcut declara MethosRecoveredName_737, candidato a override. Se corrigió la generalización previa sobre múltiples derivadas.
+
+
+Ampliación de SublimityItem: la comparación de firmas identificó cinco overrides candidatos en SublimityShortcutWnd y uno en SublimityShortcut. Se trazaron las rutas 630→_911→_730→_744, 631→_913→_729→_744 y 640→_909→_731→_345. Los flags UFunction y el bytecode siguen pendientes; los stubs exportados no prueban que el cliente original no ejecute lógica.
