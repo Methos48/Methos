@@ -214,3 +214,14 @@ Los SHA-256 de los dos binarios descifrados coinciden con los valores registrado
 - [ ] Reproteger ambos derivados y comprobar round-trip protegido exacto.
 
 Nota de alcance: la inspección actual confirma los artefactos históricos empaquetados, pero no prueba que una interfaz editada haya sido recompilada ni que el cliente L2Sudamerica la haya cargado correctamente. Los originales versionados permanecen intactos.
+
+
+## Coordinación de trabajos paralelos — 2026-11-14
+
+Se mantienen tres líneas simultáneas, aisladas por paquete:
+
+1. **Colección:** inventariar los ocho RAR versionados en `Interfaces U Xdat/` (L2GZ Interlude, Wellington V3, MaxCheaters, Gracia FileEdit, Gracia System, Hellbound System, compiler interlude e interfacegk). Cada muestra se extrae en su propia carpeta y se identifica por contenido; el nombre del archivo no demuestra su chronicle.
+2. **L2Sudamerica:** el workflow 43579091099 ya acredita descifrado, round-trip exacto de las capas SmartCrypt 1.5.2.2 + Lineage2Ver111, extracción de 150 clases y reconstrucción XDAT exacta. La repetición local queda como verificación adicional, no invalida el resultado automatizado.
+3. **InventoryWnd:** continuar la auditoría de L2Sudamerica en paralelo con la investigación separada de AnimalGame. Nunca sustituir fuentes de un cliente por las del otro.
+
+La recompilación UCC de una versión modificada y su carga real en cliente siguen siendo fases pendientes. Los originales permanecen inmutables; cada muestra y derivado tendrá su propio hash y registro.
