@@ -7,7 +7,7 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from unrealscript_functions import extract_functions as extract, lex_tokens as tokens, mask_code
+from unrealscript_functions import extract_functions as extract, lex_tokens as tokens, extract_event_routes
 
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
@@ -21,15 +21,7 @@ def read_source(path: Path) -> str:
 
 def event_routes(functions: list[dict]) -> dict[int, str]:
     on_event = next((item for item in functions if item["name"].lower() == "onevent"), None)
-    if not on_event:
-        return {}
-    return {
-        int(match.group(1)): match.group(2)
-        for match in re.finditer(
-            r"(?im)^\s*case\s+(\d+)\s*:\s*([A-Za-z_]\w*)\s*\(",
-            mask_code(on_event["body"]),
-        )
-    }
+    return extract_event_routes(on_event["body"]) if on_event else {}
 
 
 def normalized_hash(source: str) -> str:
