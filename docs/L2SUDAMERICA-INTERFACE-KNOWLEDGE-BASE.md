@@ -241,3 +241,8 @@ Nueva ficha: [L2SUDAMERICA-SIEGE-MANOR-OLYMPIAD-AUDIT.md](L2SUDAMERICA-SIEGE-MAN
 ## 14. Auditoría de sistemas especiales
 
 Nueva ficha: [L2SUDAMERICA-SPECIAL-SYSTEMS-AUDIT.md](L2SUDAMERICA-SPECIAL-SYSTEMS-AUDIT.md). Incluye EventMatch GM/Observer, replay local, DuelManager, HeroTower, herramientas GM, ReportWnd, PC Café y cupones. Se identificaron los controles XDAT, eventos, payloads y solicitudes; también se marcaron funciones GM de EventMatch que están vacías en la fuente exportada, sin asumir una implementación inexistente. Análisis estático, sin cambios ni pruebas en cliente.
+
+
+## 15. Auditoría de UICommonAPI
+
+Nueva ficha: [L2SUDAMERICA-UICOMMONAPI-AUDIT.md](L2SUDAMERICA-UICOMMONAPI-AUDIT.md). Analiza la capa compartida UICommonAPI: wrappers de ventana/diálogo, parser de ItemInfo, parser LVDataRecord, mensajes, eventos internos, ordenación local de inventario y wrappers de primitivas. Se marcan funciones con cuerpo vacío en la exportación y las dependencias que requieren análisis de bytecode. Análisis estático; sin cambios en binarios.
