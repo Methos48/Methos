@@ -181,3 +181,38 @@ Riesgos:
 **Pendiente:** grafo completo de llamadas, resolución de FNames, tabla completa de enums de ítems, productores/consumidores de eventos, revisión de bytecode y prueba de compilación/carga.
 
 No se ha modificado ni recompilado Interface.u.
+
+## 13. Addendum — referencias cruzadas desde consumidores (14-11-2026)
+
+La búsqueda de llamadas en todas las fuentes exportadas permite confirmar el alcance real del parser ItemInfo principal:
+
+| Consumidor | Uso de UICommonAPI.MethosRecoveredName_116 |
+|---|---|
+| ShopWnd | Convierte payload de objeto a ItemInfo |
+| InventoryWnd | Dos rutas de lectura de objetos |
+| ToolTip | Construye los datos del tooltip |
+| PrivateShopWnd | Convierte datos de tienda privada |
+| ItemEnchantWnd | Lee objeto para encantamiento |
+| WarehouseWnd | Convierte objetos del almacén |
+| ManorShopWnd | Convierte objeto/semilla de Manor |
+| TradeWnd | Dos rutas de lectura de objeto |
+| PetWnd | Dos rutas de objetos de mascota |
+| NPHRN_PotionsWnd | Dos rutas de objeto/poción |
+| DeliverWnd | Convierte objeto de envío |
+| GMInventoryWnd | Convierte objeto en la vista GM |
+
+Esto confirma que MethosRecoveredName_116 es un contrato transversal de datos de objeto y que una alteración puede repercutir en inventario, tooltips, comercio, almacén, mascotas, pociones y ventanas GM.
+
+### 13.1 Parser alternativo incompleto
+
+AutoShotItemWnd llama a MethosRecoveredName_1328 para convertir una cadena a ItemInfo. Sin embargo, el cuerpo exportado de esa función está vacío. Esto es una discrepancia crítica entre consumidor y fuente exportada: AutoShotItemWnd parece depender de un parser cuyo cuerpo no está disponible en el texto reconstruido.
+
+No significa que el paquete original carezca de implementación. Debe comprobarse el bytecode/export de UICommonAPI y compararse con otra build antes de cambiar AutoShotItemWnd o sustituir la llamada por el parser principal.
+
+### 13.2 Evento 10002
+
+UICommonAPI construye un payload con QuestID y Level y ejecuta ExecuteEvent(10002, payload). La búsqueda en las fuentes UC exportadas no encontró RegisterEvent(10002) ni otro consumidor explícito de ese ID. Puede ser consumido por código nativo/externo o por una clase no representada en la exportación. Su destino queda abierto; no se atribuye a una ventana concreta.
+
+### 13.3 Estado de la evidencia
+
+Las referencias anteriores son llamadas directas encontradas en los archivos UC. No demuestran el orden completo de los eventos de red ni los datos que el servidor acepta. El parser principal y su lista de consumidores sí quedan confirmados estáticamente.
