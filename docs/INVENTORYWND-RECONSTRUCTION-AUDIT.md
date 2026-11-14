@@ -271,3 +271,27 @@ El resto de las puntuaciones máximas fueron bajas y no ofrecen identificación 
 ### Corrección metodológica
 
 La comparación sirve para descubrir candidatos, no para restaurar nombres automáticamente. Los resultados exactos o altos se validan contra evento, firma, cuerpo, llamadas y referencias del paquete Animal. Se mantiene la regla de no renombrar ninguna función sin evidencia directa del build AnimalGame.
+
+## Undécima pasada: resolución semántica de helpers duplicados (2026-11-14)
+
+Se revisaron directamente los cuerpos de `function44`, `function26`, `function14` y sus equivalentes en la referencia UCC Interlude. Esta pasada detectó dos duplicaciones importantes y evitó una asignación de nombre potencialmente incorrecta.
+
+### `function26(ItemInfo)` — duplicado exacto de `IsArrow`
+
+El cuerpo de `function26` es `return paramItemInfo.bArrow; return false;`, mientras que la clase Animal ya contiene `IsArrow(ItemInfo)` con el mismo retorno de `bArrow`. El código Animal llama a `IsArrow` desde la ruta de actualización de equipo; no se encontró llamada a `function26`. El comparador token-level también coloca `IsArrow` como candidato principal (0.6154). Conclusión: helper redundante o residual, semántica exacta conocida, pero no se cambia el nombre porque el nombre `IsArrow` ya existe y no hay evidencia de que el helper duplicado tuviera un rol activo.
+
+### `function44(int)` — helper de comparación de accesorios sin nombre resuelto
+
+El cuerpo llama `GetAccessoryServerID(int_1, int_2, int_3, int_4)` y compara el ID recibido únicamente con las dos primeras salidas: primera → `-1`, segunda → `1`, cualquier otra → `0`. En la referencia UCC, `IsLOrREar` usa precisamente las dos primeras salidas y `IsLOrRFinger` las dos últimas; por eso la comparación automática había dado ambos candidatos con empate por similitud de tokens, pero la inspección semántica favorece `IsLOrREar` **solo si la convención de salida de Animal coincide con la del UCC**.
+
+No se renombra: Animal ya contiene una función llamada `IsLOrREar` que compara las salidas tercera y cuarta, mientras que `IsLOrRFinger` usa variables nombradas `LFinger/RFinger` y compara esas mismas salidas tercera/cuarta. Además, no hay llamada interna a `function44`. La contradicción entre la función anónima, la función Animal ya nombrada y la referencia impide afirmar un nombre original sin inspeccionar la implementación/contrato real de `GetAccessoryServerID` en el runtime Animal.
+
+### `function14(ItemInfo)` — no-op confirmado
+
+Su cuerpo solo contiene `return;`. El comparador de similitud no ofrece un candidato convincente; no se asigna nombre. No se ha encontrado evidencia de efecto secundario ni de llamada relevante que permita reconstruir un propósito distinto.
+
+### `MethosRecoveredName_444()` — guardia de set con retorno temprano
+
+Mantiene `vvCanUseSetEquipment = true; return;`. El bloque posterior intenta obtener `UserInfo` y habilitarlo solo para una lista fija de nombres, pero es inalcanzable desde la entrada. Se conserva el retorno y no se reactiva la lista. El helper `MethosRecoveredName_1105(ItemInfo)` consulta esta bandera antes de recorrer piezas del set y solicitar `RequestUseItem` para las piezas que faltan; por tanto, la bandera habilita ese flujo de uso de piezas, no modifica la lógica de equipamiento del servidor.
+
+No se modificó `InventoryWnd.uc`. Estos hallazgos se añaden como anotaciones semánticas; los identificadores permanecen intactos hasta demostrar el nombre del build Animal.
