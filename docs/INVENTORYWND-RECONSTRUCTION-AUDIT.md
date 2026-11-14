@@ -736,3 +736,37 @@ La búsqueda global confirma que los nombres ausentes no están siendo resueltos
 `SearchItem` es el único control interactivo de tipo ItemWindow del XDAT que no tiene ninguna referencia textual encontrada en las 160 clases. Se mantiene como nodo no explicado; no se elimina ni se asigna a una función por semejanza.
 
 La siguiente comprobación será revisar las firmas y comportamiento de `GetHandle`, `ButtonHandle`, `SetFocus` y el registro de callbacks en las fuentes/API disponibles del mismo paquete, para separar referencias obsoletas inocuas de posibles incompatibilidades reales. No se modificó ningún control ni código de producción.
+
+
+## Trigésima séptima pasada: análisis de riesgo de handles ausentes en InitHandle (2026-11-14)
+
+Se inspeccionó el orden real de ejecución de `InventoryWnd.OnLoad()` y `InitHandle()`, y se comparó con patrones de otras ventanas del mismo paquete.
+
+### Secuencia confirmada
+
+1. `OnLoad()` registra eventos y llama a `InitHandle()`.
+2. `InitHandle()` obtiene los handles principales de inventario y los 15 slots de equipo.
+3. Después obtiene `InventoryWnd.SortButton`, `InventoryWnd.EnchantButton`, `InventoryWnd.FastDelete` y `InventoryWnd.RefineButton`.
+4. Inmediatamente después de obtenerlos ejecuta:
+   - `button_1.SetTooltipCustomType(...)`
+   - `button_2.SetTooltipCustomType(...)`
+   - `button_3.SetTooltipCustomType(...)`
+   - `button_4.SetTooltipCustomType(...)`
+5. El XDAT inspeccionado contiene `SortButton`, pero no contiene `EnchantButton`, `FastDelete` ni `RefineButton`.
+
+Esto demuestra que tres handles pedidos por `InitHandle()` no tienen un nodo homónimo en el XDAT actual, y que el script intenta utilizarlos inmediatamente. No es solo código antiguo aislado en una función sin llamadas: la secuencia está en la inicialización normal de la ventana.
+
+### Qué se puede y qué no se puede concluir
+
+- **Confirmado:** hay tres discrepancias de nombres entre el script y el XDAT; los tres handles se usan inmediatamente para configurar tooltips.
+- **No demostrado:** si `GetHandle()` devuelve un handle inválido tolerado por el runtime, un objeto nulo, un proxy no operativo o si el motor resuelve esos nombres por algún mecanismo externo. Las fuentes UnrealScript exportadas no incluyen la implementación nativa de `GetHandle` ni de `SetTooltipCustomType`.
+- En las 160 clases no se encontró un patrón de comprobación `None`/validez aplicado a los handles UI antes de invocar sus métodos. Los ejemplos comparables de `RefineryWnd` también adquieren handles y configuran animaciones/controles sin comprobación visible, pero esto no prueba cómo se comporta el runtime ante un handle ausente.
+- `OnClickButton` contiene rutas para `RefineButton` y `BtnExpand`; la primera apunta a abrir/cerrar `AugmentationWnd`, mientras la segunda depende de un bloque de layout que empieza con `return;`. El XDAT no contiene esos botones bajo esos nombres.
+
+### Riesgo y decisión
+
+Se clasifica el desajuste de `EnchantButton`, `FastDelete` y `RefineButton` como **riesgo de inicialización que requiere prueba de runtime**, no como fallo confirmado. No se añadieron controles, no se cambiaron los nombres ni se insertaron comprobaciones especulativas: cualquiera de esas acciones modificaría el comportamiento sin conocer el contrato nativo.
+
+La prueba que resolvería el riesgo requiere ejecutar exactamente este paquete AnimalGame con su runtime original y observar la inicialización de InventoryWnd (log/depurador o captura de error). Si no se dispone del cliente ejecutable, el siguiente mejor insumo es el `NWindow.dll` exacto de esa instalación para inspeccionar la semántica de handles.
+
+No se modificó `InventoryWnd.uc`, XDAT ni ningún paquete de producción.
