@@ -90,11 +90,18 @@ EVENT_ROUTE = re.compile(
 
 
 def extract_event_routes(source: str) -> dict[int, str]:
-    """Read event case handlers while ignoring comments and string literals."""
-    return {
-        int(match.group(1)): match.group(2)
-        for match in EVENT_ROUTE.finditer(mask_code(source))
-    }
+    """Read event case handlers and reject ambiguous duplicate event IDs."""
+    routes: dict[int, str] = {}
+    for match in EVENT_ROUTE.finditer(mask_code(source)):
+        event_id = int(match.group(1))
+        handler = match.group(2)
+        previous = routes.get(event_id)
+        if previous is not None:
+            raise ValueError(
+                f"Duplicate event case {event_id}: {previous} and {handler}"
+            )
+        routes[event_id] = handler
+    return routes
 
 
 def extract_functions(source: str) -> list[dict[str, str]]:
