@@ -112,7 +112,7 @@ def extract_event_routes(source: str) -> dict[int, str]:
 
 
 def count_parameters(params: str) -> int:
-    """Count comma-separated parameters without splitting nested expressions."""
+    """Count top-level parameters and reject malformed nested syntax."""
     if not params.strip():
         return 0
     count = 1
@@ -120,7 +120,7 @@ def count_parameters(params: str) -> int:
     pairs = {")": "(", "]": "[", "}": "{"}
     quote: str | None = None
     escaped = False
-    for char in params:
+    for index, char in enumerate(params):
         if quote is not None:
             if escaped:
                 escaped = False
@@ -134,10 +134,15 @@ def count_parameters(params: str) -> int:
         elif char in "([{":
             stack.append(char)
         elif char in ")]}":
-            if stack and stack[-1] == pairs[char]:
-                stack.pop()
+            if not stack or stack[-1] != pairs[char]:
+                raise ValueError(f"Unbalanced parameter delimiter at position {index}")
+            stack.pop()
         elif char == "," and not stack:
             count += 1
+    if quote is not None:
+        raise ValueError("Unterminated string in parameter list")
+    if stack:
+        raise ValueError("Unclosed delimiter in parameter list")
     return count
 
 
