@@ -177,3 +177,33 @@ Los nombres MethosRecoveredName_* son nombres de recuperación de esta exportaci
 **Confirmado estáticamente:** los ocho tipos, exclusión de diálogo único, identidad del llamador, ID, eventos 1710/1720, comportamiento de Enter, entrada numérica, timeout y estructura XDAT principal.
 
 **Pendiente:** matriz completa de consumidores, payloads de confirmación por ventana, posiciones de cada subcontrol y validación real en cliente. No se ha compilado ni cargado un paquete modificado.
+
+## 13. Addendum — mapa de consumidores UC
+
+Se realizó una búsqueda global en las fuentes exportadas, excluyendo las definiciones de UICommonAPI. Quedó confirmado que el wrapper de apertura del diálogo se usa directamente en estas clases:
+
+RecipeShopWnd, ShopWnd, InventoryWnd, QuestTreeWnd, MultiSellWnd, MacroInfoWnd, RecipeBookWnd, UnrefineryWnd, ManorCropInfoChangeWnd, GMSnoopWnd, PrivateShopWnd, ChatWnd, EventMatchGMFenceWnd, WarehouseWnd, UserPetitionWnd, EventMatchGMWnd, DuelManager, RefineryWnd, GMWnd, ManorShopWnd, MacroEditWnd, TradeWnd, SiegeInfoWnd, ManorSeedInfoSettingWnd, SystemMenuWnd, ManorCropInfoSettingWnd, MacroListWnd, PetWnd, ElfenMenu, DeliverWnd y ManorSeedInfoChangeWnd.
+
+El wrapper de comprobación de propiedad aparece en un conjunto amplio de las mismas familias: comercio, inventario, almacén, macros, recetas, quests, peticiones, asedios, duelos, GM, Manor, mascotas y Deliver. Esto confirma que la identidad de llamador no es un detalle exclusivo de una ventana.
+
+### 13.1 Registro explícito de eventos globales
+
+La búsqueda de RegisterEvent(1710) encontró registros en:
+RecipeShopWnd, ShopWnd, InventoryWnd, QuestTreeWnd, MultiSellWnd, RecipeBookWnd, PrivateShopWnd, ChatWnd, WarehouseWnd, DuelManager, RefineryWnd, GMWnd, ManorShopWnd, MacroEditWnd, RadarMapWnd, TradeWnd, SiegeInfoWnd, ManorSeedInfoSettingWnd, SystemMenuWnd, ManorCropInfoSettingWnd, MacroListWnd, PetWnd, ElfenMenu y DeliverWnd.
+
+La búsqueda de RegisterEvent(1720) encontró:
+DuelManager, GMWnd y TradeWnd.
+
+Esta diferencia no implica que el resto no gestione cancelaciones: algunas ventanas pueden usar solo confirmación, registrar el evento a través de otra clase/base o cerrar el diálogo de otra forma. Se debe seguir cada función OnEvent y la comprobación de identidad por clase.
+
+### 13.2 Campos auxiliares e ID
+
+Los consumidores configuran ID y valores auxiliares antes de abrir. Los wrappers consultan posteriormente:
+- ID de confirmación;
+- texto de entrada;
+- propiedad del diálogo;
+- valores auxiliares usados para cantidades, índices o contexto.
+
+El ID no viaja explícitamente dentro de ExecuteEvent(1710/1720) en el código DialogBox; queda en el estado compartido de la instancia DialogBox. Esto explica por qué la consulta del ID y la comprobación de propietario deben ejecutarse en el consumidor.
+
+**Pendiente:** producir una matriz por cada clase que cruce ID concreto, tipo, texto, acción OK/Cancel, campos auxiliares y solicitud final. El inventario anterior confirma dependencias, pero no reemplaza ese seguimiento individual.
