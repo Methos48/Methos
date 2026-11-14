@@ -779,7 +779,129 @@ jobs:
           Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $hennaSources -Recurse
           $hennaFile = Join-Path $hennaSources "InventoryWnd.uc"
           $hennaText = [IO.File]::ReadAllText($hennaFile)
-          $hennaPattern = '(?m)^function function37\(string string_2\)$'
+          $hennaPattern = '(?m)^function function37\(string string_2\)\r?
+          if ([regex]::Matches($hennaText, $hennaPattern).Count -ne 1) { throw "Could not isolate Animal function37 declaration." }
+          $hennaText = [regex]::Replace($hennaText, $hennaPattern, 'function HandleAddHennaInfo(string string_2)', 1)
+          [IO.File]::WriteAllText($hennaFile, $hennaText, [Text.UTF8Encoding]::new($false))
+          $hennaOutput = Join-Path $probeRoot "InventoryWnd-HennaCandidate.u"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $hennaSources $hennaOutput
+          if ($LASTEXITCODE -ne 0) { throw "Renaming function37 to HandleAddHennaInfo did not compile in isolation." }
+          Write-Host "PASS: INVENTORYWND_FUNCTION37_HANDLEADDHENNAINFO_COMPILES=true"
+
+          $addItemSources = Join-Path $probeRoot "AddItemCandidate"
+          Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $addItemSources -Recurse
+          $addItemFile = Join-Path $addItemSources "InventoryWnd.uc"
+          $addItemText = [IO.File]::ReadAllText($addItemFile)
+          $addItemPattern = '(?m)^function function30\(string string_2\)\r?
+          if ([regex]::Matches($addItemText, $addItemPattern).Count -ne 1) { throw "Could not isolate Animal function30 declaration." }
+          $addItemText = [regex]::Replace($addItemText, $addItemPattern, 'function HandleAddItem(string string_2)', 1)
+          [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
+          $addItemOutput = Join-Path $probeRoot "InventoryWnd-AddItemCandidate.u"
+          $addItemLog = dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $addItemSources $addItemOutput 2>&1
+          $addItemExit = $LASTEXITCODE
+          $addItemLog | Out-File -FilePath (Join-Path $probeRoot "function30-HandleAddItem-compiler.log") -Encoding utf8
+          if ($addItemExit -eq 0) {
+            Write-Host "PASS: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=true"
+          } else {
+            Write-Host "INFO: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=false exit=$addItemExit"
+            $addItemLog | Select-String -Pattern 'already defined|duplicate|overload|HandleAddItem|error' | ForEach-Object { Write-Host $_.Line }
+          }
+
+      - name: Publish Animal U reconstruction and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-U-Reconstruction-Validation
+          path: |
+            Animal-Rebuilt/Interface-clean.u
+            Animal-Rebuilt/Interface-edited-test.u
+            Animal-Rebuilt/UnrealScript/*.uc
+            Animal-Rebuilt/UnrealScript/methos_name_map.json
+            Animal-InventoryWnd-XDAT/
+            Animal-Rebuilt/Reopened-Clean/*.uc
+            Animal-Rebuilt/Reopened-Edited/*.uc
+            Cross-Package-InventoryWnd/**/*.uc
+            Animal-Rebuilt/InventoryWnd-Name-Probes/**
+          if-no-files-found: warn
+          retention-days: 14
+
+          if ([regex]::Matches($hennaText, $hennaPattern).Count -ne 1) { throw "Could not isolate Animal function37 declaration." }
+          $hennaText = [regex]::Replace($hennaText, $hennaPattern, 'function HandleAddHennaInfo(string string_2)', 1)
+          [IO.File]::WriteAllText($hennaFile, $hennaText, [Text.UTF8Encoding]::new($false))
+          $hennaOutput = Join-Path $probeRoot "InventoryWnd-HennaCandidate.u"
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $hennaSources $hennaOutput
+          if ($LASTEXITCODE -ne 0) { throw "Renaming function37 to HandleAddHennaInfo did not compile in isolation." }
+          Write-Host "PASS: INVENTORYWND_FUNCTION37_HANDLEADDHENNAINFO_COMPILES=true"
+
+          $addItemSources = Join-Path $probeRoot "AddItemCandidate"
+          Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $addItemSources -Recurse
+          $addItemFile = Join-Path $addItemSources "InventoryWnd.uc"
+          $addItemText = [IO.File]::ReadAllText($addItemFile)
+          $addItemPattern = '(?m)^function function30\(string string_2\)$'
+          if ([regex]::Matches($addItemText, $addItemPattern).Count -ne 1) { throw "Could not isolate Animal function30 declaration." }
+          $addItemText = [regex]::Replace($addItemText, $addItemPattern, 'function HandleAddItem(string string_2)', 1)
+          [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
+          $addItemOutput = Join-Path $probeRoot "InventoryWnd-AddItemCandidate.u"
+          $addItemLog = dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $addItemSources $addItemOutput 2>&1
+          $addItemExit = $LASTEXITCODE
+          $addItemLog | Out-File -FilePath (Join-Path $probeRoot "function30-HandleAddItem-compiler.log") -Encoding utf8
+          if ($addItemExit -eq 0) {
+            Write-Host "PASS: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=true"
+          } else {
+            Write-Host "INFO: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=false exit=$addItemExit"
+            $addItemLog | Select-String -Pattern 'already defined|duplicate|overload|HandleAddItem|error' | ForEach-Object { Write-Host $_.Line }
+          }
+
+      - name: Publish Animal U reconstruction and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-U-Reconstruction-Validation
+          path: |
+            Animal-Rebuilt/Interface-clean.u
+            Animal-Rebuilt/Interface-edited-test.u
+            Animal-Rebuilt/UnrealScript/*.uc
+            Animal-Rebuilt/UnrealScript/methos_name_map.json
+            Animal-InventoryWnd-XDAT/
+            Animal-Rebuilt/Reopened-Clean/*.uc
+            Animal-Rebuilt/Reopened-Edited/*.uc
+            Cross-Package-InventoryWnd/**/*.uc
+            Animal-Rebuilt/InventoryWnd-Name-Probes/**
+          if-no-files-found: warn
+          retention-days: 14
+
+          if ([regex]::Matches($addItemText, $addItemPattern).Count -ne 1) { throw "Could not isolate Animal function30 declaration." }
+          $addItemText = [regex]::Replace($addItemText, $addItemPattern, 'function HandleAddItem(string string_2)', 1)
+          [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
+          $addItemOutput = Join-Path $probeRoot "InventoryWnd-AddItemCandidate.u"
+          $addItemLog = dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $addItemSources $addItemOutput 2>&1
+          $addItemExit = $LASTEXITCODE
+          $addItemLog | Out-File -FilePath (Join-Path $probeRoot "function30-HandleAddItem-compiler.log") -Encoding utf8
+          if ($addItemExit -eq 0) {
+            Write-Host "PASS: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=true"
+          } else {
+            Write-Host "INFO: INVENTORYWND_FUNCTION30_HANDLEADDITEM_OVERLOAD_COMPILES=false exit=$addItemExit"
+            $addItemLog | Select-String -Pattern 'already defined|duplicate|overload|HandleAddItem|error' | ForEach-Object { Write-Host $_.Line }
+          }
+
+      - name: Publish Animal U reconstruction and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Animal-U-Reconstruction-Validation
+          path: |
+            Animal-Rebuilt/Interface-clean.u
+            Animal-Rebuilt/Interface-edited-test.u
+            Animal-Rebuilt/UnrealScript/*.uc
+            Animal-Rebuilt/UnrealScript/methos_name_map.json
+            Animal-InventoryWnd-XDAT/
+            Animal-Rebuilt/Reopened-Clean/*.uc
+            Animal-Rebuilt/Reopened-Edited/*.uc
+            Cross-Package-InventoryWnd/**/*.uc
+            Animal-Rebuilt/InventoryWnd-Name-Probes/**
+          if-no-files-found: warn
+          retention-days: 14
+
           if ([regex]::Matches($hennaText, $hennaPattern).Count -ne 1) { throw "Could not isolate Animal function37 declaration." }
           $hennaText = [regex]::Replace($hennaText, $hennaPattern, 'function HandleAddHennaInfo(string string_2)', 1)
           [IO.File]::WriteAllText($hennaFile, $hennaText, [Text.UTF8Encoding]::new($false))
