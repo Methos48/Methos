@@ -79,3 +79,36 @@ Corrección del estado anterior: los binarios sí están versionados en el repos
 - Ejecutar la prueba controlada de recompilación y reprotección; no se considera terminada por el mero hecho de que existan los binarios en GitHub.
 
 Los originales versionados se mantienen inmutables. No se modificó ningún binario en esta pasada.
+
+
+## Auditoría del pipeline disponible en Methos (2026-11-14)
+
+Se revisaron los componentes existentes antes de intentar transformar el paquete:
+
+- `src/Methos.Engine/UnrealPackageDecompiler.cs`: usa UELib para abrir paquetes UE y exportar objetos de clase a fuentes; conserva un mapa de nombres saneados y aplica reparaciones controladas al código decompilado.
+- `src/Methos.Engine/UnrealScriptCompilerPipeline.cs`: permite compilar cuerpos de función limitados mediante el generador de bytecode actual, reconstruye el paquete y comprueba que el bytecode insertado coincide con el generado. **No equivale todavía a recompilar sin restricciones una interfaz completa de Interlude.**
+- `reference-data/ucc-runtime/System/Compilar.ps1`: ejecuta UCC en una carpeta de prueba `Interlude\\System`, valida el paquete producido y copia el resultado a `Testar\\system`. Es un arnés de prueba genérico; no está configurado por sí solo para el paquete L2Sudamerica.
+- `reference-data/ucc-runtime/System/ValidatePackage.ps1`: comprueba cabecera, tablas de nombres y exports, offsets y nombres de exports públicos.
+- `tools/xdat/README.md`: el módulo XDAT documenta soporte canónico para reconstrucción ct0 y pruebas round-trip; los protocolos cifrados se mantienen separados y un protocolo desconocido debe detener el proceso sin alterar el original.
+
+### Intento de acceso a los binarios
+
+Los dos blobs están presentes en GitHub y sus tamaños/SHA Git quedaron registrados. La lectura binaria directa del conector GitHub falla al intentar decodificar el contenido como UTF-8; por ello no fue posible materializarlos en este entorno para calcular SHA-256 ni ejecutar el decompilador/UCC. No se ha alterado ninguno de los blobs.
+
+### Conclusión técnica de esta pasada
+
+El repositorio ya contiene piezas útiles para descompilar, compilar bytecode de funciones concretas, reconstruir paquetes y validar estructuras. No hay evidencia suficiente para afirmar que el pipeline completo de recompilación y reprotección de L2Sudamerica esté cerrado. Antes de una prueba real hay que materializar los dos binarios y determinar la protección efectiva de cada uno; luego se debe probar el UCC/runtime contra el paquete exacto, en una copia de trabajo aislada.
+
+
+## Recuperación binaria desde GitHub — 2026-11-14 (prueba adicional)
+
+Se confirmó una vía de lectura que evita el error UTF-8 de `fetch_blob`: el endpoint de contenidos del repositorio permite solicitar `encoding=base64` mediante `fetch_file`. La lectura respondió correctamente para ambos originales y devolvió los mismos Git blob SHA ya registrados:
+
+| Archivo | Git blob SHA | Longitud Base64 recibida |
+|---|---|---:|
+| `reference-data/packages/l2sudamerica/Interface.u` | `5f3943d7faf7b85386873524fe2f664e28867549` | 1,338,284 caracteres |
+| `reference-data/packages/l2sudamerica/interface.xdat` | `93bc3ceb3fd5999da3aaa98e5b18d3607422686a` | 1,274,742 caracteres |
+
+La cabecera Base64 de ambos empieza por `/+36zgE`, consistente con que se recibieron datos binarios y no texto fuente. Esto confirma que GitHub entrega los contenidos íntegros en Base64 a través del conector. Sin embargo, la respuesta de esa herramienta no crea un archivo local ni entrega un identificador de archivo materializable; por ello todavía no se han decodificado los bytes en el entorno de trabajo, calculado SHA-256, ni ejecutado el decompilador/UCC/XDAT sobre estos dos binarios. No se modificó ningún original del repositorio.
+
+**Siguiente bloqueo técnico:** transferir esa respuesta Base64 a un archivo binario local de forma verificable. No se debe declarar iniciada la descompilación hasta disponer de los archivos locales y comprobar sus hashes.
