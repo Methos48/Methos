@@ -542,3 +542,15 @@ La cifra local de 68/72 registrada arriba corresponde a comparar el archivo Anim
 - `GetCurrentTab`: retorno final restaurado a `return None;`.
 
 Por tanto, la comparación automatizada confirma identidad total Animal–Berserker antes de las correcciones de compatibilidad; las cuatro diferencias posteriores son cambios controlados del proceso de reconstrucción, no diferencias originales entre esos dos paquetes. Berserker no aporta nombres alternativos para las funciones anónimas porque conserva los mismos 15 identificadores anónimos.
+
+## Vigésima octava pasada: referencias externas en Berserker (2026-11-14)
+
+Se recorrieron las 159 clases UnrealScript de Berserker extraídas en el artifact `14103300541`, buscando llamadas a los identificadores anónimos de `InventoryWnd` fuera de su propia declaración.
+
+Resultado:
+- `function14`, `function26`, `function44` y `function47`: cero llamadas en las 159 clases.
+- `function30`, `function37`, `function31`, `function32`, `function2`, `function13`, `function46` y `function3`: sus referencias aparecen únicamente en `InventoryWnd.uc`, en las mismas rutas internas observadas en Animal.
+- `function48`: seis llamadas, todas dentro de `InventoryWnd.uc`; pertenecen al bloque posterior al retorno inicial de `function3`.
+- No hay referencias a estos identificadores desde las otras 158 clases de Berserker.
+
+Esto replica la ausencia de referencias externas ya observada en Animal y reduce la posibilidad de que las funciones aisladas tengan consumidores textuales en otra clase de esa variante. No demuestra que el runtime no pueda invocarlas por callbacks/reflexión; por eso se conservan todas las funciones. No se cambió el código.
