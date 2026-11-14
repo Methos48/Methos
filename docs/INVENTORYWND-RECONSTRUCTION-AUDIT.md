@@ -387,3 +387,18 @@ La documentación técnica existente `docs/STEP26_NPKSCRYPT_DECRYPTION_PATH.md` 
 Se ajustó el workflow para reconocer `FFEDFACE`, registrar el tipo de protección y omitir la descompilación UELib en crudo para ese paquete. El original se conserva intacto. El análisis de L2Sudamérica queda pendiente de completar el camino de claves NPKscrypt y verificar una decodificación/recodificación exacta antes de comparar su `InventoryWnd`.
 
 **Estado cruzado actualizado:** Berserker es una referencia de la misma familia y confirma el código anónimo, Silent Dark es una variante distinta útil solo como pista, y L2Sudamérica está protegido por NPKscrypt con la inicialización de claves aún sin resolver. No se modificó la fuente Animal ni el comportamiento del juego.
+
+## Decimoctava pasada: nueva evidencia para function37 (2026-11-14)
+
+La comparación semántica detallada con Silent Dark elevó la confianza del candidato para `function37(string)`:
+
+- En Animal, `OnEvent` despacha el evento 2630 a `function37(param)`.
+- En Silent Dark, el mismo evento 2630 despacha a `HandleAddHennaInfo(param)`.
+- Ambas funciones reciben un `string` y su cuerpo efectivo es `UpdateHennaInfo(); return;`. Silent Dark contiene un segundo `return;` redundante al final.
+- La referencia UCC Interlude también ofrece `HandleAddHennaInfo(string)` para la ruta de alta de henna/evento 2630, según la comparación previa.
+
+La coincidencia de evento, firma y operación en dos referencias distintas hace que `HandleAddHennaInfo(string)` sea ahora un candidato de alta confianza para el nombre original de Animal `function37`. Aun así, Silent Dark no es el mismo paquete AnimalGame y Berserker conserva el identificador anónimo; por la regla de reconstrucción estricta, se documenta el candidato pero no se renombra la fuente hasta disponer de evidencia del mismo build.
+
+También se volvió a confirmar que Animal `function26(ItemInfo)` y `IsArrow(ItemInfo)` son duplicados funcionales, mientras que Silent Dark conserva solo la versión nombrada `IsArrow`. Esto no demuestra que el identificador original de `function26` fuese `IsArrow`, ya que Animal mantiene ambas declaraciones.
+
+No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
