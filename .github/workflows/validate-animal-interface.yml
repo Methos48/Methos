@@ -779,7 +779,7 @@ jobs:
           Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $hennaSources -Recurse
           $hennaFile = Join-Path $hennaSources "InventoryWnd.uc"
           $hennaText = [IO.File]::ReadAllText($hennaFile)
-          $hennaPattern = '(?m)^function function37\(string string_2\)\r?
+          $hennaPattern = '(?m)^function function37\(string string_2\)\r?$'
           if ([regex]::Matches($hennaText, $hennaPattern).Count -ne 1) { throw "Could not isolate Animal function37 declaration." }
           $hennaText = [regex]::Replace($hennaText, $hennaPattern, 'function HandleAddHennaInfo(string string_2)', 1)
           [IO.File]::WriteAllText($hennaFile, $hennaText, [Text.UTF8Encoding]::new($false))
@@ -792,7 +792,7 @@ jobs:
           Copy-Item -LiteralPath $env:ANIMAL_SOURCES -Destination $addItemSources -Recurse
           $addItemFile = Join-Path $addItemSources "InventoryWnd.uc"
           $addItemText = [IO.File]::ReadAllText($addItemFile)
-          $addItemPattern = '(?m)^function function30\(string string_2\)\r?
+          $addItemPattern = '(?m)^function function30\(string string_2\)\r?$'
           if ([regex]::Matches($addItemText, $addItemPattern).Count -ne 1) { throw "Could not isolate Animal function30 declaration." }
           $addItemText = [regex]::Replace($addItemText, $addItemPattern, 'function HandleAddItem(string string_2)', 1)
           [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
