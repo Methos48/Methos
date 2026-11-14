@@ -225,3 +225,8 @@ Se mantienen tres líneas simultáneas, aisladas por paquete:
 3. **InventoryWnd:** continuar la auditoría de L2Sudamerica en paralelo con la investigación separada de AnimalGame. Nunca sustituir fuentes de un cliente por las del otro.
 
 La recompilación UCC de una versión modificada y su carga real en cliente siguen siendo fases pendientes. Los originales permanecen inmutables; cada muestra y derivado tendrá su propio hash y registro.
+
+
+## Ampliación de alcance: Chat y mensajes del sistema — 2026-11-14
+
+Se incorporó una auditoría separada para `ChatWnd`, `SystemMsgWnd` y `CustomDamageWnd`: [L2SUDAMERICA-CHAT-SYSTEM-AUDIT.md](L2SUDAMERICA-CHAT-SYSTEM-AUDIT.md). Se verificaron sus fuentes UnrealScript y XML del artefacto del workflow 43579091099. La lista de mensajes del sistema es `SystemMsgWnd.SystemMsgList`, conectada directamente desde `ChatWnd`; los números flotantes de daño pertenecen a `CustomDamageWnd`, un componente distinto. No se han modificado archivos del cliente.
