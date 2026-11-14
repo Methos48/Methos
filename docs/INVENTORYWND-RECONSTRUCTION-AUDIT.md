@@ -1031,3 +1031,33 @@ Esto demuestra que el artefacto incluye un paquete binario separado que incorpor
 ### Conclusión
 
 La validación de Henna avanza de «candidato fuente no compilado» a **«paquete candidato compilado/serializado presente, sin prueba de runtime»**. Se mantiene 'Interface-clean.u' como referencia y no se sustituye el paquete de producción. El candidato AddItem sigue sin un paquete binario propio identificable en el artefacto.
+
+
+## Cuadragésima séptima pasada: comparación binaria de paquetes y límite de atribución (2026-11-14)
+
+Se descargó nuevamente el artefacto de validación 14102532523 y se compararon byte a byte los tres paquetes Unreal incluidos. El objetivo fue comprobar si el paquete HennaCandidate constituye una modificación binaria pequeña y aislada respecto del paquete limpio.
+
+### Resultados reproducibles
+
+| Comparación | Bytes distintos en la zona común | Tramos de diferencias | Diferencia de tamaño |
+|---|---:|---:|---:|
+| Interface-clean.u vs Interface-edited-test.u | 3,020,362 | 138,420 | 144 bytes |
+| Interface-clean.u vs InventoryWnd-HennaCandidate.u | 3,068,536 | 135,457 | 24 bytes |
+
+Hashes SHA-256 verificados:
+- Interface-clean.u: `b9a443ac57cc39e9099e2ab47683c95070852379ec4a178b9fead8c79e17a255`
+- Interface-edited-test.u: `9096389fc5457e97bc8d4b67312781b4965c0fa272cd4bf3fb8d4360bf6ce756`
+- InventoryWnd-HennaCandidate.u: `b4b99ab61d90241e68c9c8afcf86edfc11e6af8694f4ab992967493652cbe1eb`
+
+### Interpretación
+
+- En el paquete HennaCandidate se observa el nombre `HandleAddHennaInfo` y ya no aparece `function37`; el paquete limpio conserva `function37`.
+- Sin embargo, el cambio binario no está limitado a los bytes de ese nombre: hay más de 3 millones de bytes distintos respecto del paquete limpio.
+- La comparación clean/edited también presenta diferencias masivas de bytes. Esto indica que una reconstrucción/serialización del paquete puede alterar muchas regiones aunque el cambio fuente sea pequeño.
+- Por ello, no es válido afirmar que el paquete HennaCandidate contiene únicamente el renombrado Henna ni atribuir todos los cambios binarios a esa función. Las cadenas visibles prueban la presencia/ausencia de nombres, no la integridad de las tablas de exportación, bytecode, referencias ni el comportamiento.
+
+### Decisión de seguridad
+
+Se corrige el grado de confianza de la pasada 46: el artefacto contiene un paquete candidato serializado con el nuevo nombre, pero **no hay validación binaria diferencial aislada ni prueba de carga/runtime**. Se mantiene como candidato experimental. No sustituir `Interface-clean.u` ni desplegar HennaCandidate en el cliente.
+
+Próximo paso: conseguir un parser de paquetes Unreal compatible con esta versión o un volcado de exports/bytecode para comparar la clase InventoryWnd y confirmar que el cambio está limitado a la función esperada.
