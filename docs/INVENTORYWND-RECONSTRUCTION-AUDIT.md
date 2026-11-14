@@ -832,3 +832,28 @@ El fuente asigna handles a `CraftingItem` y `SuppliesItem`, pero no a `SearchIte
 `SearchItem` es un **duplicado estructural exacto de CraftingItem con nombre distinto**, añadido como último hermano tras los controles de búsqueda. Se registra esta relación con alta confianza. Su propósito funcional sigue sin demostrarse.
 
 No se cambió el destino de `FilterInventory()`, no se enlazó el control y no se eliminó ningún nodo. El próximo paso será revisar las variantes de InventoryWnd disponibles en el repositorio y los metadatos de origen para establecer si `SearchItem` aparece en otras generaciones o si solo existe en este XDAT de AnimalGame.
+
+
+## Cuadragésima pasada: contraste con InventoryWnd de Berserker (2026-11-14)
+
+Se revisó el informe de comparación cruzada incluido en el artefacto de reconstrucción, que compara `Animal-Rebuilt/UnrealScript/InventoryWnd.uc` con la variante `Cross-Package-InventoryWnd/berserker/InventoryWnd.uc`.
+
+### Resultado verificable
+
+- El análisis registra 72 funciones en Animal y 72 en Berserker.
+- Las 72 funciones con el mismo nombre tienen cuerpos idénticos después de normalizar comentarios y espacios en blanco.
+- La coincidencia incluye `OnLoad()`, `InitHandle()`, `OnKeyUp()`, `CopyInventory()`, `RestoreInventory()` y `FilterInventory()`.
+- Los hashes SHA-256 de los cuerpos de `InitHandle()` coinciden exactamente: `740126d1ba690e96855d70b2d23f37e629b13e143efb02ba638332eda6fee74d`.
+- Por tanto, la ausencia de un handle para `SearchItem` y la ruta de búsqueda que actualiza `InventoryItem` no parecen ser una peculiaridad introducida por la reconstrucción Animal del script: la misma lógica está en la variante Berserker comparada.
+
+### Límite de esta evidencia
+
+Este contraste es entre fuentes UnrealScript, no entre XDAT. No demuestra que el XDAT Berserker tenga el mismo nodo `SearchItem`, ni permite determinar qué versión de interfaz acompaña a cada fuente. Tampoco valida el runtime de los handles ausentes.
+
+El informe de comparación usa hashes de cuerpos normalizados; no se ha afirmado igualdad binaria de archivos completos ni identidad de los paquetes compilados.
+
+### Conclusión
+
+La hipótesis de que `SearchItem` es un nodo residual/no utilizado por la lógica UnrealScript gana apoyo: la variante Berserker comparte íntegramente el flujo de búsqueda Animal, sin que `SearchItem` participe en él. Aun así, su función externa o su presencia en otros XDAT sigue abierta.
+
+Se mantiene el XDAT sin cambios. El siguiente paso será examinar la variante Silent Dark y separar diferencias reales de lógica frente a diferencias de nombres recuperados automáticamente.
