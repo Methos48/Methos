@@ -1529,3 +1529,6 @@ Se aisló la lectura de rutas `case N: Handler(...)` en una función compartida 
 ### Validación
 
 Los cambios están subidos y documentados. No se ha observado todavía una ejecución local o CI de la suite; no se declara aprobada. No se alteraron los paquetes originales ni el código de la interfaz.
+
+
+Corrección de revisión: la primera escritura del patrón de rutas dejó escapes duplicados en la expresión regular. Se detectó al releer el archivo y se corrigió en `1a36412`; el patrón ahora contiene los escapes regex normales. La prueba cubre el caso, pero su ejecución sigue pendiente.
