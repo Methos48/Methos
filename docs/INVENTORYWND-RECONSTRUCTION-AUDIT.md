@@ -1591,3 +1591,26 @@ En la verificación posterior detecté que los literales de bytes se habían gua
 Commits de corrección:
 - `08520d5`: decodificador.
 - `6d066aa`: fixtures de prueba.
+
+
+## Sexagésima novena pasada: conteo seguro de parámetros (2026-11-14)
+
+Los dos comparadores contaban parámetros separando por cada coma. Eso daba resultados incorrectos cuando una coma pertenecía a una llamada anidada o a un literal de texto, y podía alterar el desempate de candidatos similares.
+
+### Corrección aplicada
+
+- Añadí `count_parameters` al módulo compartido.
+- El conteo ignora comas dentro de paréntesis, corchetes, llaves y cadenas entre comillas.
+- Ambos comparadores utilizan ahora la misma función; eliminé el conteo local duplicado.
+- Añadí pruebas para listas vacías, parámetros simples, comas en cadenas, llamadas anidadas y comillas escapadas.
+
+Commits:
+- `71ffa71`: función compartida inicial.
+- `ed40b07`: corrección de escape de comillas.
+- `f444daa`: integración en comparador de paquetes.
+- `dd1458c`: integración en comparador de referencia.
+- `3d209dc` y `1f7ca71`: pruebas y corrección del fixture.
+
+### Estado
+
+Cambios subidos. Los paquetes originales no se modificaron. No se ha ejecutado localmente la suite ni se ha confirmado GitHub Actions.
