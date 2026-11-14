@@ -714,3 +714,25 @@ El nodo `Frame` y el nodo `Tex` sí participan en las referencias de layout del 
 ### Conclusión y siguiente prueba
 
 El esqueleto de slots de equipo y los paneles principales está alineado con el XDAT. La zona de botones y layout muestra diferencias de nombres concretas que no deben resolverse por intuición. La siguiente prueba segura será rastrear los nombres ausentes y los nodos no enlazados en las demás fuentes del paquete Animal, además de revisar las definiciones de ventana y los aliases del API UI. No se modificó ningún archivo de producción ni el comportamiento del cliente.
+
+
+## Trigésima sexta pasada: búsqueda global de los controles desajustados (2026-11-14)
+
+Se amplió el cruce anterior a las 160 clases UnrealScript exportadas del paquete AnimalGame y se buscaron tanto los nombres simples como las rutas completas `InventoryWnd.<Control>`.
+
+Resultados:
+- `InventoryWnd.EnchantButton`: una sola referencia en todo el paquete, dentro de `InventoryWnd.InitHandle()`.
+- `InventoryWnd.FastDelete`: una sola referencia de ruta completa; dos apariciones del nombre simple, ambas en `InventoryWnd.uc` (handle y tooltip).
+- `InventoryWnd.RefineButton`: una sola referencia de ruta completa dentro de `InventoryWnd.InitHandle()`; las demás apariciones de `RefineButton` pertenecen a las ventanas `RefineryWnd` y `UnrefineryWnd`, no a InventoryWnd.
+- `InventoryWnd.BtnExpand`: dos referencias de ruta completa, ambas dentro del bloque de layout inactivo de `function3`. Las otras apariciones de `BtnExpand` en el paquete pertenecen a `SSQMainBoard`, `QuestTreeWnd` y `RecipeTreeWnd`; no prueban que exista el control de InventoryWnd.
+- `InventoryWnd.SearchItem`: cero referencias en las 160 clases.
+- `InventoryWnd.CrystallizeButton`, `InventoryWnd.TrashButton` e `InventoryWnd.InventoryTab`: sus referencias encontradas pertenecen a `InventoryWnd.uc`; no hay consumidores externos que expliquen los controles ausentes.
+- `InventoryWnd.CancelBar`: una sola referencia, en el callback de botón que restaura el inventario.
+
+### Interpretación
+
+La búsqueda global confirma que los nombres ausentes no están siendo resueltos desde otra clase UnrealScript del mismo paquete. En particular, no hay una clase auxiliar que cree o enlace `EnchantButton`, `FastDelete`, `RefineButton` o `BtnExpand` bajo la ruta `InventoryWnd.*`. Esto refuerza la hipótesis de referencias heredadas o de una discrepancia entre la fuente exportada y el XDAT, pero no permite concluir si los handles nulos causan un fallo: esa respuesta depende del comportamiento del runtime UI y de la versión exacta de sus APIs.
+
+`SearchItem` es el único control interactivo de tipo ItemWindow del XDAT que no tiene ninguna referencia textual encontrada en las 160 clases. Se mantiene como nodo no explicado; no se elimina ni se asigna a una función por semejanza.
+
+La siguiente comprobación será revisar las firmas y comportamiento de `GetHandle`, `ButtonHandle`, `SetFocus` y el registro de callbacks en las fuentes/API disponibles del mismo paquete, para separar referencias obsoletas inocuas de posibles incompatibilidades reales. No se modificó ningún control ni código de producción.
