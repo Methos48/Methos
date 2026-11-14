@@ -249,3 +249,25 @@ La pasada estructural del bytecode original ya recupera los campos `CodeOffset` 
 - `ReturnToken` final: posición `0x0554`.
 
 El primer `ReturnToken` permanece en posición `0x0000`. Estos destinos permiten seguir el grafo interno del bloque posterior si hace falta, pero no alteran la conclusión de alcanzabilidad desde la entrada: el retorno inicial termina la función antes de llegar a la condición en `0x008E`. Los saltos se conservan como evidencia estructural, no como permiso para reactivar la rutina.
+
+## Décima pasada: comparación automática de funciones anónimas con el UCC Interlude (2026-11-14)
+
+Se añadió `tools/analysis/compare_animal_inventorywnd_reference.py`. El workflow compara tokens de los cuerpos de las 15 funciones anónimas/recuperadas de Animal contra las 52 funciones de `InventoryWnd.uc` del kit UCC Interlude. El script admite el archivo de referencia UTF-16 y guarda `Animal-InventoryWnd-XDAT/reference-function-matches.json` en el artefacto. La ejecución corregida terminó correctamente y la reconstrucción limpia y la prueba de ida/vuelta también pasaron.
+
+### Resultados útiles (similitud de tokens; solo candidatos)
+
+| Función Animal | Mejor candidato de referencia | Similitud | Interpretación segura |
+|---|---|---:|---|
+| `function37(string)` | `HandleAddHennaInfo(string)` y `HandleUpdateHennaInfo(string)` | 1.0000 | Los cuerpos coinciden exactamente; el evento 2630 favorece `HandleAddHennaInfo`. Candidato de alta confianza, no renombrado. |
+| `function44(int)` | `IsLOrREar(int)` y `IsLOrRFinger(int)` | 0.6607 ambos | Empate; no permite distinguir qué pareja de accesorios compara. Mantener anónima. |
+| `function26(ItemInfo)` | `IsArrow(ItemInfo)` | 0.6154 | Refuerza que es duplicado de `IsArrow`; sin llamada interna encontrada. Mantenerla. |
+| `MethosRecoveredName_1105(ItemInfo)` | `RecoveredName_1266(ItemInfo)` | 0.6689 | Parecido estructural con un helper también recuperado/anónimo; no revela nombre original. |
+| `function30(string)` | `HandleAddItem(string)` | 0.3659 | Coincidencia débil y existe `HandleAddItem(ItemInfo)` en Animal; no renombrar. |
+| `function31(ItemInfo)` | `IsBowOrFishingRod(ItemInfo)` | 0.4478 | No corresponde a la lógica real (ItemType 0/1/2); descartar como nombre candidato. |
+| `function32(ItemInfo)` | `IsBowOrFishingRod(ItemInfo)` | 0.5455 | Coincidencia superficial; no corresponde al filtro ItemSubType 5/6. Descartar. |
+
+El resto de las puntuaciones máximas fueron bajas y no ofrecen identificación fiable. En particular, `function2`, `function13`, `function46`, `function47`, `function3` y `function48` no reciben nombres por similitud automática. La métrica no es prueba semántica: no se usan estos resultados para reemplazar identificadores.
+
+### Corrección metodológica
+
+La comparación sirve para descubrir candidatos, no para restaurar nombres automáticamente. Los resultados exactos o altos se validan contra evento, firma, cuerpo, llamadas y referencias del paquete Animal. Se mantiene la regla de no renombrar ninguna función sin evidencia directa del build AnimalGame.
