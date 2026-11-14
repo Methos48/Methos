@@ -83,3 +83,20 @@ Se revisaron todos los usos de ItemSubType en las 160 clases extraídas y, en pa
 - function32(ItemInfo): clasificador de ItemSubType 5/6 destinado al control CraftingItem; nombre original y significado del subtipo 6 pendientes.
 
 No se modificó código ni comportamiento del cliente. Esta pasada amplía la evidencia y evita asignar un significado inventado al subtipo 6.
+
+
+## Cuarta pasada: referencias y código inalcanzable (2026-11-14)
+
+Se inspeccionaron las referencias textuales y los cuerpos completos de varios identificadores todavía anónimos en el `InventoryWnd.uc` reabierto:
+
+- `function14(ItemInfo)`: solo aparece su declaración; el cuerpo está vacío y no se encontró ninguna llamada dentro de la clase. No hay base para asignarle un nombre funcional. Mantenerla sin cambios hasta comprobar referencias externas/bytecode.
+- `function26(ItemInfo)`: solo aparece su declaración y devuelve `bArrow`. Existe `IsArrow(ItemInfo)` con el mismo resultado. La duplicación está confirmada dentro de la clase, pero no hay llamadas textuales a `function26`; no eliminarla sin revisar referencias compiladas externas.
+- `function44(int)`: solo aparece su declaración y no tiene llamadas textuales dentro de `InventoryWnd`. Compara el ID recibido con los dos primeros IDs de `GetAccessoryServerID` y devuelve -1, 1 o 0. Los helpers nombrados `IsLOrREar` y `IsLOrRFinger` consultan otros pares de IDs; no hay evidencia suficiente para afirmar que `function44` sea uno de ellos.
+- `MethosRecoveredName_444()`: tiene una llamada desde `HandleGamingStateEnter`. El cuerpo ejecuta `vvCanUseSetEquipment = true` y retorna inmediatamente. Después del `return` existe código que obtiene `UserInfo` y compara el nombre del jugador con una lista de siete nombres, pero ese bloque es inalcanzable en el flujo de control extraído. No debe describirse como una whitelist activa: el comportamiento ejecutable observado es habilitar `vvCanUseSetEquipment` sin condición.
+- `MethosRecoveredName_1105(ItemInfo)`: solo se encontró su declaración en esta clase; no hay llamada textual interna. Su cuerpo, si `vvCanUseSetEquipment` está activo, recorre las piezas de set de `GetSetItemIDList` y solicita usar las piezas faltantes que encuentra en el inventario. Esto confirma su función descriptiva, pero no su nombre original ni que el método se invoque en este build por una ruta externa.
+
+### Consecuencia para la reconstrucción
+
+La falta de llamadas internas no prueba que una función sea inútil: puede ser invocada desde otra clase, por reflexión/delegados o por bytecode no representado como llamada textual. Por eso no se borraron funciones duplicadas o sin referencias. También se registra el `return` temprano de `MethosRecoveredName_444` como un hallazgo del fuente extraído, no como una corrección propuesta.
+
+No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
