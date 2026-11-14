@@ -1481,3 +1481,25 @@ Cambios:
 Commits: `da3fec0` y `1be64fb`.
 
 Pendiente: ejecutar/inspeccionar CI y contrastar resultados reales de extracción de AnimalGame. No se declaran nombres reconstruidos ni equivalencias funcionales sin evidencia de las fuentes comparadas.
+
+
+## Sexagésima quinta pasada: exclusión de literales al detectar funciones y eventos (2026-11-14)
+
+La revisión del extractor encontró que el patrón de declaraciones todavía se ejecutaba sobre el texto con comentarios enmascarados, pero conservando literales. Una cadena multilínea que contuviera una línea con aspecto de declaración `function` podía crear una función fantasma. El mismo riesgo afectaba a la búsqueda de rutas `case N: Handler(...)` dentro de `OnEvent`.
+
+### Corrección aplicada
+
+- Se añadió `mask_code`, que enmascara comentarios y literales de texto sin cambiar offsets ni saltos de línea.
+- `extract_functions` localiza declaraciones sobre esa vista de código, pero sigue usando el texto original para recuperar firmas y cuerpos.
+- `event_routes` analiza una vista sin comentarios ni literales, evitando rutas de evento falsas dentro de strings.
+- Se agregó una prueba con una cadena multilínea que contiene una declaración falsa y una ruta de evento falsa; solo debe extraerse la función real.
+
+### Commits
+
+- `e89730d`: vista de código para detección de declaraciones.
+- `ec7765e`: prueba de declaración falsa dentro de literal multilínea.
+- `407b1b8`: protección de extracción de rutas de eventos.
+
+### Validación y límites
+
+Los cambios quedaron registrados en el repositorio. En esta pasada no se ejecutó la suite local ni se observó un resultado de GitHub Actions; por tanto, la corrección está implementada y cubierta por una prueba añadida, pero no se declara CI aprobado. No se modificaron los paquetes binarios ni el código de la interfaz.
