@@ -221,3 +221,8 @@ Estas fichas están en:
 ## 10. Auditoría de mascotas, invocaciones, pociones y shots
 
 Nueva ficha técnica: [L2SUDAMERICA-PET-SUMMON-POTION-AUDIT.md](L2SUDAMERICA-PET-SUMMON-POTION-AUDIT.md). Incluye AutoPotionsWnd, AutoPotionOptionWnd, PotionsConfigWnd, NPHRN_PotionsWnd, AutoShotItemWnd, PetWnd, PetStatusWnd, SummonedWnd y SummonedStatusWnd; documenta eventos, temporizadores, umbrales HP/MP/CP, ClassID observados, solicitudes de objetos y preguntas abiertas. La auditoría es estática y no implica compilación ni prueba en cliente.
+
+
+## 11. Auditoría de mapas, radar, misiones y navegación
+
+Nueva ficha: [L2SUDAMERICA-MAP-QUEST-NAVIGATION-AUDIT.md](L2SUDAMERICA-MAP-QUEST-NAVIGATION-AUDIT.md). Documenta MinimapWnd/Expand, MinimapControl, RadarMapWnd, RadarWnd, RadarContainerWnd, QuestTreeWnd, QuestListWnd, QuestBtnWnd, TownMapWnd, ZoneTitleWnd y GMQuestWnd; incluye geometría XDAT, eventos, APIs, vínculo QuestAPI↔minimapa, leyenda de zonas y preguntas abiertas. Análisis estático, sin modificaciones ni pruebas de carga.
