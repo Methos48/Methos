@@ -822,7 +822,6 @@ jobs:
           }
           $global:LASTEXITCODE = 0
           Write-Host "PASS: INVENTORYWND_NAME_CANDIDATE_PROBES_COMPLETED=true"
-          }
 
       - name: Publish Animal U reconstruction and diagnostics
         if: always()
