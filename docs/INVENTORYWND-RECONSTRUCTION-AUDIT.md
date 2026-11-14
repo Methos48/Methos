@@ -1553,3 +1553,28 @@ Commits:
 ### Estado
 
 Cambios subidos y documentados. No se ha ejecutado localmente la suite ni se ha confirmado GitHub Actions; por tanto, no se declara validación aprobada. Los paquetes binarios originales permanecen intactos.
+
+
+## Sexagésima octava pasada: decodificación estricta de fuentes (2026-11-14)
+
+Se detectó una inconsistencia entre los comparadores: uno decodificaba UTF-8 de forma estricta y el otro usaba `errors="replace"`. En archivos con bytes inválidos, este último podía insertar el carácter de reemplazo y continuar la comparación con texto alterado, produciendo evidencia engañosa.
+
+### Corrección aplicada
+
+- Centralicé la decodificación en `decode_source_bytes`.
+- Se reconocen BOM UTF-16 LE/BE y UTF-8.
+- UTF-8 sin BOM también se procesa de forma estricta.
+- Los dos comparadores utilizan ahora el mismo decodificador.
+- Los bytes inválidos provocan `UnicodeDecodeError`; no se sustituyen silenciosamente.
+- Añadí pruebas para UTF-8, UTF-8 con BOM, UTF-16 LE/BE y rechazo de bytes inválidos.
+
+Commits:
+- `42d6243`: decodificador compartido inicial.
+- `e83c9d4`: integración en comparador de referencia.
+- `60ec063`: integración en comparador de paquetes.
+- `a523ab3`: pruebas de decodificación.
+- `9359487` y `8fca369`: corrección de literales de bytes detectada durante revisión.
+
+### Estado
+
+Cambios subidos. La revisión del contenido confirmó que los comparadores delegan en el decodificador común. La suite y GitHub Actions aún no están confirmados. No se modificaron los paquetes originales.
