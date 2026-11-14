@@ -587,3 +587,17 @@ La evidencia de eventos eleva `HandleAddHennaInfo` a candidato muy sólido para 
 El run `43566703204` terminó **SUCCESS**: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43566703204). Artifact `Animal-U-Reconstruction-Validation`, ID `14103300541`.
 
 El JSON `Animal-InventoryWnd-XDAT/cross-package-function-matches.json` del artifact confirma `animal=72`, `berserker=72`, `silent_dark=53` y `same_name_exact=72` en la comparación previa a restauraciones. También conserva los candidatos y los indicadores de colisión para las 15 funciones anónimas. Las pruebas de compilación limpia, reapertura 160/160, edición real persistente y renombre temporal de `function37` volvieron a finalizar correctamente.
+
+## Trigésima pasada: correlación automática entre eventos y handlers (2026-11-14)
+
+Se amplió `compare_animal_inventorywnd_packages.py` para extraer automáticamente las rutas `case Event_ID` de `OnEvent` en Animal, Berserker y Silent Dark, y añadirlas al JSON de comparación.
+
+La prueba local con las fuentes extraídas muestra:
+- Animal y Berserker: evento 2600 → `function30`; evento 2630 → `function37`.
+- Silent Dark: evento 2600 → `HandleAddItem`; evento 2630 → `HandleAddHennaInfo`.
+- El candidato del evento 2600 tiene colisión con `HandleAddItem(ItemInfo)` existente en Animal.
+- El candidato del evento 2630 no tiene colisión en Animal.
+
+Esta ruta de eventos coincide también con la segunda referencia pública `kdo70/a1_l2j` y su `UIEventManager.uc`, que define 2600 como `EV_InventoryAddItem`, 2630 como `EV_InventoryAddHennaInfo` y 260 como `EV_UpdateHennaInfo`. Es la evidencia más fuerte hasta ahora para identificar `function37` como `HandleAddHennaInfo`, mientras que `function30` no puede tomar `HandleAddItem` por el conflicto de nombre.
+
+Se añadió la impresión de estas rutas al workflow para que el resultado quede visible en cada ejecución. Run `43567163467` pendiente. No se renombró ninguna función de producción.
