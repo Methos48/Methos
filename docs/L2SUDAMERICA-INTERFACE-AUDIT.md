@@ -79,3 +79,22 @@ Corrección del estado anterior: los binarios sí están versionados en el repos
 - Ejecutar la prueba controlada de recompilación y reprotección; no se considera terminada por el mero hecho de que existan los binarios en GitHub.
 
 Los originales versionados se mantienen inmutables. No se modificó ningún binario en esta pasada.
+
+
+## Auditoría del pipeline disponible en Methos (2026-11-14)
+
+Se revisaron los componentes existentes antes de intentar transformar el paquete:
+
+- `src/Methos.Engine/UnrealPackageDecompiler.cs`: usa UELib para abrir paquetes UE y exportar objetos de clase a fuentes; conserva un mapa de nombres saneados y aplica reparaciones controladas al código decompilado.
+- `src/Methos.Engine/UnrealScriptCompilerPipeline.cs`: permite compilar cuerpos de función limitados mediante el generador de bytecode actual, reconstruye el paquete y comprueba que el bytecode insertado coincide con el generado. **No equivale todavía a recompilar sin restricciones una interfaz completa de Interlude.**
+- `reference-data/ucc-runtime/System/Compilar.ps1`: ejecuta UCC en una carpeta de prueba `Interlude\\System`, valida el paquete producido y copia el resultado a `Testar\\system`. Es un arnés de prueba genérico; no está configurado por sí solo para el paquete L2Sudamerica.
+- `reference-data/ucc-runtime/System/ValidatePackage.ps1`: comprueba cabecera, tablas de nombres y exports, offsets y nombres de exports públicos.
+- `tools/xdat/README.md`: el módulo XDAT documenta soporte canónico para reconstrucción ct0 y pruebas round-trip; los protocolos cifrados se mantienen separados y un protocolo desconocido debe detener el proceso sin alterar el original.
+
+### Intento de acceso a los binarios
+
+Los dos blobs están presentes en GitHub y sus tamaños/SHA Git quedaron registrados. La lectura binaria directa del conector GitHub falla al intentar decodificar el contenido como UTF-8; por ello no fue posible materializarlos en este entorno para calcular SHA-256 ni ejecutar el decompilador/UCC. No se ha alterado ninguno de los blobs.
+
+### Conclusión técnica de esta pasada
+
+El repositorio ya contiene piezas útiles para descompilar, compilar bytecode de funciones concretas, reconstruir paquetes y validar estructuras. No hay evidencia suficiente para afirmar que el pipeline completo de recompilación y reprotección de L2Sudamerica esté cerrado. Antes de una prueba real hay que materializar los dos binarios y determinar la protección efectiva de cada uno; luego se debe probar el UCC/runtime contra el paquete exacto, en una copia de trabajo aislada.
