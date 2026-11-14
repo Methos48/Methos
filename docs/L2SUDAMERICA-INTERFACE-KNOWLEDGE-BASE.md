@@ -286,3 +286,6 @@ Addendum de jerarquía: el paquete exportado contiene dos derivadas directas de 
 
 
 Ampliación de SublimityItem: la comparación de firmas identificó cinco overrides candidatos en SublimityShortcutWnd y uno en SublimityShortcut. Se trazaron las rutas 630→_911→_730→_744, 631→_913→_729→_744 y 640→_909→_731→_345. Los flags UFunction y el bytecode siguen pendientes; los stubs exportados no prueban que el cliente original no ejecute lógica.
+
+
+Ampliación verificada de SublimityShortcutWnd: los cinco hooks candidatos (_735, _729, _730, _731 y _728) tienen cuerpos funcionales en la derivada. Se reconstruyó _744: actualiza las dos representaciones visuales del shortcut y cambia visibilidad de texturas; _345 valida panel 0–3 y página 0–9 y persiste Game/ShortcutPage_<panel>. El evento 640 cambia la página del panel 0. El hook 737 de SublimityShortcut, en cambio, sigue siendo stub en la fuente exportada. Véase Addendum D de la auditoría SublimityItem. Los flags UFunction/bytecode bruto siguen pendientes.
