@@ -966,3 +966,36 @@ El fuente base despacha el evento 2630 a `function37(param)`. El candidato `Henn
 - Fuente base: sigue siendo la referencia conservadora para preservar comportamiento.
 
 No se modificó producción ni se ha afirmado compatibilidad binaria. El próximo paso es verificar el soporte de sobrecarga y compilar los candidatos por separado con el compilador/runtime correcto, si está disponible.
+
+
+## Cuadragésima quinta pasada: verificación de llamadas y declaraciones en candidatos (2026-11-14)
+
+Se volvió al ZIP original y se inspeccionaron línea por línea las declaraciones y todas las llamadas de los dos candidatos, para separar el cambio de nombre de la función de la ruta real de evento.
+
+### AddItemCandidate
+
+- El evento 2600 llama a `HandleAddItem(param)`.
+- El archivo declara `HandleAddItem(string string_2)`, cuyo cuerpo coincide con el cuerpo original de `function30(string string_2)`: convierte el parámetro con `ParamToItemInfo`, clasifica equipo/quest/ítem y actualiza las ventanas correspondientes.
+- El filtro conserva `HandleAddItem(info_4)` con parámetro `ItemInfo`; la llamada del filtro sigue en `if(HandleAddItem(info_4))`.
+- Por tanto, las dos llamadas tienen argumentos de tipos distintos y ambas declaraciones existen en el candidato. La ruta de evento 2600 ya no apunta a la función anónima y el predicado del filtro no fue reemplazado.
+
+### HennaCandidate
+
+- El evento 2630 llama a `HandleAddHennaInfo(param)`.
+- El archivo declara `HandleAddHennaInfo(string string_2)`; su cuerpo coincide con el wrapper original `function37(string string_2)` y llama a `UpdateHennaInfo()`.
+- El evento 260 sigue usando `HandleUpdateHennaInfo(param)`; esa función no se renombró ni se redirigió.
+- El cambio se limita al wrapper asociado al evento 2630.
+
+### Independencia y límites de los candidatos
+
+Los dos candidatos son pruebas separadas: `AddItemCandidate` no incorpora el renombrado Henna; `HennaCandidate` no incorpora el renombrado AddItem. Esto evita atribuirles una integración que todavía no existe.
+
+El ZIP no contiene compilador, ejecutable, DLL ni script de build. No fue posible compilar ni probar sobre el cliente. La sintaxis de sobrecarga con `string` e `ItemInfo` está presente en el candidato, pero su aceptación por el compilador concreto permanece sin validar.
+
+### Conclusión
+
+La trazabilidad textual de los dos candidatos queda confirmada:
+- AddItem: evento 2600 → wrapper string renombrado; filtro → predicado ItemInfo conservado.
+- Henna: evento 2630 → wrapper string renombrado; evento 260 → handler original conservado.
+
+No se combinaron aún ambos cambios ni se modificó producción. El siguiente paso es revisar el inventario del repositorio para localizar el compilador/entorno compatible o una prueba previa de sobrecarga en el mismo dialecto de UnrealScript.
