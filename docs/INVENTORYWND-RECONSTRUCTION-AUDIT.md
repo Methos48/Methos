@@ -1445,3 +1445,22 @@ Al revisar las herramientas que comparan funciones anónimas de `InventoryWnd` e
 ### Estado
 
 La corrección y las pruebas quedaron registradas, pero todavía no se afirma que GitHub Actions las haya ejecutado correctamente. Las coincidencias de nombres o similitud siguen siendo indicios, no prueba de identidad funcional. No se modificaron los paquetes `.u` originales.
+
+
+## Sexagésima tercera pasada: tokenización sin alterar literales de texto (2026-11-14)
+
+La revisión posterior del extractor encontró un segundo riesgo independiente: aunque la extracción de funciones ya ignoraba comentarios, las dos herramientas de comparación todavía eliminaban comentarios mediante una sustitución regex aplicada al cuerpo de cada función. Eso podía borrar fragmentos válidos dentro de strings, por ejemplo URLs con `//` o texto que contuviera `/* ... */`, cambiando hashes y puntuaciones de similitud.
+
+### Corrección aplicada
+
+- Se añadió `lex_tokens` al módulo compartido `unrealscript_functions.py`.
+- El tokenizador enmascara comentarios respetando literales de texto y luego genera los tokens.
+- Ambas comparaciones (`reference` y `packages`) usan ahora el mismo tokenizador.
+- Se añadió una prueba que exige conservar un literal que contiene `//` y `/*...*/`, y excluir un comentario real.
+- El workflow ahora también se activa cuando cambian el extractor, sus pruebas o el comparador entre paquetes.
+
+Commits: `5bce0b6`, `0d7af5b`, `6f52224`, `cf62337`, `daa3b07`.
+
+### Estado de validación
+
+Cambios registrados en GitHub. No se afirma que el workflow haya pasado; queda pendiente revisar la ejecución y sus logs. Las similitudes siguen siendo pistas y no identificaciones definitivas de funciones.
