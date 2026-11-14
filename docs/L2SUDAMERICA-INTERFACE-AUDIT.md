@@ -57,3 +57,25 @@ Según el registro de trabajo anterior:
 4. Comparar las dos variantes y determinar qué protección usa cada archivo.
 5. Completar la prueba controlada de recompilación/reprotección de `Interface.u`.
 6. Registrar hashes de originales y derivados por separado.
+
+
+## Reconciliación con el repositorio (2026-11-14)
+
+Se inspeccionó el árbol completo de la rama `main` y se localizaron finalmente los dos binarios originales dentro de `reference-data/packages/l2sudamerica/`:
+
+| Archivo | Tamaño | Git blob SHA |
+|---|---:|---|
+| `Interface.u` | 987,258 bytes | `5f3943d7faf7b85386873524fe2f664e28867549` |
+| `interface.xdat` | 940,381 bytes | `93bc3ceb3fd5999da3aaa98e5b18d3607422686a` |
+
+Corrección del estado anterior: los binarios sí están versionados en el repositorio; lo que no estaba disponible en el workspace de esta conversación era una copia local montada para ejecutar las herramientas. Los SHA indicados son identificadores Git blob, no hashes SHA-256.
+
+### Qué queda pendiente
+
+- Descargar/materializar ambos blobs en un entorno de trabajo que permita procesar binarios.
+- Calcular SHA-256 independientes y registrar metadatos.
+- Verificar que el `Interface.u` versionado corresponde al mismo paquete del que provino la extracción histórica de 150/150 clases.
+- Repetir/validar la extracción contra ese binario concreto.
+- Ejecutar la prueba controlada de recompilación y reprotección; no se considera terminada por el mero hecho de que existan los binarios en GitHub.
+
+Los originales versionados se mantienen inmutables. No se modificó ningún binario en esta pasada.
