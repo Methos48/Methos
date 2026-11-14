@@ -25,7 +25,11 @@ if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
     int byteScriptSize = (int)(byteScriptSizeProperty.GetValue(target) ?? throw new InvalidDataException("UELib ByteScriptSize returned null."));
     Console.WriteLine($"SCRIPT_OFFSET={target.ScriptOffset}; DATA_SCRIPT_SIZE={target.ScriptSize}; BYTE_SCRIPT_SIZE={byteScriptSize}; TOKEN_COUNT={decoder.DeserializedTokens.Count}");
     foreach (var token in decoder.DeserializedTokens)
-        Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name}");
+    {
+        var codeOffset = token.GetType().GetField("CodeOffset", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        string jumpTarget = codeOffset is null ? string.Empty : $"; CODE_OFFSET=0x{Convert.ToInt32(codeOffset.GetValue(token)):X4}";
+        Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name}{jumpTarget}");
+    }
     int decodedEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
         decoder.DeserializedTokens.Max(token => token.Position + token.Size);
     int decodedStorageEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
