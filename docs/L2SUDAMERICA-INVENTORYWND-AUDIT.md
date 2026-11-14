@@ -117,3 +117,20 @@ Se revisaron todas las fuentes `.uc` y todos los XML exportados, no solo el arch
 - `RefineButton`: aparece en `GetHandle`, recibe tooltip y sí tiene rama `OnClickButton` que alterna la ventana `AugmentationWnd`; aun así, el control no está declarado en el XML de InventoryWnd.
 
 Esto apunta a una discrepancia entre la capa UnrealScript y el árbol XDAT exportado, o a controles creados por otra capa/versión. No se renombraron ni se inventaron controles para resolverla.
+
+
+## Continuación paralela — 2026-11-14
+
+Esta auditoría corresponde solo a `InventoryWnd` de L2Sudamerica. La auditoría `docs/INVENTORYWND-RECONSTRUCTION-AUDIT.md` es del paquete AnimalGame y permanece separada.
+
+### Estado consolidado
+- [x] 27 variables de clase relacionadas con tipos y controles cuando existe evidencia.
+- [x] Orden de los 15 slots de equipo recuperado.
+- [x] Controles XDAT, parámetros principales de ItemWindow, eventos y puntos de entrada registrados.
+- [x] Discrepancia de EnchantButton, FastDelete y RefineButton documentada sin inventar nodos XML.
+- [ ] Resolver FName numéricos y variables globales pendientes con evidencia de la misma build.
+- [ ] Inspeccionar índices de export/bytecode para detectar referencias externas a funciones anónimas.
+- [ ] Comparar geometría, anclajes y estados de controles con otras ventanas del mismo XDAT.
+- [ ] Probar cambios solo en una copia, con reconstrucción exacta; no editar el original.
+
+No se restauran nombres ni se modifican funciones por semejanza con AnimalGame u otras interfaces. No se ha cambiado el comportamiento del cliente.
