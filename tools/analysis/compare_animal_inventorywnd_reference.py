@@ -6,29 +6,7 @@ from pathlib import Path
 if len(sys.argv) != 4:
     raise SystemExit("Usage: compare_animal_inventorywnd_reference.py <animal.uc> <reference.uc> <output.json>")
 
-FUNC = re.compile(r"(?im)^\s*function\s+(?:(?:[A-Za-z_]\w*)\s+)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{")
-
-def extract(source):
-    result = []
-    for m in FUNC.finditer(source):
-        start = source.find("{", m.start(), m.end())
-        depth, quote, escaped = 0, None, False
-        for i in range(start, len(source)):
-            ch = source[i]
-            if quote:
-                if escaped: escaped = False
-                elif ch == "\\": escaped = True
-                elif ch == quote: quote = None
-            elif ch in ("'", '"'): quote = ch
-            elif ch == "{": depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    result.append({"name": m.group(1), "params": m.group(2).strip(),
-                                   "signature": m.group(0).split("{")[0].strip(),
-                                   "body": source[start + 1:i]})
-                    break
-    return result
+from unrealscript_functions import extract_functions as extract
 
 def lex(s):
     s = re.sub(r"/\*.*?\*/|//[^\r\n]*", " ", s, flags=re.S)
