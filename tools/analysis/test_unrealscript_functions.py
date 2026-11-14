@@ -2,10 +2,23 @@ from __future__ import annotations
 
 import unittest
 
-from unrealscript_functions import extract_event_routes, extract_functions, lex_tokens, mask_comments
+from unrealscript_functions import decode_source_bytes, extract_event_routes, extract_functions, lex_tokens, mask_comments
 
 
 class UnrealScriptFunctionExtractionTests(unittest.TestCase):
+    def test_source_decoder_supports_utf8_and_utf8_bom(self):
+        self.assertEqual(decode_source_bytes("café".encode("utf-8")), "café")
+        self.assertEqual(decode_source_bytes(b"\\xef\\xbb\\xbf" + "café".encode("utf-8")), "café")
+
+    def test_source_decoder_supports_utf16_bom_little_and_big_endian(self):
+        text = "function Café() {}"
+        self.assertEqual(decode_source_bytes(b"\\xff\\xfe" + text.encode("utf-16-le")), text)
+        self.assertEqual(decode_source_bytes(b"\\xfe\\xff" + text.encode("utf-16-be")), text)
+
+    def test_source_decoder_rejects_invalid_utf8_instead_of_replacing_bytes(self):
+        with self.assertRaises(UnicodeDecodeError):
+            decode_source_bytes(b"function Real() { \\xff }")
+
     def test_ignores_function_declarations_and_braces_in_comments(self):
         source = """// function Fake() { }
 function Real()
