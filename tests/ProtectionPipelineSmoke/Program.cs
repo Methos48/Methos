@@ -1,5 +1,6 @@
 using UELib;
 using UELib.Core;
+using System.Reflection;
 using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
@@ -20,12 +21,14 @@ if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
     var decoder = target.ByteCodeManager ?? throw new InvalidDataException("Function has no bytecode manager.");
     decoder.Deserialize();
     Console.WriteLine($"FUNCTION={target.Outer?.Name}.{target.Name}");
-    Console.WriteLine($"SCRIPT_OFFSET={target.ScriptOffset}; SCRIPT_SIZE={target.ScriptSize}; TOKEN_COUNT={decoder.DeserializedTokens.Count}");
+    var byteScriptSizeProperty = typeof(UStruct).GetProperty("ByteScriptSize", BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new MissingMemberException("UELib ByteScriptSize property was not found.");
+    int byteScriptSize = (int)(byteScriptSizeProperty.GetValue(target) ?? throw new InvalidDataException("UELib ByteScriptSize returned null."));
+    Console.WriteLine($"SCRIPT_OFFSET={target.ScriptOffset}; DATA_SCRIPT_SIZE={target.ScriptSize}; BYTE_SCRIPT_SIZE={byteScriptSize}; TOKEN_COUNT={decoder.DeserializedTokens.Count}");
     foreach (var token in decoder.DeserializedTokens)
         Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name} TEXT={token.Decompile().Replace("\\r", " ").Replace("\\n", " ")}");
     int decodedEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
         decoder.DeserializedTokens.Max(token => token.StoragePosition + token.StorageSize);
-    Console.WriteLine($"DECODED_STORAGE_END={decodedEnd}; SCRIPT_SIZE={target.ScriptSize}; COMPLETE={(decodedEnd >= target.ScriptSize)}");
+    Console.WriteLine($"DECODED_STORAGE_END={decodedEnd}; BYTE_SCRIPT_SIZE={byteScriptSize}; COMPLETE={(decodedEnd >= byteScriptSize)}");
     return;
 }
 
