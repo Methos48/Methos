@@ -1118,3 +1118,34 @@ El paquete candidato real está en `Animal-Rebuilt/InventoryWnd-Name-Probes/Inve
 ### Conclusión
 
 La fuente `HennaCandidate/InventoryWnd.uc` queda confirmada como un cambio mínimo y aislado de dos líneas respecto del fuente base. Es la mejor base para continuar la reconstrucción estática. La validación binaria/compilación y la prueba en cliente siguen pendientes; no desplegar todavía el paquete candidato ni modificar el paquete limpio.
+
+
+## Quincuagésima pasada: comparación de cadenas del paquete candidato (2026-11-14)
+
+Se compararon las cadenas ASCII imprimibles (secuencias de 4 o más caracteres) de `Interface-clean.u` y `InventoryWnd-HennaCandidate.u`, conservando multiplicidad y comparando el conjunto completo, no solo buscando el nombre nuevo.
+
+### Identidad de los paquetes
+
+- `Interface-clean.u`: 3,338,657 bytes; SHA-256 `b9a443ac57cc39e9099e2ab47683c95070852379ec4a178b9fead8c79e17a255`.
+- `InventoryWnd-HennaCandidate.u`: 3,338,681 bytes; SHA-256 `b4b99ab61d90241e68c9c8afcf86edfc11e6af8694f4ab992967493652cbe1eb`.
+
+### Resultado de comparación completa de cadenas
+
+Ambos paquetes contienen exactamente 84,308 secuencias ASCII imprimibles de longitud mínima 4. Al comparar sus multiconjuntos, las únicas diferencias son estas tres cadenas reemplazadas:
+
+- Solo paquete limpio: `function37`.
+- Solo paquete candidato: `HandleAddHennaInfo`.
+- Solo paquete limpio: `function37(param);`.
+- Solo paquete candidato: `HandleAddHennaInfo(param);`.
+- Solo paquete limpio: `function function37(string string_2)`.
+- Solo paquete candidato: `function HandleAddHennaInfo(string string_2)`.
+
+No aparece ninguna otra cadena imprimible añadida, eliminada o con multiplicidad alterada. Esto coincide exactamente con los dos reemplazos del fuente documentados en la pasada 49 y aporta evidencia fuerte de que el paquete candidato es una variante textual acotada al wrapper Henna.
+
+### Límite de esta comprobación
+
+La prueba cubre cadenas imprimibles completas del paquete, no el bytecode UnrealScript ni la ejecución del evento. No sustituye un parser/desensamblador compatible con paquetes UE2 versión 126, una compilación reproducible o una prueba en cliente. Por tanto, no se declara validación binaria completa ni se autoriza instalación.
+
+### Decisión
+
+Mantener `InventoryWnd-HennaCandidate.u` como candidato preferido para la siguiente fase de inspección. `Interface-clean.u` sigue siendo la referencia intacta. No modificar ni desplegar el paquete limpio.
