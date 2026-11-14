@@ -1614,3 +1614,23 @@ Commits:
 ### Estado
 
 Cambios subidos. Los paquetes originales no se modificaron. No se ha ejecutado localmente la suite ni se ha confirmado GitHub Actions.
+
+
+## Septuagésima pasada: rechazo de firmas de parámetros malformadas (2026-11-14)
+
+Al revisar el nuevo contador encontré que los delimitadores de cierre incorrectos se ignoraban y los delimitadores sin cerrar podían ocultar comas posteriores. Eso podía producir un número de parámetros aparentemente válido a partir de una firma malformada.
+
+### Corrección aplicada
+
+- El contador ahora valida que paréntesis, corchetes y llaves cierren en el orden correcto.
+- Rechaza cadenas sin comilla de cierre.
+- Emite `ValueError` ante delimitadores desbalanceados en lugar de devolver un conteo dudoso.
+- Añadí pruebas para expresiones anidadas con corchetes/llaves y para firmas malformadas.
+
+Commits:
+- `315e4de`: validación de delimitadores y cadenas.
+- `0767070`: pruebas de sintaxis anidada y malformada.
+
+### Estado
+
+Cambios subidos y documentados. La suite aún no se ha ejecutado y GitHub Actions no está confirmado. No se tocaron los paquetes originales.
