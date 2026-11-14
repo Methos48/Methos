@@ -4,7 +4,7 @@ import re
 
 
 FUNCTION = re.compile(
-    r"(?im)^\\s*function\\s+(?:(?:[A-Za-z_]\\w*)\\s+)?([A-Za-z_]\\w*)\\s*\\(([^)]*)\\)\\s*\\{"
+    r"(?im)^\s*function\s+(?:(?:[A-Za-z_]\w*)\s+)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{"
 )
 
 
@@ -32,13 +32,13 @@ def mask_comments(source: str) -> str:
                 state = "block"
                 continue
         elif state in ("single", "double"):
-            if ch == "\\\\":
+            if ch == "\\":
                 i += 2
                 continue
             if (state == "single" and ch == "'") or (state == "double" and ch == '"'):
                 state = "code"
         elif state == "line":
-            if ch in "\\r\\n":
+            if ch in "\r\n":
                 state = "code"
             else:
                 chars[i] = " "
@@ -48,7 +48,7 @@ def mask_comments(source: str) -> str:
                 i += 2
                 state = "code"
                 continue
-            if ch not in "\\r\\n":
+            if ch not in "\r\n":
                 chars[i] = " "
         i += 1
     return "".join(chars)
@@ -67,7 +67,7 @@ def extract_functions(source: str) -> list[dict[str, str]]:
             if quote:
                 if escaped:
                     escaped = False
-                elif char == "\\\\":
+                elif char == "\\":
                     escaped = True
                 elif char == quote:
                     quote = None
