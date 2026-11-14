@@ -73,6 +73,12 @@ jobs:
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --inspect-package-assets $env:ANIMAL_INPUT
           if ($LASTEXITCODE -ne 0) { throw "Animal package asset-reference inspection failed." }
 
+      - name: Self-test UE CompactIndex boundary decoding
+        shell: pwsh
+        run: |
+          dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --self-test-compact-index
+          if ($LASTEXITCODE -ne 0) { throw "UE CompactIndex boundary self-test failed." }
+
       - name: Audit every Animal UE2 export record and locate InventoryWnd
         shell: pwsh
         run: |
