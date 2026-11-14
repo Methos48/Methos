@@ -642,3 +642,20 @@ También confirma la anomalía de Animal: la función ya nombrada `IsLOrREar` co
 ### Validación final del paso de eventos
 
 El run `43567163467` completó **SUCCESS**: [workflow](https://github.com/Methos48/Methos/actions/runs/43567163467). Artifact `Animal-U-Reconstruction-Validation`, ID `14102532523`. El log imprimió ambas rutas de eventos y las marcas de colisión esperadas. También volvió a pasar la compilación limpia, reapertura de 160/160 clases, edición real persistente y prueba temporal de renombre/persistencia de `HandleAddHennaInfo`. El rechazo de `HandleAddItem(string)` se registró como resultado negativo esperado, sin fallar el workflow.
+
+
+## Trigésima tercera pasada: búsqueda del runtime nativo exacto de AnimalGame (2026-11-14)
+
+Se continuó la investigación de la contradicción entre Animal `function44` y `IsLOrREar`, esta vez buscando evidencia del runtime nativo correspondiente al mismo cliente, no otra copia de UnrealScript.
+
+Comprobaciones realizadas:
+- Se buscó `NWindow.dll` y referencias a `AnimalGame` en el contenido indexado del repositorio `Methos48/Methos`; no apareció un archivo o referencia versionada que permita identificar el DLL nativo de AnimalGame.
+- Se hicieron búsquedas públicas por cliente AnimalGame Interlude y por la combinación AnimalGame/`NWindow.dll`. Los resultados encontrados corresponden a clientes/servidores distintos o a documentación general de herramientas; ninguno proporciona un `NWindow.dll` identificable como el mismo build AnimalGame.
+- La evidencia nativa de Elbera sigue siendo útil como hipótesis comparativa, pero no identifica el runtime Animal. No se extrapola su layout de memoria a este paquete.
+
+Conclusión de esta pasada:
+- No se obtuvo evidencia nueva que autorice intercambiar, renombrar o reescribir `function44` y `IsLOrREar`.
+- La contradicción permanece abierta. El dato necesario para cerrarla es el `NWindow.dll` extraído de la misma instalación/build AnimalGame que produjo `reference-data/packages/animal/Interface.u`, junto con su hash SHA-256 y metadatos PE (TimeDateStamp, tamaño de imagen y arquitectura). Con ese binario se podrá comprobar si el contrato de `GetAccessoryServerID` coincide con la referencia externa antes de asignar nombres.
+- Mientras no exista ese binario exacto, se conserva el código y se continúa con el inventario descriptivo de funciones y recursos XDAT sin alterar el comportamiento.
+
+No se incorporó ningún DLL de otro cliente, no se modificó `InventoryWnd.uc` y no se cambió ningún identificador de producción.
