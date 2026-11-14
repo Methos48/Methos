@@ -251,3 +251,8 @@ Nueva ficha: [L2SUDAMERICA-UICOMMONAPI-AUDIT.md](L2SUDAMERICA-UICOMMONAPI-AUDIT.
 ## 16. Auditoría de DialogBox
 
 Nueva ficha: [L2SUDAMERICA-DIALOGBOX-AUDIT.md](L2SUDAMERICA-DIALOGBOX-AUDIT.md). Documenta los ocho tipos de diálogo, exclusión de instancia simultánea, identidad del llamador, ID de confirmación, eventos globales 1710/1720, acción predeterminada de Enter, entrada numérica, barra temporizada y estructura XDAT. Se identifican riesgos de concurrencia y consumo de respuestas entre ventanas. Análisis estático; sin modificar ni probar binarios.
+
+
+## 18. Auditoría del sistema de shortcuts
+
+Nueva ficha: [L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md](L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md). Documenta ShortcutWnd y Shortcut: cinco barras/páginas, 12 slots por página, diez páginas, orientación horizontal/vertical, panel joypad, expansión, bloqueo/movimiento, persistencia y comandos globales de UI. Incluye eventos 590–660 y riesgos de no confundir índice global ShortcutID con slot local. Análisis estático; sin cambios ni pruebas en cliente.
