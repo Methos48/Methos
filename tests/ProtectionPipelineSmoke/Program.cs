@@ -1,6 +1,33 @@
+using UELib;
+using UELib.Core;
 using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
+
+if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
+{
+    if (args.Length != 4)
+        throw new ArgumentException("Usage: --inspect-function-bytecode <package.u> <outerClass> <functionName>");
+    using var package = UnrealLoader.LoadPackage(args[1], FileAccess.Read);
+    package.InitializePackage();
+    var matches = package.Objects.OfType<UFunction>()
+        .Where(function => string.Equals(function.Outer?.Name?.ToString(), args[2], StringComparison.OrdinalIgnoreCase)
+            && string.Equals(function.Name?.ToString(), args[3], StringComparison.OrdinalIgnoreCase))
+        .ToList();
+    if (matches.Count != 1)
+        throw new InvalidDataException($"Expected exactly one {args[2]}.{args[3]} function, found {matches.Count}.");
+    var target = matches[0];
+    var decoder = target.ByteCodeManager ?? throw new InvalidDataException("Function has no bytecode manager.");
+    decoder.Deserialize();
+    Console.WriteLine($"FUNCTION={target.Outer?.Name}.{target.Name}");
+    Console.WriteLine($"SCRIPT_OFFSET={target.ScriptOffset}; SCRIPT_SIZE={target.ScriptSize}; TOKEN_COUNT={decoder.DeserializedTokens.Count}");
+    foreach (var token in decoder.DeserializedTokens)
+        Console.WriteLine($"POS=0x{token.Position:X4} STORAGE=0x{token.StoragePosition:X4} SIZE={token.Size} STORAGE_SIZE={token.StorageSize} OPCODE=0x{token.OpCode:X2} TYPE={token.GetType().Name} TEXT={token.Decompile().Replace("\\r", " ").Replace("\\n", " ")}");
+    int decodedEnd = decoder.DeserializedTokens.Count == 0 ? 0 :
+        decoder.DeserializedTokens.Max(token => token.StoragePosition + token.StorageSize);
+    Console.WriteLine($"DECODED_STORAGE_END={decodedEnd}; SCRIPT_SIZE={target.ScriptSize}; COMPLETE={(decodedEnd >= target.ScriptSize)}");
+    return;
+}
 
 if (args.Length > 0 && args[0] == "--inspect-package-assets")
 {
