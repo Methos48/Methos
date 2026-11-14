@@ -33,6 +33,20 @@ function Real()
         self.assertIn('"http://host/path/*literal*/"', tokens)
         self.assertNotIn("comment", tokens)
 
+    def test_escaped_quotes_and_unbalanced_braces_inside_strings(self):
+        source = r'''function Real()
+{
+    local string S;
+    S = "escaped \\" } // still text /* still text */";
+    S = 'single quote with // and }';
+}
+'''
+        functions = extract_functions(source)
+        self.assertEqual(len(functions), 1)
+        tokens = lex_tokens(functions[0]["body"])
+        self.assertIn('"escaped \\" } // still text /* still text */"', tokens)
+        self.assertIn("'single quote with // and }'", tokens)
+
     def test_masking_preserves_source_length_and_line_breaks(self):
         source = "a/* comment\nmore */b // tail\nc"
         masked = mask_comments(source)
