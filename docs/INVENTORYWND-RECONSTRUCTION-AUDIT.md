@@ -1578,3 +1578,16 @@ Commits:
 ### Estado
 
 Cambios subidos. La revisión del contenido confirmó que los comparadores delegan en el decodificador común. La suite y GitHub Actions aún no están confirmados. No se modificaron los paquetes originales.
+
+
+## Corrección de revisión de la pasada 68: literales de bytes (2026-11-14)
+
+En la verificación posterior detecté que los literales de bytes se habían guardado con barras invertidas duplicadas. Eso impedía reconocer realmente los BOM y hacía que la prueba de bytes inválidos no representara el byte inválido previsto.
+
+- Corregí los literales a escapes Python reales (`\\xff`, `\\xfe`, `\\xef\\xbb\\xbf`).
+- Volví a leer ambos archivos desde GitHub y confirmé que el código contiene ahora los escapes de un solo nivel.
+- La suite todavía no se ha ejecutado; esta corrección de contenido no equivale a una prueba aprobada.
+
+Commits de corrección:
+- `08520d5`: decodificador.
+- `6d066aa`: fixtures de prueba.
