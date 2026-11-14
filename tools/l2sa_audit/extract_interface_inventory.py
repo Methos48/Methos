@@ -28,15 +28,15 @@ def main() -> int:
     constant_rows = []
     for source_path in sorted(args.u_source.glob("*.uc")):
         source = source_path.read_text(encoding="utf-8", errors="replace")
-        class_match = re.search(r"^class\\s+(\\w+)", source, re.MULTILINE)
+        class_match = re.search(r"^class\s+(\w+)", source, re.MULTILINE)
         class_name = class_match.group(1) if class_match else source_path.stem
         variables, constants, functions = [], [], []
 
         for line_number, line in enumerate(source.splitlines(), 1):
-            match = re.match(r"^var\\s+(.+?);\\s*$", line)
+            match = re.match(r"^var\s+(.+?);\s*$", line)
             if match:
                 declaration = match.group(1).strip()
-                parsed = re.match(r"(.+?)\\s+([A-Za-z_]\\w*)(?:\\[(\\d+)\\])?$", declaration)
+                parsed = re.match(r"(.+?)\s+([A-Za-z_]\w*)(?:\[(\d+)\])?$", declaration)
                 variable_type = parsed.group(1).strip() if parsed else ""
                 identifier = parsed.group(2) if parsed else declaration
                 array_length = int(parsed.group(3)) if parsed and parsed.group(3) else 1
@@ -52,13 +52,13 @@ def main() -> int:
                 variables.append(record)
                 variable_rows.append(record)
 
-            match = re.match(r"^const\\s+(.+?);\\s*$", line)
+            match = re.match(r"^const\s+(.+?);\s*$", line)
             if match:
                 record = {"class": class_name, "line": line_number, "declaration": match.group(1).strip()}
                 constants.append(record)
                 constant_rows.append(record)
 
-            match = re.match(r"^function\\s+(.+?)\\s*$", line)
+            match = re.match(r"^function\s+(.+?)\s*$", line)
             if match:
                 record = {"class": class_name, "line": line_number, "signature": match.group(1).strip()}
                 functions.append(record)
@@ -146,7 +146,7 @@ def main() -> int:
             writer.writerows(rows)
 
     (args.output / "SUMMARY.txt").write_text(
-        "\\n".join(f"{key}: {value}" for key, value in summary.items()) + "\\n",
+        "\n".join(f"{key}: {value}" for key, value in summary.items()) + "\n",
         encoding="utf-8",
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
