@@ -54,10 +54,39 @@ def mask_comments(source: str) -> str:
     return "".join(chars)
 
 
+
+def mask_code(source: str) -> str:
+    """Mask comments and string literals, preserving offsets and line breaks."""
+    chars = list(mask_comments(source))
+    state = "code"
+    i = 0
+    while i < len(source):
+        ch = source[i]
+        if state == "code":
+            if ch in ("'", '"'):
+                state = ch
+                chars[i] = " "
+        else:
+            if ch == "\\\\":
+                chars[i] = " "
+                if i + 1 < len(source) and source[i + 1] not in "\\r\\n":
+                    chars[i + 1] = " "
+                i += 2
+                continue
+            if ch == state:
+                chars[i] = " "
+                state = "code"
+            elif ch not in "\\r\\n":
+                chars[i] = " "
+        i += 1
+    return "".join(chars)
+
+
 def extract_functions(source: str) -> list[dict[str, str]]:
     masked = mask_comments(source)
+    declaration_view = mask_code(source)
     result: list[dict[str, str]] = []
-    for match in FUNCTION.finditer(masked):
+    for match in FUNCTION.finditer(declaration_view):
         opening = masked.find("{", match.start(), match.end())
         depth = 0
         quote = None
