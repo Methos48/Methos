@@ -1274,3 +1274,29 @@ El bloque posterior al offset de exportación mide 158.834 bytes en ambos archiv
 ### Decisión
 
 Las importaciones quedan verificadas como intactas. El siguiente objetivo es identificar y decodificar el bloque de exportaciones con el formato UE2 correcto, separar los registros de los datos serializados y localizar el export `InventoryWnd`. No se instala el candidato; el paquete limpio permanece intacto.
+
+
+## Quincuagésima quinta pasada: diferencial de la región de exportaciones (2026-11-14)
+
+Se comparó la región desde el offset de exportación hasta el final del paquete, alineando ambos archivos por sus respectivos offsets de tabla.
+
+### Medidas verificadas
+
+| Dato | Interface-clean.u | HennaCandidate.u |
+|---|---:|---:|
+| Inicio de exportaciones | 3.179.823 | 3.179.847 |
+| Longitud de región comparada | 158.834 bytes | 158.834 bytes |
+| Diferencias byte a byte | — | 11.021 bytes |
+| Islas contiguas de diferencias | — | 9.745 |
+
+Los tamaños de ambas regiones coinciden, pero el contenido no. Las diferencias aparecen en miles de islas cortas distribuidas por toda la región, con un patrón repetitivo de cambios en posiciones separadas aproximadamente por 16 bytes. Algunas islas afectan uno o dos bytes; no son cambios de texto legible.
+
+### Interpretación prudente
+
+El patrón es compatible con muchos campos de offset/serialización que se recalculan cuando los datos anteriores crecen, pero no se ha decodificado aún el formato de cada registro de exportación. Por tanto, no se afirma que cada diferencia sea un offset ni que todos los offsets resultantes sean válidos.
+
+La tabla declara 9.744 exportaciones. La cantidad de islas de diferencia (9.745) es cercana a ese número, pero esa coincidencia por sí sola no demuestra una correspondencia uno a uno entre islas y registros.
+
+### Próximo paso
+
+Obtener una lectura validada del formato UE2 de los registros de exportación (índices compactos, FName, flags, serial size y serial offset) y verificarla contra límites y referencias conocidas. Después se podrá localizar el registro de `InventoryWnd` y separar metadatos de datos serializados. No se modifica ni instala ningún paquete de producción.
