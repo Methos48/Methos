@@ -6,11 +6,7 @@ from pathlib import Path
 if len(sys.argv) != 4:
     raise SystemExit("Usage: compare_animal_inventorywnd_reference.py <animal.uc> <reference.uc> <output.json>")
 
-from unrealscript_functions import extract_functions as extract
-
-def lex(s):
-    s = re.sub(r"/\*.*?\*/|//[^\r\n]*", " ", s, flags=re.S)
-    return re.findall(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[A-Za-z_]\w*|\d+|==|!=|<=|>=|&&|\|\||\S', s)
+from unrealscript_functions import extract_functions as extract, lex_tokens as lex
 
 animal_path, ref_path, out_path = map(Path, sys.argv[1:])
 def read_source(path: Path):
