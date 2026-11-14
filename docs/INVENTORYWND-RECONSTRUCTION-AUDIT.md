@@ -659,3 +659,21 @@ Conclusión de esta pasada:
 - Mientras no exista ese binario exacto, se conserva el código y se continúa con el inventario descriptivo de funciones y recursos XDAT sin alterar el comportamiento.
 
 No se incorporó ningún DLL de otro cliente, no se modificó `InventoryWnd.uc` y no se cambió ningún identificador de producción.
+
+
+## Trigésima cuarta pasada: inspección del artefacto y disponibilidad de recursos (2026-11-14)
+
+Se descargó e inspeccionó el ZIP real del workflow `43567163467`, artifact `14102532523` (`Animal-U-Reconstruction-Validation`, SHA-256 del artifact publicado por GitHub: `406af52e018b4b3fe76d6f3862220e6facf656dbbf4af9cb7278ec8594c01bde`).
+
+Inventario del ZIP:
+- 1.288 fuentes `.uc` (incluye exportación original, reaperturas y pruebas temporales).
+- 3 paquetes `.u`: `Interface-clean.u`, `Interface-edited-test.u` y el paquete temporal de prueba de nombre.
+- 2 CSV y 7 JSON de análisis XDAT/comparación.
+- **0 archivos `.utx`, 0 `.dll` y 0 `.xdat`**.
+
+Implicaciones comprobadas:
+- El artifact sí permite continuar la auditoría de código y de la estructura XDAT mediante los informes exportados.
+- No contiene los píxeles/paquetes de texturas necesarios para visualizar las 38 referencias ni el `NWindow.dll` necesario para resolver la contradicción nativa de los accesorios.
+- No se debe reconstruir la apariencia de las texturas a partir de sus nombres, ni usar un DLL de otra compilación como sustituto.
+
+Siguiente línea de trabajo: continuar el cruce de controles XDAT con los handlers y funciones del `InventoryWnd.uc`, y mantener en espera únicamente las conclusiones que dependan de los paquetes `.utx` o del DLL exacto. El código de producción permanece intacto.
