@@ -8,6 +8,7 @@ on:
       - "reference-data/packages/animal/Interface.u"
       - "reference-data/packages/animal/interface.xdat"
       - "tools/xdat/report_animal_inventorywnd.py"
+      - "tools/analysis/compare_animal_inventorywnd_reference.py"
       - "src/Methos.Engine/**"
       - "tests/ProtectionPipelineSmoke/**"
       - "reference-data/kits/Compilador-U.zip"
@@ -89,6 +90,11 @@ jobs:
           Write-Host "ANIMAL_DECOMPILED_CLASSES=$($classes.Count)"
           "ANIMAL_SOURCES=$sources" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Compare anonymous Animal InventoryWnd functions with UCC reference
+        shell: pwsh
+        run: |
+          python tools/analysis/compare_animal_inventorywnd_reference.py (Join-Path $env:ANIMAL_SOURCES "InventoryWnd.uc") (Join-Path $env:ANIMAL_UCC_ROOT "Interlude/Interface/Classes/InventoryWnd.uc") (Join-Path $PWD "Animal-InventoryWnd-XDAT/reference-function-matches.json")
+          if ($LASTEXITCODE -ne 0) { throw "Animal InventoryWnd reference comparison failed." }
       - name: Restore missing Animal class property declarations from reference sources
         shell: pwsh
         run: |
