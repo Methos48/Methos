@@ -601,3 +601,18 @@ La prueba local con las fuentes extraídas muestra:
 Esta ruta de eventos coincide también con la segunda referencia pública `kdo70/a1_l2j` y su `UIEventManager.uc`, que define 2600 como `EV_InventoryAddItem`, 2630 como `EV_InventoryAddHennaInfo` y 260 como `EV_UpdateHennaInfo`. Es la evidencia más fuerte hasta ahora para identificar `function37` como `HandleAddHennaInfo`, mientras que `function30` no puede tomar `HandleAddItem` por el conflicto de nombre.
 
 Se añadió la impresión de estas rutas al workflow para que el resultado quede visible en cada ejecución. Run `43567163467` pendiente. No se renombró ninguna función de producción.
+
+## Trigésima primera pasada: tercera fuente pública de InventoryWnd (2026-11-14)
+
+Se localizó y revisó una segunda copia pública extensa de la interfaz Interlude:
+[ L2jBrasil — InventoryWnd.uc ](https://github.com/L2jBrasil/InterludeClassicInterface/blob/56faed3a11ccf5dd9fc7ac149bdc39160fd967de/src/Interface/Classes/InventoryWnd.uc).
+
+La fuente contiene 48 funciones y confirma de forma independiente:
+- `OnEvent`: 2600 → `HandleAddItem`, 2630 → `HandleAddHennaInfo`, 260 → `HandleUpdateHennaInfo`.
+- `SortItem`: `ItemType 0` = Weapon, `1` = Armor, `2` = Accessary, `4` = Asset y `5` = EtcItem.
+- Dentro de `ItemType 5`, `ItemSubType 5` se clasifica explícitamente como receta.
+- `IsEquipItem` solo devuelve `bEquipped`; no es equivalente a Animal `function31`, que filtra ItemType 0/1/2.
+- `IsLOrREar` compara los dos primeros resultados de `GetAccessoryServerID`; `IsLOrRFinger` compara los dos últimos. Esto confirma que la contradicción de Animal `function44` frente a su función nombrada `IsLOrREar` es real entre variantes, no un supuesto basado en una única referencia.
+- La variante no contiene un helper equivalente que permita asignar nombre original a `function31` o `function32`; el subtipo 6 tampoco aparece en la clasificación de recetas.
+
+La tercera fuente refuerza las conclusiones semánticas de las pasadas anteriores, pero no es el mismo paquete AnimalGame. No se copió código ni se cambiaron identificadores en producción.
