@@ -501,3 +501,18 @@ La prueba aislada del run `43565930234` confirma:
 El run terminó en fallo únicamente por propagación del código de salida 1 del compilador durante la prueba negativa esperada de `function30`, aunque el script detectó y registró correctamente el conflicto. Se corrigió el cierre del bloque PowerShell y se fuerza un código final satisfactorio tras registrar ese rechazo como resultado esperado. Nuevo run `43566249499` pendiente.
 
 Importante: la persistencia técnica del nombre candidato no demuestra que ese fuera el nombre histórico original de Animal. Por la evidencia cruzada, `HandleAddHennaInfo` es candidato de alta confianza, pero se conserva `function37` en la fuente original hasta obtener confirmación específica del paquete Animal. Ningún archivo de producción fue renombrado.
+
+## Vigésima sexta pasada: validación completa y prueba de nombres (2026-11-14)
+
+El run `43566249499` terminó **SUCCESS**: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43566249499). Artifact `Animal-U-Reconstruction-Validation`, ID `14103220248`.
+
+Resultados comprobados en los logs y el artifact:
+- Análisis XDAT: 53 controles y 38 referencias de textura únicas.
+- Extracción cruzada: Berserker y Silent Dark se descompilaron; L2Sudamérica fue tratado según su protección NPKscrypt, sin intentar abrirlo como paquete plano.
+- Compilación limpia de las 159 fuentes Animal: UCC generó `Interface-clean.u` de 3.338.657 bytes.
+- Reapertura limpia: UELib exportó 160/160 clases, 10.483 objetos, cero clases fallidas.
+- Prueba de edición real: UCC generó `Interface-edited-test.u` de 3.338.801 bytes; la reapertura confirmó `MethosAnimalRoundTripProbe_20261113` en `ToolTip.uc`.
+- Prueba aislada de `function37`: el cambio temporal a `HandleAddHennaInfo(string)` compiló y persistió después de reabrir el paquete; UELib volvió a exportar 160/160 clases.
+- Prueba negativa de `function30`: UCC rechazó `HandleAddItem(string)` por colisión con `HandleAddItem(ItemInfo)`; el workflow ahora registra este rechazo como resultado esperado y finaliza correctamente.
+
+El workflow no cambió el `InventoryWnd.uc` de producción. La compilación y reapertura demuestran que el proyecto puede reconstruir el paquete y conservar una modificación real, pero la prueba temporal de henna no convierte por sí sola el nombre candidato en una identificación histórica demostrada. Se mantiene `function37` sin renombrar hasta disponer de evidencia directa del build Animal.
