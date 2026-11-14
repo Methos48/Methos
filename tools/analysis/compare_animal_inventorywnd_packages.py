@@ -7,7 +7,7 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from unrealscript_functions import extract_functions as extract, lex_tokens as tokens
+from unrealscript_functions import extract_functions as extract, lex_tokens as tokens, mask_code
 
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
@@ -27,7 +27,7 @@ def event_routes(functions: list[dict]) -> dict[int, str]:
         int(match.group(1)): match.group(2)
         for match in re.finditer(
             r"(?im)^\s*case\s+(\d+)\s*:\s*([A-Za-z_]\w*)\s*\(",
-            on_event["body"],
+            mask_code(on_event["body"]),
         )
     }
 
