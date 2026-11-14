@@ -106,3 +106,14 @@ Puntos de entrada reconocibles: `OnLoad`, `OnEvent`, `OnShow`, `OnHide`, `OnDBCl
 ## Artefactos de origen
 
 El workflow [Audit L2Sudamerica Interface.u and interface.xdat](https://github.com/Methos48/Methos/actions/runs/43579091099) produjo `InventoryWnd.uc`, `InventoryWnd.xml`, el mapa de nombres y el resto de las clases/XML. Los binarios originales permanecen inmutables.
+
+
+### Seguimiento de los tres handles no encontrados en XML
+
+Se revisaron todas las fuentes `.uc` y todos los XML exportados, no solo el archivo de InventoryWnd:
+
+- `EnchantButton`: aparece en `GetHandle` y recibe un tooltip, pero no tiene nodo XML coincidente ni rama `OnClickButton` propia en esta clase.
+- `FastDelete`: aparece en `GetHandle` y recibe tooltip; tampoco hay nodo XML ni rama `OnClickButton`. El código además posiciona un nombre distinto, `InventoryWnd.b_FastDelete`, mediante `SetAnchor` en la rutina de expansión. Ninguno de esos dos nombres existe en el XML extraído.
+- `RefineButton`: aparece en `GetHandle`, recibe tooltip y sí tiene rama `OnClickButton` que alterna la ventana `AugmentationWnd`; aun así, el control no está declarado en el XML de InventoryWnd.
+
+Esto apunta a una discrepancia entre la capa UnrealScript y el árbol XDAT exportado, o a controles creados por otra capa/versión. No se renombraron ni se inventaron controles para resolverla.
