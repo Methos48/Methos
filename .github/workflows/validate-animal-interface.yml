@@ -781,7 +781,7 @@ jobs:
           $hennaText = [IO.File]::ReadAllText($hennaFile)
           $hennaPattern = '(?m)^function function37\(string string_2\)\r?$'
           if ([regex]::Matches($hennaText, $hennaPattern).Count -ne 1) { throw "Could not isolate Animal function37 declaration." }
-          $hennaText = [regex]::Replace($hennaText, $hennaPattern, 'function HandleAddHennaInfo(string string_2)', 1)
+          $hennaText = $hennaText.Replace('function37', 'HandleAddHennaInfo')
           [IO.File]::WriteAllText($hennaFile, $hennaText, [Text.UTF8Encoding]::new($false))
           $hennaOutput = Join-Path $probeRoot "InventoryWnd-HennaCandidate.u"
           dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $hennaSources $hennaOutput
@@ -794,7 +794,7 @@ jobs:
           $addItemText = [IO.File]::ReadAllText($addItemFile)
           $addItemPattern = '(?m)^function function30\(string string_2\)\r?$'
           if ([regex]::Matches($addItemText, $addItemPattern).Count -ne 1) { throw "Could not isolate Animal function30 declaration." }
-          $addItemText = [regex]::Replace($addItemText, $addItemPattern, 'function HandleAddItem(string string_2)', 1)
+          $addItemText = $addItemText.Replace('function30', 'HandleAddItem')
           [IO.File]::WriteAllText($addItemFile, $addItemText, [Text.UTF8Encoding]::new($false))
           $addItemOutput = Join-Path $probeRoot "InventoryWnd-AddItemCandidate.u"
           $addItemLog = dotnet run --project tests/ProtectionPipelineSmoke/ProtectionPipelineSmoke.csproj --configuration Release -- --ucc-compile $env:ANIMAL_UCC_ROOT $addItemSources $addItemOutput 2>&1
