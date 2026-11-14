@@ -377,3 +377,13 @@ La extracción directa de `reference-data/packages/l2sudamerica/Interface.u` fal
 - L2Sudamérica queda pendiente de detección/decodificación segura.
 - La reconstrucción Animal mantiene la validación de ida y vuelta: compilación limpia, reapertura de 160/160 clases y cambio real persistente después de recompilar y reabrir.
 - No se cambió `InventoryWnd.uc` ni se modificó el comportamiento del juego.
+
+## Decimoséptima pasada: identificación del bloqueo de L2Sudamérica (2026-11-14)
+
+Se inspeccionó la cabecera binaria original de `reference-data/packages/l2sudamerica/Interface.u` sin alterar el archivo. Los primeros cuatro bytes son `FF ED FA CE`, firma de NPKscrypt identificada previamente en el análisis de protección del proyecto. Esto explica por qué UELib rechaza el archivo como paquete Unreal cuando se le entrega directamente: todavía está protegido, no es evidencia de que el paquete esté dañado.
+
+La documentación técnica existente `docs/STEP26_NPKSCRYPT_DECRYPTION_PATH.md` reconstruye la forma del transformador de lectura dentro de `npkscrypt.dll`, pero deja pendiente recuperar el estado de clave por archivo y el inicializador/proveedor que lo prepara. Sin esas claves no existe decodificación validada. No se intentó descifrar con valores supuestos ni retirar la cabecera.
+
+Se ajustó el workflow para reconocer `FFEDFACE`, registrar el tipo de protección y omitir la descompilación UELib en crudo para ese paquete. El original se conserva intacto. El análisis de L2Sudamérica queda pendiente de completar el camino de claves NPKscrypt y verificar una decodificación/recodificación exacta antes de comparar su `InventoryWnd`.
+
+**Estado cruzado actualizado:** Berserker es una referencia de la misma familia y confirma el código anónimo, Silent Dark es una variante distinta útil solo como pista, y L2Sudamérica está protegido por NPKscrypt con la inicialización de claves aún sin resolver. No se modificó la fuente Animal ni el comportamiento del juego.
