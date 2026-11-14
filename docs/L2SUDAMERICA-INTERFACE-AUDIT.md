@@ -98,3 +98,17 @@ Los dos blobs están presentes en GitHub y sus tamaños/SHA Git quedaron registr
 ### Conclusión técnica de esta pasada
 
 El repositorio ya contiene piezas útiles para descompilar, compilar bytecode de funciones concretas, reconstruir paquetes y validar estructuras. No hay evidencia suficiente para afirmar que el pipeline completo de recompilación y reprotección de L2Sudamerica esté cerrado. Antes de una prueba real hay que materializar los dos binarios y determinar la protección efectiva de cada uno; luego se debe probar el UCC/runtime contra el paquete exacto, en una copia de trabajo aislada.
+
+
+## Recuperación binaria desde GitHub — 2026-11-14 (prueba adicional)
+
+Se confirmó una vía de lectura que evita el error UTF-8 de `fetch_blob`: el endpoint de contenidos del repositorio permite solicitar `encoding=base64` mediante `fetch_file`. La lectura respondió correctamente para ambos originales y devolvió los mismos Git blob SHA ya registrados:
+
+| Archivo | Git blob SHA | Longitud Base64 recibida |
+|---|---|---:|
+| `reference-data/packages/l2sudamerica/Interface.u` | `5f3943d7faf7b85386873524fe2f664e28867549` | 1,338,284 caracteres |
+| `reference-data/packages/l2sudamerica/interface.xdat` | `93bc3ceb3fd5999da3aaa98e5b18d3607422686a` | 1,274,742 caracteres |
+
+La cabecera Base64 de ambos empieza por `/+36zgE`, consistente con que se recibieron datos binarios y no texto fuente. Esto confirma que GitHub entrega los contenidos íntegros en Base64 a través del conector. Sin embargo, la respuesta de esa herramienta no crea un archivo local ni entrega un identificador de archivo materializable; por ello todavía no se han decodificado los bytes en el entorno de trabajo, calculado SHA-256, ni ejecutado el decompilador/UCC/XDAT sobre estos dos binarios. No se modificó ningún original del repositorio.
+
+**Siguiente bloqueo técnico:** transferir esa respuesta Base64 a un archivo binario local de forma verificable. No se debe declarar iniciada la descompilación hasta disponer de los archivos locales y comprobar sus hashes.
