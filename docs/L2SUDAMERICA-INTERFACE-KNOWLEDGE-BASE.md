@@ -253,26 +253,26 @@ Nueva ficha: [L2SUDAMERICA-UICOMMONAPI-AUDIT.md](L2SUDAMERICA-UICOMMONAPI-AUDIT.
 Nueva ficha: [L2SUDAMERICA-DIALOGBOX-AUDIT.md](L2SUDAMERICA-DIALOGBOX-AUDIT.md). Documenta los ocho tipos de diálogo, exclusión de instancia simultánea, identidad del llamador, ID de confirmación, eventos globales 1710/1720, acción predeterminada de Enter, entrada numérica, barra temporizada y estructura XDAT. Se identifican riesgos de concurrencia y consumo de respuestas entre ventanas. Análisis estático; sin modificar ni probar binarios.
 
 
-## 18. Auditoría del sistema de shortcuts
+## 17. Auditoría del sistema de shortcuts
 
 Nueva ficha: [L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md](L2SUDAMERICA-SHORTCUT-SYSTEM-AUDIT.md). Documenta ShortcutWnd y Shortcut: cinco barras/páginas, 12 slots por página, diez páginas, orientación horizontal/vertical, panel joypad, expansión, bloqueo/movimiento, persistencia y comandos globales de UI. Incluye eventos 590–660 y riesgos de no confundir índice global ShortcutID con slot local. Análisis estático; sin cambios ni pruebas en cliente.
 
 
-### Addendum a la auditoría 17 — bindings y teclas rápidas
+### Addendum a la auditoría del sistema de shortcuts — bindings y teclas rápidas
 
 La ficha de Shortcut fue ampliada con el cruce de `Shortcut.uc` e `InterfaceAI_KeySettingWnd.uc`: tres bindings independientes (teclas 1–12, QWERTY y F1–F12), paneles configurables por INI, comandos `/useshortcut` y `/useshortcutforce`, y la frontera no reconstruida de `NWindow.ShortcutAPI`. También se registraron dos puntos que requieren prueba/bytecode: la rama Force de Bind3 y etiquetas duplicadas en el switch de comandos. No se atribuye a “force” capacidad de saltarse restricciones del servidor.
 
 
-## 19. Auditoría de SublimityShortcut
+## 18. Auditoría de SublimityShortcut
 
 Nueva ficha: [L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md](L2SUDAMERICA-SUBLIMITY-SHORTCUT-AUDIT.md). Documenta la variante de cuatro paneles heredada de SublimityItem, sus 120 índices, páginas, persistencia propia y diferencias con ShortcutWnd estándar. Se marcan como pendientes los eventos 631/25002 y la lógica incompleta de SublimityShortcut; no se atribuyen semánticas no demostradas.
 
 
-## 20. Auditoría de ToolTip y SublimityItem
+## 19. Auditoría de ToolTip y SublimityItem
 
 Nueva ficha: [L2SUDAMERICA-TOOLTIP-SUBLIMITYITEM-AUDIT.md](L2SUDAMERICA-TOOLTIP-SUBLIMITYITEM-AUDIT.md). Cubre el evento global 2920, el catálogo de variantes de tooltip, construcción dinámica DrawList, inventario/precios/refinería, y el despacho de eventos de la clase base SublimityItem. Se mantienen pendientes los productores, contratos nativos, bytecode y ramas duplicadas/stubs.
 
 
-## 21. Auditoría de UISublimityCommonAPI y SublimityTimerActor
+## 20. Auditoría de UISublimityCommonAPI y SublimityTimerActor
 
 Nueva ficha: [L2SUDAMERICA-UISUBLIMITY-COMMONAPI-AUDIT.md](L2SUDAMERICA-UISUBLIMITY-COMMONAPI-AUDIT.md). Documenta la jerarquía común Sublimity, eventos, actor temporizador, preferencias separadas por personaje y las rutas bypass PIN/bot-check. Estas últimas se identifican como solicitudes al servidor y quedan fuera de cambios visuales; no se ejecutaron.
