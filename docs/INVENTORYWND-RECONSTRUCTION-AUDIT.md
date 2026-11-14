@@ -1391,3 +1391,14 @@ Archivos:
 Commits: `70b8823` (autotest) y `c7c99bc` (CI).
 
 **Límite actual:** el autotest está agregado al workflow, pero todavía no se ha observado una ejecución real de Actions. No se declara como aprobado hasta obtener el log.
+
+
+## Sexagésima pasada: representación CompactIndex inválida (2026-11-14)
+
+Revisión del decodificador contra el autotest recién incorporado. Se añadió un caso negativo específico para la codificación de cero negativo (`0x80`), que no representa un valor válido y debe rechazarse.
+
+La prueba confirma que el parser no acepte silenciosamente esa representación inválida. Se conserva también la cobertura del quinto byte, extremos de 32 bits y secuencias truncadas de la pasada anterior.
+
+Commit: `f40a4fc`.
+
+Pendiente: ejecución del workflow en GitHub Actions y revisión de sus logs. La prueba está implementada, pero aún no se considera validada en CI.
