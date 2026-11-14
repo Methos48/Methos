@@ -105,4 +105,4 @@ Puntos de entrada reconocibles: `OnLoad`, `OnEvent`, `OnShow`, `OnHide`, `OnDBCl
 
 ## Artefactos de origen
 
-El workflow [Audit L2Sudamerica Interface.u and interface.xdat](https://github.com/Methos48/Methos/actions/runs/43578703858) produjo `InventoryWnd.uc`, `InventoryWnd.xml`, el mapa de nombres y el resto de las clases/XML. Los binarios originales permanecen inmutables.
+El workflow [Audit L2Sudamerica Interface.u and interface.xdat](https://github.com/Methos48/Methos/actions/runs/43579091099) produjo `InventoryWnd.uc`, `InventoryWnd.xml`, el mapa de nombres y el resto de las clases/XML. Los binarios originales permanecen inmutables.
