@@ -7,7 +7,7 @@ import sys
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from unrealscript_functions import extract_functions as extract
+from unrealscript_functions import extract_functions as extract, lex_tokens as tokens
 
 ANONYMOUS = re.compile(r"(?:function\d+|MethosRecoveredName_\d+)", re.I)
 
@@ -17,14 +17,6 @@ def read_source(path: Path) -> str:
     if raw.startswith((bytes.fromhex("FFFE"), bytes.fromhex("FEFF"))):
         return raw.decode("utf-16")
     return raw.decode("utf-8-sig", errors="replace")
-
-
-def tokens(source: str) -> list[str]:
-    source = re.sub(r"/\*.*?\*/|//[^\r\n]*", " ", source, flags=re.S)
-    return re.findall(
-        r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[A-Za-z_]\w*|\d+|==|!=|<=|>=|&&|\|\||\S',
-        source,
-    )
 
 
 def event_routes(functions: list[dict]) -> dict[int, str]:
