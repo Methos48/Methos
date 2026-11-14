@@ -66,7 +66,7 @@ def event_routes(functions: list[dict]) -> dict[int, str]:
     return {
         int(match.group(1)): match.group(2)
         for match in re.finditer(
-            r"(?im)^\\s*case\\s+(\\d+)\\s*:\\s*([A-Za-z_]\\w*)\\s*\\(",
+            r"(?im)^\s*case\s+(\d+)\s*:\s*([A-Za-z_]\w*)\s*\(",
             on_event["body"],
         )
     }
