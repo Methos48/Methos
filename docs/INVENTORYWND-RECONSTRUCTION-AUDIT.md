@@ -770,3 +770,28 @@ Se clasifica el desajuste de `EnchantButton`, `FastDelete` y `RefineButton` como
 La prueba que resolvería el riesgo requiere ejecutar exactamente este paquete AnimalGame con su runtime original y observar la inicialización de InventoryWnd (log/depurador o captura de error). Si no se dispone del cliente ejecutable, el siguiente mejor insumo es el `NWindow.dll` exacto de esa instalación para inspeccionar la semántica de handles.
 
 No se modificó `InventoryWnd.uc`, XDAT ni ningún paquete de producción.
+
+
+## Trigésima octava pasada: control huérfano SearchItem y flujo de búsqueda (2026-11-14)
+
+Se inspeccionó el nodo XDAT `SearchItem` y se siguió el flujo completo de búsqueda/restauración de objetos en el fuente Animal.
+
+### Datos directos del XDAT
+
+`SearchItem` es un `ct0.ItemWindow` de 339 × 288, con 9 columnas × 8 filas, máximo 250 objetos, iconos de 32 × 32 y separación de 4 × 4. Sus dimensiones y capacidad coinciden con el panel `CraftingItem`; no es un campo de texto ni un botón. Está ubicado como hijo directo de `InventoryWnd`, en la posición XDAT `children[36]`.
+
+### Flujo de búsqueda en el script
+
+- `OnLoad()` asigna `SearchBox = EditBoxHandle(GetHandle("InventoryWnd.SearchBar"))`.
+- `OnKeyUp()` comprueba si SearchBox tiene foco; si queda vacío llama a `RestoreInventory()`; si tiene texto de longitud suficiente llama a `FilterInventory(SearchBox.GetString())`.
+- `FilterInventory()` construye una lista filtrada a partir de `m_invenItem` y actualiza ese mismo ItemWindow mediante `Clear()` y `AddItem()`.
+- `RestoreInventory()` vacía SearchBox, solicita la lista de inventario, carga el orden guardado y reconstruye la copia del inventario.
+- No existe una asignación de handle para `SearchItem`, ni una llamada textual a `GetHandle("InventoryWnd.SearchItem")`, ni un uso por nombre simple dentro de las 160 clases exportadas.
+
+### Conclusión
+
+El control `SearchItem` no participa en el flujo de búsqueda implementado por `InventoryWnd.uc`: el filtro opera sobre el ItemWindow principal `InventoryItem`. Su geometría idéntica a la de `CraftingItem` sugiere que puede ser un panel residual, una superficie reservada para una función retirada o un nodo consumido por lógica nativa/configuración no visible en el fuente; ninguna de esas posibilidades queda demostrada.
+
+No se debe conectar `SearchItem` al filtro ni eliminarlo sin evidencia adicional. Queda clasificado como **nodo ItemWindow huérfano en la capa UnrealScript**, con posible función externa aún desconocida.
+
+La siguiente comprobación segura es comparar su posición, anclajes, orden de hijos y propiedades con el panel `CraftingItem` y con las ventanas equivalentes de las variantes de código ya archivadas, para detectar si es un duplicado estructural o un elemento heredado de otra generación de UI. No se modificó el XDAT ni el código de producción.
