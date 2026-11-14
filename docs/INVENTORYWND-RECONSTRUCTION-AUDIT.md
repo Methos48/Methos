@@ -1178,3 +1178,41 @@ Esto verifica consistencia de nombres y texto serializado, pero el paquete inclu
 ### Estado
 
 `InventoryWnd-HennaCandidate.u` continúa siendo el candidato estático preferido. `Interface-clean.u` permanece intacto. No se modificó ningún archivo de producción.
+
+
+## Quincuagésima segunda pasada: validación estructural del encabezado UE2 (2026-11-14)
+
+Se inspeccionaron los primeros 64 bytes de `Interface-clean.u`, `InventoryWnd-HennaCandidate.u` y `Interface-edited-test.u` del ZIP. El candidato y el paquete limpio tienen encabezados compatibles y conservan los mismos contadores principales.
+
+### Comparación del encabezado limpio vs. HennaCandidate
+
+| Campo (offset) | Paquete limpio | HennaCandidate | Resultado |
+|---|---:|---:|---|
+| Firma (0) | `0x9E2A83C1` | `0x9E2A83C1` | Igual |
+| Versión (4, UInt16) | 126 | 126 | Igual |
+| Licensee (6, UInt16) | 1 | 1 | Igual |
+| Cantidad de nombres (12) | 5,258 | 5,258 | Igual |
+| Offset tabla de nombres (16) | 64 | 64 | Igual |
+| Cantidad de exports (20) | 9,744 | 9,744 | Igual |
+| Offset tabla de exports (24) | 3,178,799 | 3,178,823 | +24 |
+| Cantidad de imports (28) | 739 | 739 | Igual |
+| Offset tabla de imports (32) | 3,172,186 | 3,172,210 | +24 |
+
+El tamaño total del candidato también es exactamente 24 bytes mayor: 3,338,681 frente a 3,338,657 bytes.
+
+### Interpretación
+
+El aumento de 24 bytes coincide exactamente con el aumento acumulado de longitud de los tres textos sustituidos en el paquete:
+- Nombre de tabla: `function37` (9 bytes) → `HandleAddHennaInfo` (17 bytes): +8.
+- Llamada serializada: +8.
+- Declaración serializada: +8.
+
+Además, el offset de la tabla de nombres y los tres contadores principales permanecen iguales; las tablas posteriores se desplazan +24 bytes. Esto es una señal estructural muy consistente con el cambio de identificador documentado, no con una reconstrucción que haya agregado o quitado exports/imports/nombres.
+
+### Límite
+
+La inspección confirma campos del encabezado, contadores y desplazamientos. No parsea cada registro de export/import ni verifica bytecode, índices de nombres o referencias internas. Por eso aún no equivale a validación completa de paquete UE2. El paquete editado de prueba tiene contadores distintos (5,259 nombres, 9,745 exports y 739 imports), lo que lo diferencia estructuralmente del candidato Henna y refuerza que no debemos confundir ambos archivos.
+
+### Decisión
+
+La evidencia acumulada favorece claramente `InventoryWnd-HennaCandidate.u`: fuente de dos líneas, tres referencias textuales coherentes, contadores del encabezado idénticos al limpio y crecimiento total exacto de 24 bytes. Sigue siendo candidato estático; no instalar ni reemplazar `Interface-clean.u` hasta validar tablas/bytecode y probar en cliente.
