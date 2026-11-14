@@ -1464,3 +1464,20 @@ Commits: `5bce0b6`, `0d7af5b`, `6f52224`, `cf62337`, `daa3b07`.
 ### Estado de validación
 
 Cambios registrados en GitHub. No se afirma que el workflow haya pasado; queda pendiente revisar la ejecución y sus logs. Las similitudes siguen siendo pistas y no identificaciones definitivas de funciones.
+
+
+## Sexagésima cuarta pasada: límites de literales escapados (2026-11-14)
+
+Se amplió la batería del extractor/tokenizador compartido para cubrir una frontera que podía romper el conteo de llaves: comillas escapadas, llaves de cierre dentro de strings y marcadores `//` / `/*...*/` dentro de literales. La prueba cubre también strings con comillas simples.
+
+Durante la revisión del propio caso de prueba se corrigió la secuencia de escape del fixture para que represente realmente una comilla escapada en el código fuente, no dos barras invertidas. Así se evita una prueba que pareciera cubrir el escenario pero no lo ejercitara.
+
+Cambios:
+- Prueba de extracción con una llave `}` dentro de un literal.
+- Prueba de tokenización conservando el literal completo con comilla escapada y marcadores de comentario.
+- Prueba adicional de literal con comillas simples.
+- El workflow ya ejecuta esta misma suite mediante `unittest discover`; no se duplicó el paso.
+
+Commits: `da3fec0` y `1be64fb`.
+
+Pendiente: ejecutar/inspeccionar CI y contrastar resultados reales de extracción de AnimalGame. No se declaran nombres reconstruidos ni equivalencias funcionales sin evidencia de las fuentes comparadas.
