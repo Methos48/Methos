@@ -85,7 +85,7 @@ def mask_code(source: str) -> str:
 
 
 EVENT_ROUTE = re.compile(
-    r"(?im)^\\s*case\\s+(\\d+)\\s*:\\s*([A-Za-z_]\\w*)\\s*\\("
+    r"(?im)^\s*case\s+(\d+)\s*:\s*([A-Za-z_]\w*)\s*\("
 )
 
 
