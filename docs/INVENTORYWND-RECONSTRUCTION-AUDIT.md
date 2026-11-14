@@ -1095,3 +1095,26 @@ Se mantienen tres estados separados:
 3. `Interface-clean.u`: referencia limpia que no se modifica.
 
 No se cambia producción. Próximo paso: comparar el export/bytecode de InventoryWnd entre el paquete limpio y HennaCandidate con un parser compatible, para verificar que el paquete serializado corresponde realmente al fuente aislado.
+
+
+## Cuadragésima novena pasada: diff exacto del fuente HennaCandidate (2026-11-14)
+
+Se reabrió el ZIP de validación y se comparó el fuente base `Animal-Rebuilt/UnrealScript/InventoryWnd.uc` directamente contra `Animal-Rebuilt/InventoryWnd-Name-Probes/HennaCandidate/InventoryWnd.uc`, usando comparación de líneas completa y sin normalizar.
+
+### Resultado exacto
+
+- Fuente base: 72,982 bytes; SHA-256 `e4dfbd39cc3c6b41f01d6ab16461ff7bd7f53638014151bac72097396bc484eb`.
+- HennaCandidate: 72,998 bytes; SHA-256 `4302dde976865d1f743d5dcb817d6cbe7f76dbc514cb5b45dcac755cffbf2ca0`.
+- El diff contiene exactamente **dos líneas reemplazadas**, sin inserciones ni eliminaciones:
+  1. En el despacho del evento 2630: `function37(param);` → `HandleAddHennaInfo(param);`.
+  2. En la declaración del wrapper: `function function37(string string_2)` → `function HandleAddHennaInfo(string string_2)`.
+
+No cambian las líneas del evento 2600, el parser `function30`, el predicado `HandleAddItem(ItemInfo)`, ni el cuerpo del wrapper. El cambio fuente está, por tanto, aislado de forma verificable a dos identificadores relacionados con Henna.
+
+### Relación con el paquete binario
+
+El paquete candidato real está en `Animal-Rebuilt/InventoryWnd-Name-Probes/InventoryWnd-HennaCandidate.u` (3,338,681 bytes), no en una carpeta `Reopened`. Su tamaño es 24 bytes mayor que `Interface-clean.u` (3,338,657 bytes). La comparación byte a byte del paquete sigue mostrando diferencias extensas por la serialización/reconstrucción; ese dato no invalida el diff fuente aislado, pero tampoco permite demostrar que el binario corresponda exactamente a ese fuente.
+
+### Conclusión
+
+La fuente `HennaCandidate/InventoryWnd.uc` queda confirmada como un cambio mínimo y aislado de dos líneas respecto del fuente base. Es la mejor base para continuar la reconstrucción estática. La validación binaria/compilación y la prueba en cliente siguen pendientes; no desplegar todavía el paquete candidato ni modificar el paquete limpio.
