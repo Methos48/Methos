@@ -58,25 +58,26 @@ def mask_comments(source: str) -> str:
 def mask_code(source: str) -> str:
     """Mask comments and string literals, preserving offsets and line breaks."""
     chars = list(mask_comments(source))
+    scan = "".join(chars)
     state = "code"
     i = 0
-    while i < len(source):
-        ch = source[i]
+    while i < len(scan):
+        ch = scan[i]
         if state == "code":
             if ch in ("'", '"'):
                 state = ch
                 chars[i] = " "
         else:
-            if ch == "\\\\":
+            if ch == "\\":
                 chars[i] = " "
-                if i + 1 < len(source) and source[i + 1] not in "\\r\\n":
+                if i + 1 < len(scan) and scan[i + 1] not in "\r\n":
                     chars[i + 1] = " "
                 i += 2
                 continue
             if ch == state:
                 chars[i] = " "
                 state = "code"
-            elif ch not in "\\r\\n":
+            elif ch not in "\r\n":
                 chars[i] = " "
         i += 1
     return "".join(chars)
