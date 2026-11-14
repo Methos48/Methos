@@ -1,0 +1,108 @@
+# L2Sudamerica — auditoría estructural de InventoryWnd
+
+Fecha: 2026-11-14  
+Origen: `reference-data/packages/l2sudamerica/Interface.u` y `interface.xdat`.  
+Estado: fuentes U y XML obtenidos tras descifrado verificado; nombres originales de FName numéricos conservados en el mapa de nombres.
+
+## Base técnica comprobada
+
+- `Interface.u`: Unreal 123/37; 4,987 nombres, 793 imports, 9,433 exports; 10,226 objetos.
+- UELib exportó 150/150 clases, con cero errores.
+- `interface.xdat`: 169 ventanas, 8 shortcuts; XML → XDAT con coincidencia binaria exacta.
+- `InventoryWnd.uc` y `windows/InventoryWnd.xml` proceden de esos dos mismos originales L2Sudamerica, no de otra interfaz.
+
+## InventoryWnd — inventario de código
+
+- 27 declaraciones `var` a nivel de clase.
+- 26 constantes.
+- 60 funciones exportadas por el decompilador.
+- 12 códigos de evento registrados distintos.
+- 52 nodos XDAT con nombre dentro del árbol, contando la raíz `InventoryWnd`; 51 son controles/ventanas descendientes.
+
+### Variables y correspondencia con controles XDAT
+
+Los nombres `MethosRecoveredName_N` son identificadores seguros asignados por el decompilador porque el FName original del paquete es numérico/no válido como identificador UnrealScript. No son nombres semánticos originales. La correspondencia de los handles sí se puede recuperar por las llamadas `GetHandle(...)` del código.
+
+| Variable de clase | Tipo | Correspondencia / interpretación basada en el código |
+|---|---|---|
+| `MethosRecoveredName_1322` | string | Prefijo/nombre de ventana utilizado para formar rutas como `.InventoryItem` y para mostrar/ocultar la ventana; su valor de inicialización no aparece en el cuerpo exportado. |
+| `MethosRecoveredName_2527` | ItemWindowHandle | `InventoryItem`, inventario principal. |
+| `MethosRecoveredName_2505` | ItemWindowHandle | `QuestItem`, inventario de quest. |
+| `MethosRecoveredName_2575[15]` | ItemWindowHandle[15] | Los 15 slots de equipo, en el orden detallado abajo. |
+| `MethosRecoveredName_2391` | ItemWindowHandle | `HennaItem`. |
+| `MethosRecoveredName_2571` | TextBoxHandle | `AdenaText` (el mismo número se reutiliza en variables locales de otras funciones; esas variables locales no son este campo). |
+| `MethosRecoveredName_2392` | ItemWindowHandle | `EquipmentItem`. |
+| `MethosRecoveredName_2393` | ItemWindowHandle | `CraftingItem`. |
+| `MethosRecoveredName_2394` | ItemWindowHandle | `SuppliesItem`. |
+| `MethosRecoveredName_2453` | ButtonHandle | `InventoryWnd.SortButton`. |
+| `MethosRecoveredName_2395` | ButtonHandle | Se solicita `InventoryWnd.EnchantButton`; no aparece un control con ese nombre en el XML exportado. Pendiente resolver. |
+| `MethosRecoveredName_2396` | ButtonHandle | Se solicita `InventoryWnd.FastDelete`; no aparece un control con ese nombre en el XML exportado. Pendiente resolver. |
+| `MethosRecoveredName_2397` | ButtonHandle | Se solicita `InventoryWnd.RefineButton`; no aparece un control con ese nombre en el XML exportado. Pendiente resolver. |
+| `MethosRecoveredName_2398` | ButtonHandle | `InventoryWnd.TrashButton`; cambia sus texturas entre modo normal/automático. |
+| `MethosRecoveredName_2399` | ButtonHandle | `InventoryWnd.CancelBar`, botón de borrar/cancelar búsqueda. |
+| `MethosRecoveredName_2400` | EditBoxHandle | `InventoryWnd.SearchBar`. |
+| `MethosRecoveredName_2401` | ItemWindowHandle | `InventoryWnd.SearchItem`, lista filtrada de búsqueda. |
+| `MethosRecoveredName_2455` | array<int> | Orden guardado del inventario: se llena con `ItemInfo.ClassID` y se pasa a `SaveInventoryOrder` / `LoadInventoryOrder`. |
+| `MethosRecoveredName_2402` | Vector | Posición del clic/arrastre, obtenida con `GetClickLocation()` y pasada a `RequestDropItem`. |
+| `MethosRecoveredName_4023` | array<ItemInfo> | Cola temporal de objetos que comparten los slots de oreja; se resuelve en los índices 8/9 del arreglo de equipo. |
+| `MethosRecoveredName_4022` | array<ItemInfo> | Cola temporal de objetos que comparten los slots de anillo; se resuelve en los índices 13/14. |
+| `MethosRecoveredName_2504` | bool | Bandera booleana usada en lógica de recorrido/selección. Hay variables locales que la sombrean; significado global exacto pendiente. |
+| `MethosRecoveredName_2454` | int | Entero usado en rutinas de lista/eliminación y Henna; no se asigna un significado único sin rastrear todas las rutas. |
+| `MethosRecoveredName_2403` | bool | Estado del modo de anclaje de búsqueda: cambia entre posiciones superior/derecha e inferior/derecha. |
+| `MethosRecoveredName_2404` | TextureHandle | `InventoryWnd.BlackSquare`, fondo/placa que acompaña a la barra de búsqueda. |
+| `MethosRecoveredName_2405` | ButtonHandle | `InventoryWnd.EnableButton`, botón superpuesto a la zona de búsqueda. |
+| `MethosRecoveredName_2406` | ButtonHandle | `InventoryWnd.BtnInfo`, tooltip de ayuda del borrado rápido. |
+
+### Orden exacto de los 15 slots de equipo
+
+| Índice | Control XDAT |
+|---:|---|
+| 0 | `EquipItem_Underwear` |
+| 1 | `EquipItem_Head` |
+| 2 | `EquipItem_Hair` |
+| 3 | `EquipItem_Hair2` |
+| 4 | `EquipItem_Neck` |
+| 5 | `EquipItem_RHand` |
+| 6 | `EquipItem_Chest` |
+| 7 | `EquipItem_LHand` |
+| 8 | `EquipItem_REar` |
+| 9 | `EquipItem_LEar` |
+| 10 | `EquipItem_Gloves` |
+| 11 | `EquipItem_Legs` |
+| 12 | `EquipItem_Feet` |
+| 13 | `EquipItem_RFinger` |
+| 14 | `EquipItem_LFinger` |
+
+El código aplica la textura `L2UI.InventoryWnd.Icon_dualcap` a determinados slots y gestiona por separado los objetos de oreja y anillo, porque dos piezas pueden compartir una misma posición lógica según `SlotBitType`.
+
+## Controles XML presentes
+
+El XML contiene estos controles principales:
+
+- Equipamiento: los 15 slots anteriores.
+- Inventario: `InventoryItem`, `QuestItem`, `EquipmentItem`, `CraftingItem`, `SuppliesItem`, `SearchItem`, `HennaItem`.
+- Búsqueda: `SearchBar`, `CancelBar`, `BlackSquare`, `EnableButton`, `BtnInfo`.
+- Acciones: `SortButton`, `TrashButton`, `CrystallizeButton`, `BtnClose`, `BtnMin`, `BtnExpand`.
+- Datos/estado: `AdenaText`, `ItemCount`, `InvenWeight`, `AdenaIcon`, `WeightIcon`, `WeightBG`.
+- Estructura visual: `BackTexture`, `Container`, `Tex`, `Slots`, `Slots2`, `Frame`, `AdenaBox`, `Title`, `Equip_Classic`, `ObjectViewport`, `EquipSlotBg`.
+
+### Parámetros de ItemWindow
+
+Los paneles de inventario principales exportan configuración de 9 columnas × 8 filas, máximo 250 ítems, iconos de 32 × 32 y separación de 4 × 4. El código cambia dinámicamente `SearchItem` entre 9 y 12 columnas y entre 339 y 447 píxeles de ancho, manteniendo 288 píxeles de alto.
+
+## Eventos y puntos de entrada
+
+Los eventos registrados son: `150`, `180`, `260`, `1710`, `2570`, `2580`, `2590`, `2600`, `2610`, `2620`, `2630`, `2631`.
+
+Puntos de entrada reconocibles: `OnLoad`, `OnEvent`, `OnShow`, `OnHide`, `OnDBClickItemWithHandle`, `OnRClickItemWithHandle`, `OnClickButton`, `OnSelectItemWithHandle`, `OnDropItem`, `OnDropItemSource` y `OnChangeEditBox`. El resto de funciones se mantiene en el fuente exportado; sus identificadores numéricos no se renombran por intuición.
+
+## Pendientes concretos de esta auditoría
+
+1. Resolver los tres handles `EnchantButton`, `FastDelete` y `RefineButton` que no aparecen en el árbol XML de esta exportación.
+2. Rastrear los usos globales frente a locales de `MethosRecoveredName_2504`, `_2454` y `_2403` para cerrar su significado sin confundir variables sombreadas.
+3. Relacionar los identificadores numéricos del mapa `methos_name_map.json` con fuentes de referencia compatibles, si existen, sin reemplazar nombres basándose solo en similitud.
+4. Continuar el inventario estructural del resto de clases y ventanas con el mismo criterio de evidencia.
+
+## Artefactos de origen
+
+El workflow [Audit L2Sudamerica Interface.u and interface.xdat](https://github.com/Methos48/Methos/actions/runs/43578703858) produjo `InventoryWnd.uc`, `InventoryWnd.xml`, el mapa de nombres y el resto de las clases/XML. Los binarios originales permanecen inmutables.
