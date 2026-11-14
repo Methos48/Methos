@@ -626,3 +626,15 @@ Los logs publicaron las rutas exactas:
 - `ANIMAL_EVENT_ROUTE=2630 HANDLER=function37 SILENT_REFERENCE=HandleAddHennaInfo NAME_CONFLICT=False`
 
 El mismo run confirmó otra vez compilación limpia, reapertura 160/160, edición real persistente, compilación/reapertura del candidato temporal `HandleAddHennaInfo` y rechazo esperado de `HandleAddItem` por colisión. El workflow completo terminó correctamente y el código de producción sigue sin renombrar funciones.
+
+## Trigésima segunda pasada: evidencia nativa adicional para los slots de accesorios (2026-11-14)
+
+Se revisó el análisis de binarios de otra instalación Interlude en [Elbera — native-inventory-evidence.md](https://github.com/elberacasa/Lineage2Elbera/blob/main/docs/native-inventory-evidence.md#left-and-right-accessory-slots). Ese análisis verifica `UUIScript::execGetAccessoryServerID` dentro de su propio `NWindow.dll` y obtiene esta correspondencia:
+- salida 1: LEar, User+0xA0;
+- salida 2: REar, User+0x9C;
+- salida 3: LFinger, User+0xAC;
+- salida 4: RFinger, User+0xA8.
+
+Su InventoryWnd usa los dos primeros resultados para `IsLOrREar` y los dos últimos para `IsLOrRFinger`. Esto coincide con el contrato del UCC Interlude y apoya la lectura semántica de Animal `function44`: compara los dos primeros resultados y, por tanto, sería un helper de orejas bajo ese contrato.
+
+También confirma la anomalía de Animal: la función ya nombrada `IsLOrREar` compara los resultados tercero y cuarto, igual que `IsLOrRFinger`. Si Animal usa el mismo contrato nativo, la primera función nombrada parece estar mal clasificada y `function44` ocuparía el papel semántico de `IsLOrREar`. No es seguro intercambiar ni renombrar estas funciones: el `Interface.u` analizado por Elbera tiene SHA-256 distinto del paquete Animal (`Animal Interface.u = 3780DCAD8DB9C8B7FF305CBAB5C0D1B016E934044C7E3749ECD53229DB1B866B`; Elbera documenta otro fingerprint), y su `NWindow.dll` no es el runtime Animal. Se mantiene la contradicción abierta hasta verificar el contrato del NWindow exacto de AnimalGame.
