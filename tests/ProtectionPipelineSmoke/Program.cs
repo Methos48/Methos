@@ -5,6 +5,45 @@ using System.Text;
 using System.Security.Cryptography;
 using Methos.Engine;
 
+if (args.Length > 0 && args[0] == "--self-test-compact-index")
+{
+    var vectors = new (byte[] Bytes, int Expected, string Label)[]
+    {
+        (new byte[] { 0x00 }, 0, "zero"),
+        (new byte[] { 0x3F }, 63, "one-byte maximum"),
+        (new byte[] { 0x40, 0x01 }, 64, "two-byte minimum"),
+        (new byte[] { 0x7F, 0x7F }, 8191, "two-byte maximum"),
+        (new byte[] { 0x40, 0x80, 0x01 }, 8192, "three-byte minimum"),
+        (new byte[] { 0xC0, 0x01 }, -64, "negative two-byte"),
+        (new byte[] { 0x40, 0x80, 0x80, 0x80, 0x01 }, 134217728, "fifth-byte high range"),
+        (new byte[] { 0x7F, 0xFF, 0xFF, 0xFF, 0x0F }, int.MaxValue, "int maximum"),
+        (new byte[] { 0xC0, 0x80, 0x80, 0x80, 0x10 }, int.MinValue, "int minimum")
+    };
+
+    foreach (var vector in vectors)
+    {
+        int position = 0;
+        int actual = UnrealPackageIndex.DecodeCompactIndex(vector.Bytes, ref position);
+        if (actual != vector.Expected || position != vector.Bytes.Length)
+            throw new InvalidDataException($"CompactIndex {vector.Label}: expected {vector.Expected} consuming {vector.Bytes.Length} bytes, got {actual} consuming {position}.");
+        Console.WriteLine($"PASS CompactIndex {vector.Label}: {actual}");
+    }
+
+    try
+    {
+        int position = 0;
+        _ = UnrealPackageIndex.DecodeCompactIndex(new byte[] { 0x40 }, ref position);
+        throw new InvalidDataException("CompactIndex accepted a truncated continuation sequence.");
+    }
+    catch (InvalidDataException exception) when (exception.Message.Contains("fuera del archivo", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine("PASS CompactIndex truncated continuation rejected");
+    }
+
+    Console.WriteLine($"COMPACT_INDEX_SELF_TEST=PASS; VECTORS={vectors.Length + 1}");
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
 {
     if (args.Length != 4)
