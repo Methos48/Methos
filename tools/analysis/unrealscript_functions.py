@@ -124,7 +124,7 @@ def count_parameters(params: str) -> int:
         if quote is not None:
             if escaped:
                 escaped = False
-            elif char == "\\\\":
+            elif char == "\\":
                 escaped = True
             elif char == quote:
                 quote = None
