@@ -17,6 +17,21 @@ function Real()
         functions = extract_functions(source)
         self.assertEqual([item["name"] for item in functions], ["Real"])
 
+    def test_ignores_fake_declarations_inside_multiline_strings(self):
+        source = """local string S;
+S = "literal start
+function Fake() {
+    case 999: FakeHandler();
+}
+literal end";
+function Real()
+{
+    return;
+}
+"""
+        functions = extract_functions(source)
+        self.assertEqual([item["name"] for item in functions], ["Real"])
+
     def test_preserves_comment_markers_inside_strings(self):
         source = '''function Real()
 {
