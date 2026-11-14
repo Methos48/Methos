@@ -86,3 +86,13 @@ def extract_functions(source: str) -> list[dict[str, str]]:
                     })
                     break
     return result
+
+
+
+def lex_tokens(source: str) -> list[str]:
+    """Tokenize code after masking comments without damaging quoted strings."""
+    masked = mask_comments(source)
+    return re.findall(
+        r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[A-Za-z_]\w*|\d+|==|!=|<=|>=|&&|\|\||\S',
+        masked,
+    )
