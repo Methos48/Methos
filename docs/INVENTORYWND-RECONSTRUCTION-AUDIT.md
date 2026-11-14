@@ -195,3 +195,33 @@ La primera instrucción `ReturnToken` seguida por `NothingToken` demuestra que l
 La nueva métrica basada en offsets lógicos quedó confirmada por GitHub Actions: `DECODED_INSTRUCTION_END=1366`, `BYTE_SCRIPT_SIZE=1366`, `DECODED_STORAGE_END=1196`, `DATA_SCRIPT_SIZE=1196`, `TOKEN_COUNT=248`, `COMPLETE=True`. Por tanto, los 1366 bytes lógicos de bytecode de `InventoryWnd.function3` fueron recorridos completamente por UELib; la diferencia entre 1366 y 1196 es la diferencia entre offsets lógicos y almacenamiento comprimido/compactado, no bytes faltantes.
 
 El flujo contiene además `JumpIfNotToken` en `Position=0x008E`, `JumpToken` en `Position=0x0266` y un segundo `ReturnToken` en `Position=0x0554`. El primer `ReturnToken` está en `Position=0` y va seguido de `NothingToken`; por ello el resto del cuerpo, incluidos esos saltos y el retorno final, queda detrás del retorno inicial y no es alcanzable por ejecución lineal normal. La estructura completa ya está decodificada; la siguiente pasada añade los destinos numéricos de los saltos para documentar el grafo de control sin depender de la salida textual defectuosa de UELib.
+
+## Octava pasada: jerarquía real de `InventoryWnd` en Animal `interface.xdat` (2026-11-14)
+
+Se ejecutó `tools/xdat/report_animal_inventorywnd.py` directamente contra `reference-data/packages/animal/interface.xdat` dentro del workflow de validación. Resultado: `ANIMAL_INVENTORYWND_ANALYSIS_OK controls=53 unique_textures=38`. El JSON y los dos CSV se publican dentro del artefacto `Animal-U-Reconstruction-Validation`, carpeta `Animal-InventoryWnd-XDAT/`.
+
+### Estructura confirmada por XDAT
+
+- Ventana raíz `InventoryWnd`: **566 × 400**, anclaje 1, offsets -8/-70.
+- Panel visual de equipo `Equip_Classic`: 206 × 393, posición 5/-1; contiene `ObjectViewport` 204 × 364 y `EquipSlotBg` 204 × 365.
+- Inventario principal: `InventoryItem` 339 × 288 en 217/55.
+- Paneles alternativos superpuestos en la misma posición y tamaño: `QuestItem`, `EquipmentItem`, `CraftingItem`, `SuppliesItem` y `SearchItem` (todos 339 × 288, 217/55).
+- `EquipmentItem`, `CraftingItem`, `SuppliesItem` y `SearchItem` declaran 9 columnas × 8 filas, iconos de 32 × 32, separación 4 × 4 y `maxItemNum=250`.
+- `InventoryTab`: 277 × 23, en 214/18; tiene cinco elementos de pestaña visibles en el XDAT: grande/estado, equipo, consumibles, materiales y quest.
+- Slots de equipo individualizados: Underwear, Head, Hair, Hair2, Neck, RHand, Chest, LHand, REar, LEar, Gloves, Legs, Feet, RFinger y LFinger; además `HennaItem` 91 × 19.
+- Controles de acción confirmados: `CrystallizeButton` 39 × 40, `TrashButton` 39 × 40, `SortButton` 15 × 15, `BtnClose` y `BtnMin` 12 × 12; `SearchBar` 96 × 18 y `CancelBar` 16 × 16.
+- Zona inferior: `AdenaText`, `AdenaIcon`, `AdenaBox`, `InvenWeight`, `WeightIcon` y `WeightBG`.
+
+### 38 referencias de textura únicas
+
+El XDAT solicita recursos de cuatro paquetes principales: `Abaddon`, `NphrnTextures`, `L2UI_CH3` e `InterfaceTextures`. Entre las referencias verificadas están `Abaddon.Inventory_Equip_BG`, `Abaddon.Inventory_Equip_Slot_NoBr`, las texturas de pestañas `Abaddon.Inventory_Tab_*`, los botones `Abaddon.Inventory_Btn_Cry*` y `Abaddon.Inventory_Btn_Trash*`, `NphrnTextures.Wnd_Inventory`, `NphrnTextures.Wnd_Inventory_Outline`, `NphrnTextures.ItemWindow_DF_SlotBox_2x2`, `NphrnTextures.Inventory_Btn_Sort` y `L2UI_CH3.InventoryWnd.Inventory_Back`. Se detectaron además 7 referencias vacías/undefined en campos de textura; no se cuentan como recursos válidos.
+
+### Cruce con `function3`
+
+El tamaño raíz del XDAT (566 × 400) coincide con el tamaño compacto que aparece en el bloque posterior de `function3`. Ese bloque propone el modo expandido de 673 × 400 y 12 columnas frente al modo compacto de 566 × 400 y 9 columnas. El XDAT confirma la geometría compacta inicial y los paneles de 9 × 8; no demuestra que la rama expandida esté activa. Como el bytecode original empieza con `ReturnToken`, se mantiene la conclusión: la rutina de cambio de tamaño está presente detrás de un retorno temprano y no debe activarse como parte de una reconstrucción fiel sin evidencia adicional.
+
+### Límites de la evidencia
+
+El XDAT contiene nombres de controles, dimensiones, anclajes, propiedades y referencias de texturas, pero no los píxeles de las texturas ni la definición completa de sus paquetes. El informe no permite reconstruir por sí solo el aspecto visual exacto de cada recurso. Tampoco se modificó `InventoryWnd.uc` ni ningún comportamiento del cliente.
+
+La ejecución completa del workflow `43563099043` terminó correctamente: compilación limpia, reapertura de 160 clases, compilación de prueba editada y verificación de persistencia del cambio.
