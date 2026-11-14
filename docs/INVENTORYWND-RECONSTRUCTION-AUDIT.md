@@ -239,3 +239,13 @@ El workflow volvió a localizar en el kit UCC Interlude de referencia la funció
 El mismo kit de referencia contiene `HandleAddItem(string param)` en el evento 2600. Sin embargo, Animal ya tiene una función distinta `HandleAddItem(ItemInfo)` que clasifica determinados subtipos (pociones/elixires y soulshots) para `item_7`. La función anónima `function30(string)` hace la conversión inicial `ParamToItemInfo`, enruta equipo y quest, y después clasifica en los panes de inventario. Aunque ocupa el rol de handler de evento 2600, no se renombra a `HandleAddItem` porque colisionaría con la función existente y no hay evidencia de que el nombre original de Animal fuera el mismo.
 
 No se cambiaron identificadores ni lógica. Se preserva el `InventoryWnd.uc` extraído y compilado como línea base.
+
+### Destinos numéricos de los saltos de `function3`
+
+La pasada estructural del bytecode original ya recupera los campos `CodeOffset` sin invocar el formateador defectuoso de UELib:
+
+- `JumpIfNotToken`: posición `0x008E`, destino `0x0269`.
+- `JumpToken`: posición `0x0266`, destino `0x040F`.
+- `ReturnToken` final: posición `0x0554`.
+
+El primer `ReturnToken` permanece en posición `0x0000`. Estos destinos permiten seguir el grafo interno del bloque posterior si hace falta, pero no alteran la conclusión de alcanzabilidad desde la entrada: el retorno inicial termina la función antes de llegar a la condición en `0x008E`. Los saltos se conservan como evidencia estructural, no como permiso para reactivar la rutina.
