@@ -156,3 +156,16 @@ Se contrastó además con `UnrealScriptSourceIndex.RemoveRedundantTrailingReturn
 La evidencia disponible permite afirmar que el `return;` temprano está en la representación descompilada del paquete AnimalGame original y se conserva en la ida y vuelta. Todavía no se ha inspeccionado el flujo de bytes de script de la exportación `function3` con un desensamblador de bytecode independiente; por ello no se declara probado si el salto/retorno temprano corresponde exactamente a una instrucción real del bytecode o a un defecto específico de UELib al reconstruir el fuente.
 
 No se quitó el retorno. No se activó el cambio de tamaño y no se alteró el paquete del usuario. La próxima comprobación técnica necesaria es extraer el bytecode crudo de la exportación de `function3` y contrastar sus offsets con el flujo de control que UELib produjo.
+
+## Octava pasada: ruta de inspección del bytecode nativo (2026-11-14)
+
+Se revisó UELib 1.13.7 y se confirmó una ruta de diagnóstico más precisa que comparar nuevamente los fuentes reabiertos:
+
+- UELib expone un deserializador de bytecode por función (UStruct.UByteCodeDecompiler).
+- Cada token conserva su posición lógica (Position) y su posición/tamaño almacenados (StoragePosition, StorageSize).
+- El deserializador lee el flujo delimitado por ScriptOffset y ByteScriptSize; permite localizar el primer token real de InventoryWnd.function3 y seguir los offsets de salto/retorno.
+- UELib captura errores durante la lectura y puede detenerse ante un token no reconocido. El diagnóstico debe registrar si alcanzó el final del tamaño de script para no confundir una deserialización parcial con evidencia completa.
+
+La comprobación se hará en el paquete Animal original. Se inspeccionarán el token inicial, los saltos y el token Return con sus offsets almacenados. Si el bytecode muestra un salto que evita el bloque de layout, el retorno temprano es real. Si el bytecode contiene el bloque antes del retorno y UELib lo omite o altera, habrá evidencia concreta de un defecto de descompilación.
+
+No se ha cambiado el bytecode, no se ha eliminado el return; y no se ha activado el redimensionamiento. Esta pasada fija el método de comprobación y evita una corrección especulativa.
