@@ -159,7 +159,7 @@ if (args.Length > 0 && args[0] == "--audit-export-table")
         .Where(item => string.Equals(Name(item.entry.ObjectName), "InventoryWnd", StringComparison.OrdinalIgnoreCase)))
     {
         matches++;
-        Console.WriteLine($"INVENTORYWND_EXPORT_INDEX={item.index}; CLASS={RefName(item.entry.ClassRef)}; SUPER={RefName(item.entry.SuperRef)}; OUTER={RefName(item.entry.Outer)}; SERIAL_SIZE={item.entry.SerialSize}; SERIAL_OFFSET={item.entry.SerialOffset}");
+        Console.WriteLine($"INVENTORYWND_EXPORT_INDEX={item.index}; CLASS_REF={item.entry.ClassRef}({RefName(item.entry.ClassRef)}); SUPER_REF={item.entry.SuperRef}({RefName(item.entry.SuperRef)}); OUTER_REF={item.entry.Outer}({RefName(item.entry.Outer)}); SERIAL_SIZE={item.entry.SerialSize}; SERIAL_OFFSET={item.entry.SerialOffset}; SERIAL_END={checked(item.entry.SerialOffset + item.entry.SerialSize)}");
     }
     Console.WriteLine($"INVENTORYWND_EXPORT_MATCHES={matches}");
     if (matches != 1)
