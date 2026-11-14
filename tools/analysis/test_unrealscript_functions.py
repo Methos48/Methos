@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from unrealscript_functions import extract_functions, mask_comments
+from unrealscript_functions import extract_functions, lex_tokens, mask_comments
 
 
 class UnrealScriptFunctionExtractionTests(unittest.TestCase):
@@ -27,6 +27,11 @@ function Real()
         functions = extract_functions(source)
         self.assertEqual(len(functions), 1)
         self.assertIn('http://example.invalid/{x}', functions[0]["body"])
+
+    def test_tokenizer_preserves_comment_markers_inside_strings(self):
+        tokens = lex_tokens('value = "http://host/path/*literal*/"; // real comment')
+        self.assertIn('"http://host/path/*literal*/"', tokens)
+        self.assertNotIn("comment", tokens)
 
     def test_masking_preserves_source_length_and_line_breaks(self):
         source = "a/* comment\nmore */b // tail\nc"
