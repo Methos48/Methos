@@ -531,3 +531,14 @@ Prueba local con el artifact validado `14103220248`:
 - `function37` encuentra `HandleAddHennaInfo` como mejor candidato en Silent Dark; no hay colisión de nombre en Animal. `function30` encuentra `HandleAddItem`, pero ese nombre ya existe en Animal y el compilador confirmó el conflicto. `function44` encuentra `IsLOrREar`, pero ese nombre también existe en Animal y la comparación de IDs mantiene la contradicción ya documentada.
 
 La similitud solo produce candidatos; no restaura nombres automáticamente. El nuevo paso queda incluido en el run `43566703204`, todavía en ejecución al registrar esta pasada.
+
+### Aclaración de la comparación en bruto frente a la fuente restaurada
+
+El run `43566703204` ejecutó el comparador inmediatamente después de descompilar los tres paquetes y **antes** de las restauraciones de compatibilidad. El resultado reproducible del log/JSON fue `animal=72 berserker=72 same_name_exact=72`: las 72 funciones de InventoryWnd tienen el mismo nombre y cuerpo en las dos fuentes brutas.
+
+La cifra local de 68/72 registrada arriba corresponde a comparar el archivo Animal ya restaurado del artifact, no la fuente bruta. Las cuatro diferencias son precisamente correcciones posteriores documentadas por el workflow:
+- `OnDBClickItemWithHandle`: códigos 18/17 convertidos a `IK_Alt`/`IK_Ctrl`.
+- `function44` y `IsLOrREar`: retorno final incompleto restaurado a `return 0;`.
+- `GetCurrentTab`: retorno final restaurado a `return None;`.
+
+Por tanto, la comparación automatizada confirma identidad total Animal–Berserker antes de las correcciones de compatibilidad; las cuatro diferencias posteriores son cambios controlados del proceso de reconstrucción, no diferencias originales entre esos dos paquetes. Berserker no aporta nombres alternativos para las funciones anónimas porque conserva los mismos 15 identificadores anónimos.
