@@ -289,3 +289,6 @@ Ampliación de SublimityItem: la comparación de firmas identificó cinco overri
 
 
 Ampliación verificada de SublimityShortcutWnd: los cinco hooks candidatos (_735, _729, _730, _731 y _728) tienen cuerpos funcionales en la derivada. Se reconstruyó _744: actualiza las dos representaciones visuales del shortcut y cambia visibilidad de texturas; _345 valida panel 0–3 y página 0–9 y persiste Game/ShortcutPage_<panel>. El evento 640 cambia la página del panel 0. El hook 737 de SublimityShortcut, en cambio, sigue siendo stub en la fuente exportada. Véase Addendum D de la auditoría SublimityItem. Los flags UFunction/bytecode bruto siguen pendientes.
+
+
+Hallazgo adicional sobre atajos: SublimityShortcut registra 25002 y recibe payload key/state, pero su hook 737 permanece stub en las fuentes exportadas; declara tres arrays de 256 y un struct de tres enteros sin semántica aún recuperada. Se separó explícitamente este sistema del Shortcut clásico (evento 90), cuya asignación de teclas y persistencia Option.ini sí están documentadas. Shortcut clásico mapea 1–12, Q..] y F1–F12 a /useshortcut, además de rutas /useshortcutforce. No hay prueba de bypass de validaciones del servidor. Véase Addendum E.
