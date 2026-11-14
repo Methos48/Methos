@@ -206,3 +206,8 @@ Estas fichas están en:
 - [OptionWnd y sus cinco pestañas](L2SUDAMERICA-OPTIONWND-AUDIT.md): análisis UC + XDAT de configuración gráfica, audio, opciones de juego, funciones de interfaz y daño flotante. Incluye inventario de controles, claves de configuración, eventos registrados, conexiones entre ventanas y pendientes de validación.
 - [StatusWnd, TargetStatusWnd, PartyWnd, SkillCastWnd y AbnormalStatusWnd](L2SUDAMERICA-STATUS-PARTY-CAST-AUDIT.md): cruce de fuentes UC y XML XDAT, geometría, eventos, acciones de grupo, casteo y estados alterados.
 - [DetailStatusWnd, ClanWnd y ClanDrawerWnd](L2SUDAMERICA-DETAIL-CLAN-AUDIT.md): atributos del personaje, resumen del clan, miembros, autorizaciones, rangos, aprendices, guerras y emblemas.
+
+
+## Auditoría de comercio y almacén
+
+- [Comercio, almacén, tienda privada, envíos y multisell](L2SUDAMERICA-TRADE-WAREHOUSE-SHOP-AUDIT.md) — siete ventanas cruzadas U/XDAT; geometría, controles, eventos registrados, payloads y solicitudes observadas. La correlación de productores y la validación en cliente siguen pendientes.
