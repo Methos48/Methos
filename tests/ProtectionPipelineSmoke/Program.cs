@@ -9,9 +9,9 @@ if (args.Length > 0 && args[0] == "--inspect-function-bytecode")
 {
     if (args.Length != 4)
         throw new ArgumentException("Usage: --inspect-function-bytecode <package.u> <outerClass> <functionName>");
-    using var package = UnrealLoader.LoadPackage(args[1], FileAccess.Read);
-    package.InitializePackage();
-    var matches = package.Objects.OfType<UFunction>()
+    using var functionPackage = UnrealLoader.LoadPackage(args[1], FileAccess.Read);
+    functionPackage.InitializePackage();
+    var matches = functionPackage.Objects.OfType<UFunction>()
         .Where(function => string.Equals(function.Outer?.Name?.ToString(), args[2], StringComparison.OrdinalIgnoreCase)
             && string.Equals(function.Name?.ToString(), args[3], StringComparison.OrdinalIgnoreCase))
         .ToList();
