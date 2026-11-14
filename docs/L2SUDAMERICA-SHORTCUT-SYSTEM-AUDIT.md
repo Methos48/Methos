@@ -147,3 +147,76 @@ El script también gestiona un efecto LoopedTex y un conjunto de controles de fi
 **Confirmado estáticamente:** cinco barras/páginas visibles, 12 slots por página, diez páginas por barra, layouts horizontal/vertical, joypad compacto/expandido, preferencias persistentes y comandos globales de UI.
 
 **Pendiente:** productores de eventos, ShortcutAPI completa, todos los comandos de Shortcut.uc, firmas visuales y prueba de cliente. No se ha recompilado ni cargado una modificación.
+
+## 11. Addendum — asignación real de teclas rápidas
+
+Se cruzaron `Shortcut.uc` con `InterfaceAI_KeySettingWnd.uc`. Esto permite precisar que el sistema no se limita a dibujar barras: también traduce comandos de teclado en comandos de atajo del cliente.
+
+### 11.1 Tres bindings independientes
+
+La ventana de configuración lee y guarda en el archivo Option, sección `Key`:
+- `Panel1` + `UseBind1`
+- `Panel2` + `UseBind2`
+- `Panel3` + `UseBind3`
+
+Los valores Panel1/2/3 se normalizan a 1 cuando el valor leído es 0. Los tres checks se cargan desde INI y se guardan al pulsar OK. Cancel simplemente oculta la ventana; no persiste los cambios temporales.
+
+En la UI, los controles son `checkUseBind1`, `checkUseBind2`, `checkUseBind3`, `checkEnterChat`, y los combos `comboPanel1`, `comboPanel2`, `comboPanel3`. La opción EnterChatting se persiste mediante `SetOptionBool("Game","EnterChatting",...)`, separada de la sección Key.
+
+### 11.2 Familias de teclas
+
+| Binding | Teclas/comandos | Página | Comando ejecutado |
+|---|---|---|---|
+| Bind1 | 1–12 | Panel1 | `/useshortcut Panel1 slot` |
+| Bind2 | Q, W, E, R, T, Y, U, I, O, P, [, ] | Panel2 | `/useshortcut Panel2 slot` |
+| Bind3 | F1–F12 | Panel3 o página visible | `/useshortcut page slot` |
+
+La página para F1–F12 se obtiene leyendo PageNumTextBox de la barra horizontal si está visible; de lo contrario lee la vertical. La fuente muestra una conversión/selección directa de texto a entero; el valor exacto se interpreta junto al formato visual del número de página y debe verificarse en ejecución.
+
+### 11.3 Variantes Force
+
+Existe una segunda familia de comandos:
+- `UserShorcutKeyForce_1..12` para Bind1;
+- `UserShorcutKeyForce_Q..]` para Bind2;
+- `UserShorcutKeyForce_F1..F12` para Bind3.
+
+Estas rutas construyen `/useshortcutforce <panel/página> <slot>` en vez de `/useshortcut`. En Bind1 y Bind2 se comprueba el flag UseBind correspondiente antes de ejecutar. En Bind3 se lee la página visible cuando UseBind3 está activo, pero la llamada a ExecuteCommand aparece fuera de ese condicional en la fuente exportada; por tanto, el flag parece condicionar la selección de página y no necesariamente impedir la ejecución. Este detalle debe preservarse como evidencia literal y probarse antes de corregirlo.
+
+No se afirma que la palabra `force` ignore cooldowns, restricciones o validaciones del servidor. La fuente solo demuestra que emite un comando cliente distinto; su semántica final pertenece al motor/protocolo y debe comprobarse por separado.
+
+### 11.4 Comandos globales de UI y duplicados
+
+El evento 90 de Shortcut lee el campo `Command`. Entre las acciones confirmadas:
+- alternar ChatWnd y, si está habilitado, SystemMsgWnd;
+- recorrer el canal/tab activo del ChatWnd;
+- abrir/cerrar ventanas de estado, skills, acciones, quests, clan, minimapa y opciones;
+- ejecutar RequestExit para ForceExit;
+- llamar métodos de MenuWnd para algunos paneles y shortcuts personalizados.
+
+**Hallazgo que requiere cautela:** el switch exportado contiene etiquetas repetidas como `ShowActionWnd` y `ShowClanWnd` en dos ramas. En un switch convencional la primera coincidencia hace inalcanzable la segunda. No se debe reordenar ni eliminar sin comprobar el bytecode original y el comportamiento del motor; puede ser duplicación real o artefacto de recuperación.
+
+### 11.5 ShortcutAPI: frontera nativa
+
+Las fuentes UC llaman a `NWindow.ShortcutAPI.SetShortcutPage` y `NWindow.UIAPI_SHORTCUTITEMWINDOW.UpdateShortcut`, pero no contienen la implementación de esas clases nativas. La fuente de UI solo demuestra cuándo y con qué argumentos se invocan. Quedan fuera de lo que puede afirmarse estáticamente sobre el motor:
+- almacenamiento interno de la lista de atajos;
+- semántica exacta del índice de página;
+- protocolo de `/useshortcut` y `/useshortcutforce`;
+- cooldown, validación de skill/item y tratamiento de objetivos;
+- eventos nativos que originan 590–660.
+
+Por tanto, no se puede declarar que ShortcutAPI esté reconstruida ni que los eventos 590–660 tengan productores identificados dentro de estas fuentes. Es probable que parte del contrato pertenezca al runtime de NWindow/cliente.
+
+### 11.6 Ventana de configuración
+
+`InterfaceAI_KeySettingWnd` obtiene la instancia Shortcut mediante GetScript("Shortcut"), carga los seis valores INI y al pulsar OK llama a `Shortcut.MethosRecoveredName_1017` con EnterChatting, tres flags y tres paneles. Ese método actualiza la memoria de Shortcut y persiste todas las claves. Cancel solo oculta la ventana.
+
+### 11.7 Pendientes añadidos
+
+1. Obtener bytecode/exports de NWindow.ShortcutAPI y UIAPI_SHORTCUTITEMWINDOW o una referencia compatible que incluya sus definiciones.
+2. Confirmar el formato 0-based/1-based de PageNumTextBox frente al argumento de `/useshortcut`.
+3. Verificar en cliente la diferencia entre `/useshortcut` y `/useshortcutforce`; no asumir bypass de restricciones.
+4. Comprobar la rama Bind3 Force cuando UseBind3 está desactivado.
+5. Revisar las etiquetas repetidas de Shortcut.OnEvent en bytecode.
+6. Localizar los productores de eventos 590–660 en código nativo u otras fuentes del cliente.
+
+**Estado del addendum:** flujo de configuración y traducción de teclas confirmado estáticamente. API nativa, semántica de comandos y validación en cliente siguen pendientes.
