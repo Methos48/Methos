@@ -422,3 +422,15 @@ Animal, sin embargo, ya contiene una función nombrada `IsLOrREar(int)` que comp
 ### Resultado
 
 Los eventos 2600 y 2630, sus firmas y los cuerpos de Silent Dark aportan candidatos mucho más fuertes para `function30` y `function37` que la comparación por similitud sola. La coincidencia semántica de `function44` con `IsLOrREar` también queda respaldada por la segunda variante. Los tres identificadores se conservan en la fuente Animal hasta resolver las colisiones/contradicciones del propio paquete. No se modificó `InventoryWnd.uc` ni el comportamiento del cliente.
+
+## Vigésima pasada: verificación del workflow con detección NPKscrypt (2026-11-14)
+
+Se ejecutó de nuevo el workflow tras añadir la detección previa de cabecera protegida. Run `43564770505` terminó en éxito: [Validate Animal Interface U round-trip](https://github.com/Methos48/Methos/actions/runs/43564770505).
+
+Resultados confirmados en los logs:
+- Berserker: paquete abierto y 159/159 clases exportadas; `InventoryWnd.uc` recuperado.
+- Silent Dark: paquete abierto y 169/169 clases exportadas; `InventoryWnd.uc` recuperado.
+- L2Sudamérica: cabecera detectada `FFEDFACE`; el workflow registra NPKscrypt y omite la descompilación cruda por falta de perfil/estado de clave verificado. El archivo original queda intacto.
+- Animal: compilación limpia correcta, reapertura de 160/160 clases, compilación de la copia editada correcta y marcador de edición persistente tras reabrir.
+
+La detección evita repetir el error engañoso de tratar el paquete L2Sudamérica protegido como si fuera un UnrealPackage plano. No se intenta descifrarlo sin resolver primero las claves NPKscrypt. La fuente Animal y el comportamiento del juego siguen sin cambios.
